@@ -7,19 +7,17 @@
             ← Back to Pickup
           </router-link>
         </div>
-        
+
         <div class="folder-info">
           <h1>{{ folder?.name }}</h1>
           <p class="folder-meta">
             Created by {{ folder?.user_name }} • {{ folderMedia.length }} media files
           </p>
-          <div v-if="folder?.can_edit" class="owner-badge">
-            👤 This is your folder
-          </div>
+          <div v-if="folder?.can_edit" class="owner-badge">👤 This is your folder</div>
         </div>
       </div>
     </header>
-    
+
     <main class="folder-main">
       <div class="content-container">
         <!-- Upload Section -->
@@ -31,13 +29,17 @@
             @upload-error="handleUploadError"
           />
         </section>
-        
+
         <!-- Media Gallery -->
         <section class="gallery-section">
           <MediaGallery
             :media="currentFolderMedia"
             :title="folder?.can_edit ? 'Your Media' : `${folder?.user_name}'s Media`"
-            :empty-message="folder?.can_edit ? 'No media yet. Upload some files to get started!' : 'No media in this folder yet.'"
+            :empty-message="
+              folder?.can_edit
+                ? 'No media yet. Upload some files to get started!'
+                : 'No media in this folder yet.'
+            "
             :can-edit="folder?.can_edit"
             :loading="loading"
             :pickup-id="pickupId"
@@ -55,7 +57,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useToast } from 'vue-toastification'
 import { usePickupStore } from '@/stores/pickup'
-import { folderApi } from '@/services/api'
+import { folderApi, apiErrorMessage } from '@/services/api'
 import MediaUpload from '@/components/MediaUpload.vue'
 import MediaGallery from '@/components/MediaGallery.vue'
 import type { Media } from '@/types'
@@ -81,14 +83,11 @@ const folder = ref(pickupStore.currentFolder)
 const loadFolder = async () => {
   try {
     loading.value = true
-    const response = await folderApi.getFolder(
-      props.pickupId,
-      props.folderId
-    )
+    const response = await folderApi.getFolder(props.pickupId, props.folderId)
     folder.value = response.data
     pickupStore.currentFolder = response.data
-  } catch (error: any) {
-    toast.error(error.response?.data?.error || 'Failed to load folder')
+  } catch (error) {
+    toast.error(apiErrorMessage(error, 'Failed to load folder'))
   } finally {
     loading.value = false
   }
@@ -102,11 +101,10 @@ const handleUploadError = (error: string) => {
   toast.error(`Upload failed: ${error}`)
 }
 
-const handleMediaUpdated = (media: Media) => {
-  // Store is already updated by the upload component
-}
+// Store is already updated by the upload component
+const handleMediaUpdated = () => {}
 
-const handleMediaDeleted = (mediaId: string) => {
+const handleMediaDeleted = () => {
   toast.success('Media deleted successfully')
 }
 
@@ -118,12 +116,12 @@ watch(
       try {
         await loadFolder()
         await pickupStore.loadFolderMedia(props.pickupId, newFolderId)
-      } catch (error) {
+      } catch {
         toast.error('Failed to load folder media')
       }
     }
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 onMounted(async () => {
@@ -135,7 +133,7 @@ onMounted(async () => {
     if (!currentFolderMedia.value.length) {
       await pickupStore.loadFolderMedia(props.pickupId, props.folderId)
     }
-  } catch (error) {
+  } catch {
     toast.error('Failed to load folder data')
   }
 })
@@ -227,15 +225,15 @@ onMounted(async () => {
   .header-content {
     padding: 1rem;
   }
-  
+
   .folder-info h1 {
     font-size: 1.5rem;
   }
-  
+
   .folder-main {
     padding: 1rem;
   }
-  
+
   .content-container {
     gap: 1rem;
   }

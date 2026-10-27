@@ -2,22 +2,23 @@
 
 import getpass
 import sys
+from typing import Any
 
 from django.contrib.auth import get_user_model, password_validation
 from django.core.exceptions import ValidationError
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand, CommandError, CommandParser
 
 
 class Command(BaseCommand):
     help = "Set the password of an existing user."
 
-    def add_arguments(self, parser):
+    def add_arguments(self, parser: CommandParser) -> None:
         parser.add_argument("username")
         parser.add_argument(
             "--stdin", action="store_true", help="Read the password from stdin (for scripts)."
         )
 
-    def handle(self, username, stdin, **options):
+    def handle(self, *args: Any, username: str, stdin: bool, **options: Any) -> None:
         User = get_user_model()
         try:
             user = User.objects.get(**{User.USERNAME_FIELD: username})

@@ -1,10 +1,12 @@
+from typing import Any
+
 from rest_framework import serializers
 
 from ..models import MediaChunk, UploadSession
 from ..models.media import ALLOWED_EXTENSIONS, file_extension
 
 
-class UploadSessionSerializer(serializers.ModelSerializer):
+class UploadSessionSerializer(serializers.ModelSerializer[UploadSession]):
     """Serializer for upload session."""
 
     progress_percentage = serializers.ReadOnlyField()
@@ -40,13 +42,13 @@ class UploadSessionSerializer(serializers.ModelSerializer):
             "missing_chunks",
         ]
 
-    def get_missing_chunks(self, obj):
+    def get_missing_chunks(self, obj: UploadSession) -> list[int]:
         """Return list of chunk indices that have not been uploaded."""
         existing = set(MediaChunk.objects.filter(upload_session=obj).values_list("chunk_index", flat=True))
         return [i for i in range(obj.total_chunks) if i not in existing]
 
 
-class CreateUploadSessionSerializer(serializers.Serializer):
+class CreateUploadSessionSerializer(serializers.Serializer[Any]):
     """Serializer for creating an upload session."""
 
     file_name = serializers.CharField(max_length=255)
@@ -55,7 +57,7 @@ class CreateUploadSessionSerializer(serializers.Serializer):
     chunk_size = serializers.IntegerField(required=False, default=5 * 1024 * 1024)
     caption = serializers.CharField(required=False, allow_blank=True)
 
-    def validate_file_name(self, value):
+    def validate_file_name(self, value: str) -> str:
         """Same file types as direct uploads; the extension ends up in the stored file name."""
         if file_extension(value) not in ALLOWED_EXTENSIONS:
             raise serializers.ValidationError(
@@ -64,7 +66,7 @@ class CreateUploadSessionSerializer(serializers.Serializer):
         return value
 
 
-class UploadChunkSerializer(serializers.Serializer):
+class UploadChunkSerializer(serializers.Serializer[Any]):
     """Serializer for uploading a chunk."""
 
     chunk_index = serializers.IntegerField(min_value=0)

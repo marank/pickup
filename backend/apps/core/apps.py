@@ -5,5 +5,6 @@ class CoreConfig(AppConfig):
     name = "apps.core"
     label = "core"
 
-    def ready(self):
+    def ready(self) -> None:
         from . import checks  # noqa: F401  (registers system checks)
+        from .api import schema  # noqa: F401  (registers OpenAPI extensions)

@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 import os
 from pathlib import Path
 
+import django_stubs_ext
 from django.utils.csp import CSP
 
 from .env import env_bool, env_int, env_list, env_str, load_dotenv, parse_app_urls, secret_key
@@ -21,6 +22,9 @@ from .env import env_bool, env_int, env_list, env_str, load_dotenv, parse_app_ur
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv(BASE_DIR.parent / ".env", BASE_DIR / ".env")  # native dev; real env vars win
+
+# Lets type parameters on Django classes (ModelAdmin[Model], ...) work at runtime.
+django_stubs_ext.monkeypatch()
 
 
 # Quick-start development settings - unsuitable for production
@@ -48,8 +52,13 @@ if _ALL_HTTPS:
     SECURE_SSL_REDIRECT = True
     # The container's own healthcheck talks plain http to 127.0.0.1.
     SECURE_REDIRECT_EXEMPT = [r"^api/health$"]
-    # One year; no subdomains, no preload (both are decisions for the domain owner).
+    # One year. Subdomains and preload are decisions for the domain owner.
     SECURE_HSTS_SECONDS = env_int("SECURE_HSTS_SECONDS", 31_536_000)
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool("SECURE_HSTS_INCLUDE_SUBDOMAINS", False)
+    SECURE_HSTS_PRELOAD = env_bool("SECURE_HSTS_PRELOAD", False)
+
+# Deliberate choices, not oversights (see above), so the deploy check stays quiet about them.
+SILENCED_SYSTEM_CHECKS = ["security.W005", "security.W021"]
 
 SESSION_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_HTTPONLY = False  # the SPA reads csrftoken to send X-CSRFToken
@@ -209,7 +218,8 @@ UPLOAD_CHUNK_SIZE = 5 * 1024 * 1024
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
 
-# SMTP once EMAIL_HOST is set, otherwise mails are printed to the console.
+# SMTP once EMAIL_HOST is set. Without it, mails are printed to the console in DEBUG and
+# not sent at all otherwise (share links are also shown in the app).
 _EMAIL_HOST = env_str("EMAIL_HOST", "")  # not EMAIL_HOST: deprecated name
 if _EMAIL_HOST:
     MAILERS = {
@@ -224,12 +234,11 @@ if _EMAIL_HOST:
             },
         },
     }
+elif DEBUG:
+    MAILERS = {"default": {"BACKEND": "django.core.mail.backends.console.EmailBackend"}}
 else:
-    MAILERS = {
-        "default": {
-            "BACKEND": "django.core.mail.backends.console.EmailBackend",
-        },
-    }
+    MAILERS = {"default": {"BACKEND": "django.core.mail.backends.dummy.EmailBackend"}}
+    SILENCED_SYSTEM_CHECKS += ["mail.E001"]  # mail is optional for Pickup
 DEFAULT_FROM_EMAIL = env_str("DEFAULT_FROM_EMAIL", "pickup@localhost")
 
 

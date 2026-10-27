@@ -1,0 +1,1599 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "Pickup API",
+        "version": "0.0.0"
+    },
+    "paths": {
+        "/api/csrf": {
+            "get": {
+                "operationId": "csrf_retrieve",
+                "description": "Sets the csrftoken cookie; the SPA calls it before its first unsafe request.",
+                "tags": [
+                    "csrf"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/health": {
+            "get": {
+                "operationId": "health_retrieve",
+                "description": "Unauthenticated liveness probe for the container healthcheck and CI smoke test.",
+                "tags": [
+                    "health"
+                ],
+                "security": [
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Health"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/pickups/": {
+            "post": {
+                "operationId": "pickups_create",
+                "description": "Create a new pickup with its creator member and log this session in as creator.",
+                "tags": [
+                    "pickups"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CreatedPickup"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/pickups/{id}/": {
+            "get": {
+                "operationId": "pickups_retrieve",
+                "description": "Anyone can create a pickup and read one with its link; no listing, editing or deleting.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this pickup.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Pickup"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/pickups/{id}/folders/": {
+            "get": {
+                "operationId": "pickup_folders_list",
+                "description": "Get all folders in a pickup.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this pickup.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Folder"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/pickups/{id}/join/": {
+            "post": {
+                "operationId": "pickups_join_create",
+                "description": "Join a pickup: create folder and member, log this session in as that member.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this pickup.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateFolderRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateFolderRequest"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateFolderRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/JoinResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/pickups/{id}/media/": {
+            "get": {
+                "operationId": "pickup_media_list",
+                "description": "Get all media in a pickup.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this pickup.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Media"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/pickups/{id}/session/": {
+            "post": {
+                "operationId": "pickup_session_create",
+                "description": "POST {access_key}: log this browser in as the member; DELETE: leave.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this pickup.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SessionRequestRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SessionRequestRequest"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SessionRequestRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Pickup"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "pickup_session_destroy",
+                "description": "POST {access_key}: log this browser in as the member; DELETE: leave.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this pickup.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
+        "/api/pickups/{pickup_id}/folders/{folder_id}/media/{id}/": {
+            "get": {
+                "operationId": "pickups_folders_media_retrieve",
+                "description": "Media is read by anyone with the pickup link; deleting and captions need the folder owner.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "folder_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "The folder this media belongs to"
+                        },
+                        "required": true
+                    },
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this media.",
+                        "required": true
+                    },
+                    {
+                        "in": "path",
+                        "name": "pickup_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Media"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "pickups_folders_media_destroy",
+                "description": "Delete a media file.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "folder_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "The folder this media belongs to"
+                        },
+                        "required": true
+                    },
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this media.",
+                        "required": true
+                    },
+                    {
+                        "in": "path",
+                        "name": "pickup_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/pickups/{pickup_id}/folders/{folder_id}/media/{id}/caption/": {
+            "patch": {
+                "operationId": "pickups_folders_media_caption_partial_update",
+                "description": "Update media caption.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "folder_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "The folder this media belongs to"
+                        },
+                        "required": true
+                    },
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this media.",
+                        "required": true
+                    },
+                    {
+                        "in": "path",
+                        "name": "pickup_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedCaptionRequestRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedCaptionRequestRequest"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedCaptionRequestRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Media"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/pickups/{pickup_id}/folders/{folder_id}/upload-sessions/": {
+            "post": {
+                "operationId": "pickups_folders_upload_sessions_create",
+                "description": "Create an upload session for a large file.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "folder_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    },
+                    {
+                        "in": "path",
+                        "name": "pickup_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateUploadSessionRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateUploadSessionRequest"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateUploadSessionRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UploadSession"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/pickups/{pickup_id}/folders/{id}/": {
+            "get": {
+                "operationId": "pickups_folders_retrieve",
+                "description": "Folders are read by anyone with the pickup link and changed only by their owner.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this folder.",
+                        "required": true
+                    },
+                    {
+                        "in": "path",
+                        "name": "pickup_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "The pickup this folder belongs to"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Folder"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/pickups/{pickup_id}/folders/{id}/clear/": {
+            "delete": {
+                "operationId": "pickups_folders_clear_destroy",
+                "description": "Clear all media from a folder.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this folder.",
+                        "required": true
+                    },
+                    {
+                        "in": "path",
+                        "name": "pickup_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "The pickup this folder belongs to"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Message"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/pickups/{pickup_id}/folders/{id}/media/": {
+            "get": {
+                "operationId": "folder_media_list",
+                "description": "Get or upload media for a folder.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this folder.",
+                        "required": true
+                    },
+                    {
+                        "in": "path",
+                        "name": "pickup_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "The pickup this folder belongs to"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Media"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "folder_media_upload",
+                "description": "Get or upload media for a folder.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this folder.",
+                        "required": true
+                    },
+                    {
+                        "in": "path",
+                        "name": "pickup_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "The pickup this folder belongs to"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UploadMediaRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Media"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/upload-sessions/{session_id}/": {
+            "get": {
+                "operationId": "upload_sessions_retrieve",
+                "description": "Return upload session with missing chunks.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "session_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "upload-sessions"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UploadSession"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/upload-sessions/{session_id}/chunks/": {
+            "post": {
+                "operationId": "upload_sessions_chunks_create",
+                "description": "Store an uploaded chunk.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "session_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "upload-sessions"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UploadChunkRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UploadSession"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/upload-sessions/{session_id}/finalize/": {
+            "post": {
+                "operationId": "upload_sessions_finalize_create",
+                "description": "Combine all chunks and create the Media object.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "session_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "upload-sessions"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Media"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "CreateFolderRequest": {
+                "type": "object",
+                "description": "Serializer for creating a new folder.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Name of the folder",
+                        "pattern": "^[a-zA-Z0-9\\s\\-_]+$",
+                        "maxLength": 100
+                    },
+                    "user_name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Name of the user who created this folder",
+                        "maxLength": 100
+                    },
+                    "user_email": {
+                        "description": "Optional email of the user who created this folder",
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "email",
+                                "maxLength": 254
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
+                    }
+                },
+                "required": [
+                    "name",
+                    "user_name"
+                ]
+            },
+            "CreateUploadSessionRequest": {
+                "type": "object",
+                "description": "Serializer for creating an upload session.",
+                "properties": {
+                    "file_name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 255
+                    },
+                    "file_size": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "media_type": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 10
+                    },
+                    "chunk_size": {
+                        "type": "integer",
+                        "default": 5242880
+                    },
+                    "caption": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "file_name",
+                    "file_size"
+                ]
+            },
+            "CreatedPickup": {
+                "type": "object",
+                "description": "A new pickup plus the creator's personal link (only ever returned here).",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true
+                    },
+                    "title": {
+                        "type": "string",
+                        "description": "Optional title for the pickup",
+                        "maxLength": 200
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "description": "Whether this pickup is active"
+                    },
+                    "share_url": {
+                        "type": "string",
+                        "description": "Returns the share URL for this pickup.",
+                        "readOnly": true
+                    },
+                    "folder_count": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "media_count": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "is_creator": {
+                        "type": "boolean",
+                        "description": "Check if the current authenticated member is the creator.",
+                        "readOnly": true
+                    },
+                    "member_url": {
+                        "type": "string",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "folder_count",
+                    "id",
+                    "is_creator",
+                    "media_count",
+                    "member_url",
+                    "share_url"
+                ]
+            },
+            "Error": {
+                "type": "object",
+                "properties": {
+                    "error": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "error"
+                ]
+            },
+            "Folder": {
+                "type": "object",
+                "description": "Serializer for Folder model.",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true
+                    },
+                    "pickup": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true,
+                        "description": "The pickup this folder belongs to"
+                    },
+                    "name": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Name of the folder"
+                    },
+                    "user_name": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Name of the user who created this folder"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "media_count": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "can_edit": {
+                        "type": "boolean",
+                        "description": "Check if the current authenticated member owns this folder.",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "can_edit",
+                    "created_at",
+                    "id",
+                    "media_count",
+                    "name",
+                    "pickup",
+                    "user_name"
+                ]
+            },
+            "Health": {
+                "type": "object",
+                "properties": {
+                    "status": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "status"
+                ]
+            },
+            "JoinResponse": {
+                "type": "object",
+                "properties": {
+                    "folder": {
+                        "$ref": "#/components/schemas/Folder"
+                    },
+                    "member_url": {
+                        "type": "string",
+                        "description": "Personal link with the secret access key"
+                    }
+                },
+                "required": [
+                    "folder",
+                    "member_url"
+                ]
+            },
+            "Media": {
+                "type": "object",
+                "description": "Serializer for Media model.",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true
+                    },
+                    "folder": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The folder this media belongs to"
+                    },
+                    "file": {
+                        "type": "string",
+                        "format": "uri",
+                        "description": "The uploaded media file",
+                        "pattern": "(?:avi|bmp|flv|gif|jpeg|jpg|mkv|mov|mp4|png|webm|webp|wmv)$"
+                    },
+                    "original_filename": {
+                        "type": "string",
+                        "description": "Original filename of the uploaded file",
+                        "maxLength": 255
+                    },
+                    "media_type": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/MediaTypeEnum"
+                            }
+                        ],
+                        "description": "Type of media (image or video)\n\n* `image` - Image\n* `video` - Video"
+                    },
+                    "file_size": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "description": "File size in bytes"
+                    },
+                    "file_size_display": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "uploaded_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "caption": {
+                        "type": "string",
+                        "description": "Optional caption for the media"
+                    },
+                    "can_edit": {
+                        "type": "boolean",
+                        "description": "Check if the current authenticated member owns this media's folder.",
+                        "readOnly": true
+                    },
+                    "is_image": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "is_video": {
+                        "type": "boolean",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "can_edit",
+                    "file",
+                    "file_size",
+                    "file_size_display",
+                    "folder",
+                    "id",
+                    "is_image",
+                    "is_video",
+                    "media_type",
+                    "original_filename",
+                    "uploaded_at"
+                ]
+            },
+            "MediaTypeEnum": {
+                "enum": [
+                    "image",
+                    "video"
+                ],
+                "type": "string",
+                "description": "* `image` - Image\n* `video` - Video"
+            },
+            "Message": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "message"
+                ]
+            },
+            "PatchedCaptionRequestRequest": {
+                "type": "object",
+                "properties": {
+                    "caption": {
+                        "type": "string"
+                    }
+                }
+            },
+            "Pickup": {
+                "type": "object",
+                "description": "Serializer for Pickup model.",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true
+                    },
+                    "title": {
+                        "type": "string",
+                        "description": "Optional title for the pickup",
+                        "maxLength": 200
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "description": "Whether this pickup is active"
+                    },
+                    "share_url": {
+                        "type": "string",
+                        "description": "Returns the share URL for this pickup.",
+                        "readOnly": true
+                    },
+                    "folder_count": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "media_count": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "is_creator": {
+                        "type": "boolean",
+                        "description": "Check if the current authenticated member is the creator.",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "folder_count",
+                    "id",
+                    "is_creator",
+                    "media_count",
+                    "share_url"
+                ]
+            },
+            "SessionRequestRequest": {
+                "type": "object",
+                "properties": {
+                    "access_key": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "access_key"
+                ]
+            },
+            "StatusEnum": {
+                "enum": [
+                    "pending",
+                    "complete",
+                    "error",
+                    "cancelled"
+                ],
+                "type": "string",
+                "description": "* `pending` - Pending\n* `complete` - Complete\n* `error` - Error\n* `cancelled` - Cancelled"
+            },
+            "UploadChunkRequest": {
+                "type": "object",
+                "description": "Serializer for uploading a chunk.",
+                "properties": {
+                    "chunk_index": {
+                        "type": "integer",
+                        "minimum": 0
+                    },
+                    "chunk_size": {
+                        "type": "integer"
+                    },
+                    "chunk": {
+                        "type": "string",
+                        "format": "binary"
+                    }
+                },
+                "required": [
+                    "chunk",
+                    "chunk_index"
+                ]
+            },
+            "UploadMediaRequest": {
+                "type": "object",
+                "description": "Serializer for uploading media files.",
+                "properties": {
+                    "file": {
+                        "type": "string",
+                        "format": "binary",
+                        "description": "The uploaded media file",
+                        "pattern": "(?:avi|bmp|flv|gif|jpeg|jpg|mkv|mov|mp4|png|webm|webp|wmv)$"
+                    },
+                    "caption": {
+                        "type": "string",
+                        "description": "Optional caption for the media"
+                    }
+                },
+                "required": [
+                    "file"
+                ]
+            },
+            "UploadSession": {
+                "type": "object",
+                "description": "Serializer for upload session.",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true
+                    },
+                    "folder": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The folder this upload belongs to"
+                    },
+                    "file_name": {
+                        "type": "string",
+                        "description": "Original filename",
+                        "maxLength": 255
+                    },
+                    "file_size": {
+                        "type": "integer",
+                        "maximum": 9223372036854775807,
+                        "minimum": -9223372036854775808,
+                        "format": "int64",
+                        "description": "Total file size in bytes"
+                    },
+                    "chunk_size": {
+                        "type": "integer",
+                        "maximum": 9223372036854775807,
+                        "minimum": -9223372036854775808,
+                        "format": "int64",
+                        "description": "Size of each chunk in bytes"
+                    },
+                    "total_chunks": {
+                        "type": "integer",
+                        "maximum": 9223372036854775807,
+                        "minimum": -9223372036854775808,
+                        "format": "int64",
+                        "description": "Total number of chunks"
+                    },
+                    "uploaded_chunks": {
+                        "type": "integer",
+                        "readOnly": true,
+                        "description": "Number of successfully uploaded chunks"
+                    },
+                    "progress_percentage": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "media_type": {
+                        "type": "string",
+                        "description": "Type of media (image or video)",
+                        "maxLength": 10
+                    },
+                    "caption": {
+                        "type": "string",
+                        "description": "Optional caption for the media"
+                    },
+                    "status": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/StatusEnum"
+                            }
+                        ],
+                        "readOnly": true
+                    },
+                    "error_message": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Error message if upload failed"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "completed_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true
+                    },
+                    "missing_chunks": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "description": "Return list of chunk indices that have not been uploaded.",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "completed_at",
+                    "created_at",
+                    "error_message",
+                    "file_name",
+                    "file_size",
+                    "folder",
+                    "id",
+                    "media_type",
+                    "missing_chunks",
+                    "progress_percentage",
+                    "status",
+                    "total_chunks",
+                    "uploaded_chunks"
+                ]
+            }
+        },
+        "securitySchemes": {
+            "cookieAuth": {
+                "type": "apiKey",
+                "in": "cookie",
+                "name": "sessionid"
+            }
+        }
+    }
+}

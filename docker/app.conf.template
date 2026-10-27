@@ -1,0 +1,69 @@
+# Rendered by start-nginx (envsubst); only the four ${…} placeholders are replaced.
+
+# Is the direct peer one of TRUSTED_PROXIES?
+geo $realip_remote_addr $from_trusted_proxy {
+    default 0;
+${TRUSTED_GEO}
+}
+
+# Client scheme: X-Forwarded-Proto only from trusted proxies, else the connection's own.
+map "$from_trusted_proxy:$http_x_forwarded_proto" $client_proto {
+    "~^1:(?<fwd>https?)$" $fwd;
+    default $scheme;
+}
+
+server {
+    listen 8080;
+    # Larger files are uploaded in 5 MB chunks (frontend: DIRECT_UPLOAD_MAX_SIZE = 20 MB).
+    # Bodies are buffered in /tmp (tmpfs, i.e. RAM), so keep this small.
+    client_max_body_size 25m;
+${REAL_IP_CONFIG}
+
+    root /srv/spa;
+
+    location /api/ {
+        include /etc/nginx/django_proxy.conf;
+    }
+
+    # Finalizing a chunked upload concatenates the whole file; give it as long as gunicorn.
+    location ~ ^/api/upload-sessions/[^/]+/finalize/$ {
+        proxy_read_timeout ${GUNICORN_TIMEOUT}s;
+        include /etc/nginx/django_proxy.conf;
+    }
+
+${ADMIN_LOCATION}
+
+    # Uploaded media. Never run as a document: an uploaded file opened directly gets a
+    # sandbox without scripts, and browsers must not guess another content type.
+    location /media/ {
+        alias /data/media/;
+        location /media/upload_chunks/ { return 404; }
+        expires 30d;
+        add_header Cache-Control "public";
+        add_header Content-Security-Policy "default-src 'none'; img-src 'self'; media-src 'self'; style-src 'unsafe-inline'; sandbox" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header Cross-Origin-Resource-Policy "same-origin" always;
+    }
+
+    location /django-static/ {
+        alias /app/staticfiles/;
+        expires 7d;
+        access_log off;
+        include /etc/nginx/security_headers.conf;
+    }
+
+    # Vite's hashed build output
+    location /assets/ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        include /etc/nginx/security_headers.conf;
+        try_files $uri =404;
+    }
+
+    # SPA: unknown paths fall back to index.html, which must never be cached.
+    location / {
+        try_files $uri $uri/ /index.html;
+        add_header Cache-Control "no-cache";
+        include /etc/nginx/security_headers.conf;
+    }
+}

@@ -3,23 +3,21 @@
     <div class="gallery-header">
       <h3>{{ title }}</h3>
       <div class="gallery-actions" v-if="canEdit && media.length > 0">
-        <button @click="clearAllMedia" class="clear-btn" :disabled="loading">
-          Clear All
-        </button>
+        <button @click="clearAllMedia" class="clear-btn" :disabled="loading">Clear All</button>
       </div>
     </div>
-    
+
     <div v-if="loading" class="loading-state">
       <div class="spinner"></div>
       <p>Loading media...</p>
     </div>
-    
+
     <div v-else-if="media.length === 0" class="empty-state">
       <div class="empty-icon">📁</div>
       <h4>No media yet</h4>
       <p>{{ emptyMessage }}</p>
     </div>
-    
+
     <div v-else class="media-grid">
       <div
         v-for="item in media"
@@ -35,14 +33,8 @@
             class="media-image"
             loading="lazy"
           />
-          <video
-            v-else
-            :src="item.file"
-            class="media-video"
-            controls
-            preload="metadata"
-          />
-          
+          <video v-else :src="item.file" class="media-video" controls preload="metadata" />
+
           <div class="media-overlay">
             <div class="media-info">
               <p class="media-filename">{{ item.original_filename }}</p>
@@ -50,52 +42,43 @@
             </div>
           </div>
         </div>
-        
+
         <div v-if="item.caption" class="media-caption">
           {{ item.caption }}
         </div>
-        
+
         <div v-if="item.can_edit" class="media-actions">
-          <button @click="editCaption(item)" class="action-btn edit-btn">
-            ✏️
-          </button>
-          <button @click="deleteMedia(item)" class="action-btn delete-btn">
-            🗑️
-          </button>
+          <button @click="editCaption(item)" class="action-btn edit-btn">✏️</button>
+          <button @click="deleteMedia(item)" class="action-btn delete-btn">🗑️</button>
         </div>
       </div>
     </div>
-    
+
     <!-- Media Preview Modal -->
     <div v-if="previewMedia" class="media-modal" @click="closeMediaPreview">
       <div class="modal-content" @click.stop>
         <button class="close-btn" @click="closeMediaPreview">✕</button>
-        
+
         <div class="modal-media">
           <img
             v-if="previewMedia.is_image"
             :src="previewMedia.file"
             :alt="previewMedia.caption || previewMedia.original_filename"
           />
-          <video
-            v-else
-            :src="previewMedia.file"
-            controls
-            autoplay
-          />
+          <video v-else :src="previewMedia.file" controls autoplay />
         </div>
-        
+
         <div class="modal-info">
           <h3>{{ previewMedia.original_filename }}</h3>
           <p v-if="previewMedia.caption" class="caption">{{ previewMedia.caption }}</p>
           <p class="meta">
-            {{ previewMedia.file_size_display }} • 
+            {{ previewMedia.file_size_display }} •
             {{ formatDate(previewMedia.uploaded_at) }}
           </p>
         </div>
       </div>
     </div>
-    
+
     <!-- Edit Caption Modal -->
     <div v-if="editingMedia" class="caption-modal" @click="closeCaptionEdit">
       <div class="modal-content" @click.stop>
@@ -121,7 +104,7 @@
 import { ref } from 'vue'
 import { useToast } from 'vue-toastification'
 import { usePickupStore } from '@/stores/pickup'
-import { mediaApi, folderApi } from '@/services/api'
+import { mediaApi, folderApi, apiErrorMessage } from '@/services/api'
 import type { Media } from '@/types'
 
 interface Props {
@@ -172,23 +155,23 @@ const closeCaptionEdit = () => {
 
 const saveCaption = async () => {
   if (!editingMedia.value || !props.folderId) return
-  
+
   try {
     saving.value = true
     const response = await mediaApi.updateCaption(
       props.pickupId,
       props.folderId,
       editingMedia.value.id,
-      editingCaption.value
+      editingCaption.value,
     )
-    
+
     pickupStore.updateMediaCaption(editingMedia.value.id, editingCaption.value)
     emit('mediaUpdated', response.data)
-    
+
     toast.success('Caption updated')
     closeCaptionEdit()
-  } catch (err: any) {
-    toast.error(err.response?.data?.error || 'Failed to update caption')
+  } catch (err) {
+    toast.error(apiErrorMessage(err, 'Failed to update caption'))
   } finally {
     saving.value = false
   }
@@ -196,47 +179,40 @@ const saveCaption = async () => {
 
 const deleteMedia = async (media: Media) => {
   if (!props.folderId) return
-  
+
   if (!confirm(`Are you sure you want to delete "${media.original_filename}"?`)) {
     return
   }
-  
+
   try {
-    await mediaApi.deleteMedia(
-      props.pickupId,
-      props.folderId,
-      media.id
-    )
+    await mediaApi.deleteMedia(props.pickupId, props.folderId, media.id)
     pickupStore.removeMedia(media.id)
     emit('mediaDeleted', media.id)
-    
+
     toast.success('Media deleted')
-  } catch (err: any) {
-    toast.error(err.response?.data?.error || 'Failed to delete media')
+  } catch (err) {
+    toast.error(apiErrorMessage(err, 'Failed to delete media'))
   }
 }
 
 const clearAllMedia = async () => {
   if (!props.folderId) return
-  
+
   if (!confirm('Are you sure you want to delete all media in this folder?')) {
     return
   }
-  
+
   try {
-    await folderApi.clearFolder(
-      props.pickupId,
-      props.folderId
-    )
-    
+    await folderApi.clearFolder(props.pickupId, props.folderId)
+
     // Clear local state
-    props.media.forEach(media => {
+    props.media.forEach((media) => {
       pickupStore.removeMedia(media.id)
     })
-    
+
     toast.success('All media cleared')
-  } catch (err: any) {
-    toast.error(err.response?.data?.error || 'Failed to clear folder')
+  } catch (err) {
+    toast.error(apiErrorMessage(err, 'Failed to clear folder'))
   }
 }
 
@@ -303,8 +279,12 @@ const formatDate = (dateString: string) => {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .empty-state {
@@ -335,7 +315,9 @@ const formatDate = (dateString: string) => {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   overflow: hidden;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .media-item:hover {

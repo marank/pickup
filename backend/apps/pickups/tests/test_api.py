@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING, Any
+
 import pytest
 from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -5,16 +7,20 @@ from django.test import Client
 
 from apps.pickups.models import Folder, Media, Member, Pickup, UploadSession
 
+if TYPE_CHECKING:  # only defined in django-stubs
+    from django.test.client import _MonkeyPatchedWSGIResponse as TestResponse
+
 pytestmark = pytest.mark.django_db
 
 
-def create_pickup(client, title="Party"):
-    response = client.post("/create-pickup/", {"title": title}, content_type="application/json")
+def create_pickup(client: Client, title: str = "Party") -> dict[str, Any]:
+    response = client.post("/api/pickups/", {"title": title}, content_type="application/json")
     assert response.status_code == 201
-    return response.json()
+    data: dict[str, Any] = response.json()
+    return data
 
 
-def join(client, pickup_id, name="Alice", email=""):
+def join(client: Client, pickup_id: str, name: str = "Alice", email: str = "") -> TestResponse:
     return client.post(
         f"/api/pickups/{pickup_id}/join/",
         {"name": f"{name} folder", "user_name": name, "user_email": email},
@@ -23,14 +29,14 @@ def join(client, pickup_id, name="Alice", email=""):
 
 
 @pytest.fixture
-def joined(client):
+def joined(client: Client) -> tuple[str, str]:
     """Alice joined a pickup; `client` is logged in as her."""
     pickup = create_pickup(Client())
     data = join(client, pickup["id"]).json()
     return pickup["id"], data["folder"]["id"]
 
 
-def test_create_pickup_logs_in_creator(client):
+def test_create_pickup_logs_in_creator(client: Client) -> None:
     pickup = create_pickup(client)
     creator = Member.objects.get(pickup_id=pickup["id"])
     assert creator.is_creator
@@ -38,7 +44,7 @@ def test_create_pickup_logs_in_creator(client):
     assert client.get(f"/api/pickups/{pickup['id']}/").json()["is_creator"] is True
 
 
-def test_pickup_never_exposes_member_ids_or_keys(client, joined):
+def test_pickup_never_exposes_member_ids_or_keys(client: Client, joined: tuple[str, str]) -> None:
     pickup_id, _ = joined
     stranger = Client()
     secrets = [str(m.id) for m in Member.objects.all()] + [m.access_key for m in Member.objects.all()]
@@ -49,11 +55,11 @@ def test_pickup_never_exposes_member_ids_or_keys(client, joined):
     assert stranger.get(f"/api/pickups/{pickup_id}/").json()["is_creator"] is False
 
 
-def test_pickup_ids_are_random_uuid4(client):
+def test_pickup_ids_are_random_uuid4(client: Client) -> None:
     assert Pickup.objects.get(id=create_pickup(client)["id"]).id.version == 4
 
 
-def test_join_creates_folder_logs_in_and_mails_link(client):
+def test_join_creates_folder_logs_in_and_mails_link(client: Client) -> None:
     pickup = create_pickup(Client())
     response = join(client, pickup["id"], email="alice@example.com")
     assert response.status_code == 201
@@ -64,7 +70,7 @@ def test_join_creates_folder_logs_in_and_mails_link(client):
     assert [f["can_edit"] for f in folders] == [True]
 
 
-def test_join_with_taken_name_does_not_hand_out_membership(client, joined):
+def test_join_with_taken_name_does_not_hand_out_membership(client: Client, joined: tuple[str, str]) -> None:
     pickup_id, _ = joined
     response = Client().post(
         f"/api/pickups/{pickup_id}/join/",
@@ -75,7 +81,7 @@ def test_join_with_taken_name_does_not_hand_out_membership(client, joined):
     assert "user_name" in response.json()
 
 
-def test_join_rejects_duplicate_folder_name(client, joined):
+def test_join_rejects_duplicate_folder_name(client: Client, joined: tuple[str, str]) -> None:
     pickup_id, _ = joined
     response = Client().post(
         f"/api/pickups/{pickup_id}/join/",
@@ -85,7 +91,7 @@ def test_join_rejects_duplicate_folder_name(client, joined):
     assert response.status_code == 400
 
 
-def test_personal_link_logs_in_another_browser(joined):
+def test_personal_link_logs_in_another_browser(joined: tuple[str, str]) -> None:
     pickup_id, folder_id = joined
     member = Member.objects.get(user_name="Alice")
     other_browser = Client()
@@ -107,7 +113,7 @@ def test_personal_link_logs_in_another_browser(joined):
     assert folder["can_edit"] is False
 
 
-def test_member_id_parameter_is_no_longer_a_credential(joined):
+def test_member_id_parameter_is_no_longer_a_credential(joined: tuple[str, str]) -> None:
     pickup_id, folder_id = joined
     member = Member.objects.get(user_name="Alice")
     response = Client().post(
@@ -121,7 +127,6 @@ def test_member_id_parameter_is_no_longer_a_credential(joined):
     ("method", "path"),
     [
         ("get", "/api/pickups/"),
-        ("post", "/api/pickups/"),
         ("put", "/api/pickups/{pickup}/"),
         ("patch", "/api/pickups/{pickup}/"),
         ("delete", "/api/pickups/{pickup}/"),
@@ -134,7 +139,7 @@ def test_member_id_parameter_is_no_longer_a_credential(joined):
         ("patch", "/api/pickups/{pickup}/folders/{folder}/media/{media}/"),
     ],
 )
-def test_removed_crud_actions(client, joined, method, path):
+def test_removed_crud_actions(client: Client, joined: tuple[str, str], method: str, path: str) -> None:
     pickup_id, folder_id = joined
     media = upload(client, pickup_id, folder_id).json()
     url = path.format(pickup=pickup_id, folder=folder_id, media=media["id"])
@@ -144,20 +149,20 @@ def test_removed_crud_actions(client, joined, method, path):
     assert Pickup.objects.exists() and Folder.objects.exists() and Media.objects.exists()
 
 
-def test_unsafe_requests_need_csrf_token(joined):
+def test_unsafe_requests_need_csrf_token(joined: tuple[str, str]) -> None:
     pickup_id, _ = joined
     browser = Client(enforce_csrf_checks=True)
-    assert browser.post("/create-pickup/", {}, content_type="application/json").status_code == 403
+    assert browser.post("/api/pickups/", {}, content_type="application/json").status_code == 403
 
     browser.get("/api/csrf")
     token = browser.cookies["csrftoken"].value
     response = browser.post(
-        "/create-pickup/", {}, content_type="application/json", headers={"X-CSRFToken": token}
+        "/api/pickups/", {}, content_type="application/json", headers={"X-CSRFToken": token}
     )
     assert response.status_code == 201
 
 
-def test_inactive_pickup_is_gone(client, joined):
+def test_inactive_pickup_is_gone(client: Client, joined: tuple[str, str]) -> None:
     pickup_id, folder_id = joined
     Pickup.objects.update(is_active=False)
     assert client.get(f"/api/pickups/{pickup_id}/").status_code == 404
@@ -165,14 +170,14 @@ def test_inactive_pickup_is_gone(client, joined):
     assert client.get(f"/api/pickups/{pickup_id}/folders/{folder_id}/media/").status_code == 404
 
 
-def upload(client, pickup_id, folder_id, name="photo.jpg"):
+def upload(client: Client, pickup_id: str, folder_id: str, name: str = "photo.jpg") -> TestResponse:
     return client.post(
         f"/api/pickups/{pickup_id}/folders/{folder_id}/media/",
         {"file": SimpleUploadedFile(name, b"jpegdata"), "caption": "hi"},
     )
 
 
-def test_upload_requires_folder_owner(joined):
+def test_upload_requires_folder_owner(joined: tuple[str, str]) -> None:
     pickup_id, folder_id = joined
     bob = Client()
     join(bob, pickup_id, name="Bob")
@@ -181,19 +186,19 @@ def test_upload_requires_folder_owner(joined):
 
 
 @pytest.mark.parametrize("name", ["evil.exe", "drawing.svg", "page.html"])
-def test_upload_rejects_unsupported_types(client, joined, name):
+def test_upload_rejects_unsupported_types(client: Client, joined: tuple[str, str], name: str) -> None:
     assert upload(client, *joined, name=name).status_code == 400
 
 
-def test_uploaded_files_get_random_names(client, joined):
+def test_uploaded_files_get_random_names(client: Client, joined: tuple[str, str]) -> None:
     media = upload(client, *joined).json()
     stored = Media.objects.get(id=media["id"])
     assert media["original_filename"] == "photo.jpg"
-    assert "photo" not in stored.file.name
+    assert stored.file.name and "photo" not in stored.file.name
     assert stored.file.name.endswith(".jpg")
 
 
-def test_upload_caption_delete_and_clear(client, joined):
+def test_upload_caption_delete_and_clear(client: Client, joined: tuple[str, str]) -> None:
     pickup_id, folder_id = joined
     response = upload(client, pickup_id, folder_id)
     assert response.status_code == 201
@@ -220,7 +225,7 @@ def test_upload_caption_delete_and_clear(client, joined):
     assert not Media.objects.exists()
 
 
-def test_chunked_upload(client, joined):
+def test_chunked_upload(client: Client, joined: tuple[str, str]) -> None:
     pickup_id, folder_id = joined
     content = b"0123456789" * 3
     response = client.post(
@@ -250,12 +255,12 @@ def test_chunked_upload(client, joined):
     media = Media.objects.get()
     assert media.file.read() == content
     assert media.original_filename == "../clip.mp4"
-    assert ".." not in media.file.name and media.file.name.endswith(".mp4")
+    assert media.file.name and ".." not in media.file.name and media.file.name.endswith(".mp4")
     assert UploadSession.objects.get().status == "complete"
     assert client.post(f"{base}/finalize/").status_code == 400
 
 
-def test_chunked_upload_rejects_unsupported_types(client, joined):
+def test_chunked_upload_rejects_unsupported_types(client: Client, joined: tuple[str, str]) -> None:
     pickup_id, folder_id = joined
     response = client.post(
         f"/api/pickups/{pickup_id}/folders/{folder_id}/upload-sessions/",
@@ -265,7 +270,7 @@ def test_chunked_upload_rejects_unsupported_types(client, joined):
     assert response.status_code == 400
 
 
-def test_chunk_upload_checks_owner_and_range(client, joined):
+def test_chunk_upload_checks_owner_and_range(client: Client, joined: tuple[str, str]) -> None:
     _, folder_id = joined
     folder = Folder.objects.get(id=folder_id)
     session = UploadSession.objects.create(

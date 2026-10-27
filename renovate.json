@@ -1,0 +1,201 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":semanticCommitsDisabled",
+    "helpers:pinGitHubActionDigestsToSemver",
+    "docker:pinDigests"
+  ],
+  "timezone": "Europe/Berlin",
+  "schedule": [
+    "before 6am"
+  ],
+  "prHourlyLimit": 0,
+  "prConcurrentLimit": 10,
+  "dependencyDashboard": true,
+  "rangeStrategy": "bump",
+  "minimumReleaseAge": "3 days",
+  "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "description": "Known vulnerabilities (OSV): PR right away, outside the schedule and without the release-age wait",
+    "labels": [
+      "security"
+    ]
+  },
+  "pre-commit": {
+    "enabled": true
+  },
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": [
+      "before 6am on monday"
+    ],
+    "automerge": true
+  },
+  "packageRules": [
+    {
+      "description": "Minor and patch updates merge themselves once CI is green",
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest",
+        "pinDigest"
+      ],
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
+    },
+    {
+      "description": "Major updates need a look; one PR per package",
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false,
+      "dependencyDashboardApproval": false
+    },
+    {
+      "description": "0.x versions may break in minor releases",
+      "matchCurrentVersion": "/^0\\./",
+      "matchUpdateTypes": [
+        "minor"
+      ],
+      "automerge": false
+    },
+    {
+      "description": "Python minor (3.x → 3.y) is a runtime change; requires-python and wheels need a look",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "python"
+      ],
+      "matchUpdateTypes": [
+        "minor"
+      ],
+      "automerge": false
+    },
+    {
+      "description": "Node: only even majors (LTS lines)",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "node"
+      ],
+      "allowedVersions": "/^\\d*[02468]($|[.-])/"
+    },
+    {
+      "groupName": "Django",
+      "matchPackageNames": [
+        "django",
+        "django-stubs",
+        "django-stubs-ext",
+        "django-ninja",
+        "/^djangorestframework/",
+        "/^drf-/"
+      ]
+    },
+    {
+      "groupName": "Vue",
+      "matchPackageNames": [
+        "vue",
+        "vue-router",
+        "vue-i18n",
+        "pinia",
+        "@vue/**",
+        "vue-tsc"
+      ]
+    },
+    {
+      "groupName": "Lint and format",
+      "matchPackageNames": [
+        "eslint",
+        "@eslint/**",
+        "typescript-eslint",
+        "eslint-plugin-**",
+        "oxlint",
+        "prettier",
+        "knip",
+        "ruff",
+        "mypy",
+        "deptry",
+        "astral-sh/ruff-pre-commit",
+        "pre-commit/pre-commit-hooks"
+      ]
+    },
+    {
+      "groupName": "Vite and Vitest",
+      "matchPackageNames": [
+        "vite",
+        "vitest",
+        "@vitejs/**",
+        "@vitest/**"
+      ]
+    },
+    {
+      "groupName": "OpenAPI types",
+      "matchPackageNames": [
+        "openapi-typescript",
+        "openapi-fetch"
+      ]
+    },
+    {
+      "description": "Python and Node follow the versions in the Dockerfile and CI together",
+      "groupName": "Python runtime",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "python",
+        "ghcr.io/astral-sh/uv"
+      ]
+    },
+    {
+      "groupName": "Node runtime",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "node"
+      ]
+    },
+    {
+      "description": "PostgreSQL major upgrades need a dump and restore, never automatic",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "postgres"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Base images are rebuilt constantly; collect all digest updates in one weekly PR",
+      "matchUpdateTypes": [
+        "digest",
+        "pinDigest"
+      ],
+      "groupName": "Docker digests",
+      "schedule": [
+        "before 6am on monday"
+      ]
+    }
+  ],
+  "customManagers": [
+    {
+      "description": "Images used via docker run in the build workflow",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^\\.gitea/workflows/.+\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "(?:TRIVY|POSTGRES)_IMAGE: (?<depName>[\\w./-]+):(?<currentValue>[\\w.-]+)"
+      ],
+      "datasourceTemplate": "docker"
+    }
+  ]
+}

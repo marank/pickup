@@ -28,14 +28,14 @@ def create_upload_session(folder: Folder, data: dict[str, Any]) -> UploadSession
     return session
 
 
-def store_chunk(session: UploadSession, chunk_index: int, chunk_file: UploadedFile) -> None:
+def store_chunk(session: UploadSession, chunk_index: int, chunk_file: UploadedFile[bytes]) -> None:
     os.makedirs(session.chunks_dir, exist_ok=True)
     with open(session.get_chunk_path(chunk_index), "wb+") as destination:
         for chunk in chunk_file.chunks():
             destination.write(chunk)
 
     MediaChunk.objects.update_or_create(
-        upload_session=session, chunk_index=chunk_index, defaults={"chunk_size": chunk_file.size}
+        upload_session=session, chunk_index=chunk_index, defaults={"chunk_size": chunk_file.size or 0}
     )
     session.uploaded_chunks = MediaChunk.objects.filter(upload_session=session).count()
     session.save(update_fields=["uploaded_chunks"])

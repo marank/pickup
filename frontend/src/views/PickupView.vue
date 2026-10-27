@@ -9,21 +9,17 @@
             <span v-if="isCreator" class="creator-badge">👑 Creator</span>
           </p>
         </div>
-        
+
         <div class="header-actions">
           <button @click="copyShareLink" class="share-btn">
             {{ copied ? '✓ Copied!' : '🔗 Share' }}
           </button>
-          <button v-if="!isAuthenticated" @click="joinPickup" class="join-btn">
-            Join Pickup
-          </button>
-          <button v-else @click="goToFolder" class="folder-btn">
-            📁 Your Folder
-          </button>
+          <button v-if="!isAuthenticated" @click="joinPickup" class="join-btn">Join Pickup</button>
+          <button v-else @click="goToFolder" class="folder-btn">📁 Your Folder</button>
         </div>
       </div>
     </header>
-    
+
     <main class="pickup-main">
       <div class="content-grid">
         <!-- Folders Section -->
@@ -36,7 +32,7 @@
             @folder-selected="handleFolderSelected"
           />
         </section>
-        
+
         <!-- All Media Section -->
         <section class="media-section">
           <MediaGallery
@@ -60,7 +56,6 @@ import { useToast } from 'vue-toastification'
 import { usePickupStore } from '@/stores/pickup'
 import FolderList from '@/components/FolderList.vue'
 import MediaGallery from '@/components/MediaGallery.vue'
-import type { Folder } from '@/types'
 
 interface Props {
   id?: string
@@ -85,9 +80,8 @@ const currentFolderId = computed(() => pickupStore.currentFolder?.id)
 // Get the pickup ID from props (/pickup/:id; personal links redirect there)
 const pickupId = computed(() => props.id || props.pickupId || '')
 
-const handleFolderSelected = (folder: Folder) => {
-  // Navigation is handled by the FolderList component
-}
+// Navigation is handled by the FolderList component
+const handleFolderSelected = () => {}
 
 const joinPickup = () => {
   router.push(`/pickup/${pickupId.value}/join`)
@@ -105,11 +99,11 @@ const copyShareLink = async () => {
     await navigator.clipboard.writeText(shareUrl)
     copied.value = true
     toast.success('Share link copied to clipboard!')
-    
+
     setTimeout(() => {
       copied.value = false
     }, 3000)
-  } catch (err) {
+  } catch {
     toast.error('Failed to copy share link')
   }
 }
@@ -120,17 +114,17 @@ onMounted(async () => {
     // Load pickup data is handled by router guard
     await Promise.all([
       pickupStore.loadFolders(pickupId.value),
-      pickupStore.loadAllMedia(pickupId.value)
+      pickupStore.loadAllMedia(pickupId.value),
     ])
 
     // If this browser is logged in as a member, set current folder to the member's folder
     if (!pickupStore.currentFolder) {
-      const memberFolder = pickupStore.folders.find(f => f.can_edit)
+      const memberFolder = pickupStore.folders.find((f) => f.can_edit)
       if (memberFolder) {
         pickupStore.currentFolder = memberFolder
       }
     }
-  } catch (error) {
+  } catch {
     toast.error('Failed to load pickup data')
   }
 })
@@ -151,7 +145,7 @@ onMounted(async () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: 
+  background:
     radial-gradient(circle at 20% 80%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
     radial-gradient(circle at 80% 20%, rgba(118, 75, 162, 0.1) 0%, transparent 50%),
     radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
@@ -316,15 +310,15 @@ onMounted(async () => {
   .pickup-info h1 {
     font-size: 3rem;
   }
-  
+
   .header-content {
     padding: 2.5rem 4rem;
   }
-  
+
   .pickup-main {
     padding: 4rem;
   }
-  
+
   .content-grid {
     gap: 3rem;
   }
@@ -336,11 +330,11 @@ onMounted(async () => {
     grid-template-columns: 1fr;
     gap: 2rem;
   }
-  
+
   .header-content {
     padding: 2rem 3rem;
   }
-  
+
   .pickup-main {
     padding: 3rem;
   }
@@ -354,22 +348,22 @@ onMounted(async () => {
     align-items: flex-start;
     gap: 1.5rem;
   }
-  
+
   .pickup-info h1 {
     font-size: 1.75rem;
   }
-  
+
   .pickup-stats {
     font-size: 1rem;
   }
-  
+
   .header-actions {
     width: 100%;
     justify-content: flex-start;
     flex-wrap: wrap;
     gap: 0.75rem;
   }
-  
+
   .share-btn,
   .join-btn,
   .folder-btn {
@@ -378,16 +372,16 @@ onMounted(async () => {
     flex: 1;
     min-width: 120px;
   }
-  
+
   .pickup-main {
     padding: 1.5rem 1.25rem;
   }
-  
+
   .content-grid {
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
-  
+
   .content-grid > * {
     border-radius: 12px;
   }

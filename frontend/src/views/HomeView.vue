@@ -4,7 +4,7 @@
       <div class="hero-content">
         <h1 class="title">Pickup</h1>
         <p class="subtitle">Share images and videos instantly, no account required</p>
-        
+
         <div class="actions">
           <button @click="createNewPickup" class="primary-btn" :disabled="creating">
             {{ creating ? 'Creating...' : 'Create New Pickup' }}
@@ -23,10 +23,13 @@
             </button>
           </div>
         </div>
-        
+
         <div v-if="newPickupUrl" class="pickup-created">
           <h3>🎉 Pickup Created!</h3>
-          <p><strong>Creator Link:</strong> Keep this for yourself - it gives you full control over the pickup.</p>
+          <p>
+            <strong>Creator Link:</strong> Keep this for yourself - it gives you full control over
+            the pickup.
+          </p>
           <div class="share-link">
             <input :value="newCreatorMemberUrl" readonly class="link-input creator-link" />
             <button @click="copyCreatorLink" class="copy-btn creator-copy-btn">
@@ -44,13 +47,13 @@
             🚀 Go to Pickup (Creator View)
           </button>
         </div>
-        
+
         <div v-if="error" class="error-message">
           {{ error }}
         </div>
       </div>
     </header>
-    
+
     <section class="features">
       <div class="container">
         <h2>How Pickup Works</h2>
@@ -63,7 +66,10 @@
           <div class="feature-card">
             <div class="feature-icon">📁</div>
             <h3>Personal Folders</h3>
-            <p>Each user gets their own folder. You can only edit your content, but can view everyone's.</p>
+            <p>
+              Each user gets their own folder. You can only edit your content, but can view
+              everyone's.
+            </p>
           </div>
           <div class="feature-card">
             <div class="feature-icon">🔗</div>
@@ -85,7 +91,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'vue-toastification'
-import { pickupApi } from '@/services/api'
+import { pickupApi, apiErrorMessage } from '@/services/api'
 
 const router = useRouter()
 const toast = useToast()
@@ -103,18 +109,18 @@ const createNewPickup = async () => {
   try {
     creating.value = true
     error.value = ''
-    
+
     const response = await pickupApi.createPickup({ title: '' })
     const pickup = response.data
-    
+
     newPickupId.value = pickup.id
     newPickupUrl.value = `${window.location.origin}${pickup.share_url}`
     newCreatorMemberUrl.value = pickup.member_url
       ? `${window.location.origin}${pickup.member_url}`
       : `${window.location.origin}${pickup.share_url}`
     toast.success('Pickup created successfully!')
-  } catch (err: any) {
-    error.value = err.response?.data?.error || 'Failed to create pickup'
+  } catch (err) {
+    error.value = apiErrorMessage(err, 'Failed to create pickup')
     toast.error(error.value)
   } finally {
     creating.value = false
@@ -124,13 +130,13 @@ const createNewPickup = async () => {
 const joinPickup = () => {
   const code = joinCode.value.trim()
   if (!code) return
-  
+
   router.push(`/pickup/${code}`)
 }
 
 const goToPickup = () => {
   if (!newCreatorMemberUrl.value) return
-  
+
   window.location.href = newCreatorMemberUrl.value
 }
 
@@ -139,11 +145,11 @@ const copyLink = async () => {
     await navigator.clipboard.writeText(newPickupUrl.value)
     copied.value = true
     toast.success('Link copied to clipboard!')
-    
+
     setTimeout(() => {
       copied.value = false
     }, 3000)
-  } catch (err) {
+  } catch {
     toast.error('Failed to copy link')
   }
 }
@@ -153,15 +159,14 @@ const copyCreatorLink = async () => {
     await navigator.clipboard.writeText(newCreatorMemberUrl.value)
     creatorCopied.value = true
     toast.success('Creator link copied to clipboard!')
-    
+
     setTimeout(() => {
       creatorCopied.value = false
     }, 3000)
-  } catch (err) {
+  } catch {
     toast.error('Failed to copy creator link')
   }
 }
-
 </script>
 
 <style scoped>
@@ -407,7 +412,9 @@ const copyCreatorLink = async () => {
   border-radius: 12px;
   text-align: center;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .feature-card:hover {
@@ -436,27 +443,27 @@ const copyCreatorLink = async () => {
   .hero {
     padding: 3rem 1.5rem;
   }
-  
+
   .title {
     font-size: 2.5rem;
   }
-  
+
   .subtitle {
     font-size: 1rem;
   }
-  
+
   .join-section {
     max-width: 100%;
   }
-  
+
   .share-link {
     flex-direction: column;
   }
-  
+
   .feature-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .container {
     padding: 0 1.5rem;
   }

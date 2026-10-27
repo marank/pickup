@@ -2,22 +2,20 @@
   <div class="folder-list">
     <div class="list-header">
       <h3>Folders ({{ folders.length }})</h3>
-      <button @click="refreshFolders" class="refresh-btn" :disabled="loading">
-        🔄
-      </button>
+      <button @click="refreshFolders" class="refresh-btn" :disabled="loading">🔄</button>
     </div>
-    
+
     <div v-if="loading" class="loading-state">
       <div class="spinner"></div>
       <p>Loading folders...</p>
     </div>
-    
+
     <div v-else-if="folders.length === 0" class="empty-state">
       <div class="empty-icon">📂</div>
       <h4>No folders yet</h4>
       <p>Be the first to create a folder in this pickup!</p>
     </div>
-    
+
     <div v-else class="folders-grid">
       <div
         v-for="folder in folders"
@@ -33,15 +31,13 @@
             <p class="folder-owner">by {{ folder.user_name }}</p>
           </div>
         </div>
-        
+
         <div class="folder-stats">
           <span class="media-count">{{ folder.media_count }} media</span>
           <span class="created-date">{{ formatDate(folder.created_at) }}</span>
         </div>
-        
-        <div v-if="folder.can_edit" class="owner-badge">
-          👤 Your Folder
-        </div>
+
+        <div v-if="folder.can_edit" class="owner-badge">👤 Your Folder</div>
       </div>
     </div>
   </div>
@@ -85,7 +81,7 @@ const refreshFolders = async () => {
     refreshing.value = true
     await pickupStore.loadFolders(props.pickupId)
     toast.success('Folders refreshed')
-  } catch (err: any) {
+  } catch {
     toast.error('Failed to refresh folders')
   } finally {
     refreshing.value = false
@@ -97,11 +93,11 @@ const formatDate = (dateString: string) => {
   const now = new Date()
   const diffTime = Math.abs(now.getTime() - date.getTime())
   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-  
+
   if (diffDays === 1) return 'Today'
   if (diffDays === 2) return 'Yesterday'
   if (diffDays <= 7) return `${diffDays - 1} days ago`
-  
+
   return date.toLocaleDateString()
 }
 </script>
@@ -163,8 +159,12 @@ const formatDate = (dateString: string) => {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .empty-state {

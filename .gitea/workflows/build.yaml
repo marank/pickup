@@ -1,0 +1,380 @@
+# CI: lint, type-check and test backend + frontend, scan the repository, then build the
+# image, smoke-test it hardened like in production, scan it and push it to the Gitea
+# container registry (same host as this Gitea instance).
+#
+# Required repository secrets:
+#   REGISTRY_USER   Gitea user that owns (or may write to) the package
+#   REGISTRY_TOKEN  access token with the "write:package" scope
+#
+# Pull requests only run the checks and a test build; pushes to main and
+# version tags (v1.2.3) also push the image.
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ gitea.workflow }}-${{ gitea.ref }}
+  cancel-in-progress: true
+
+# The jobs only read the repository; the registry login uses its own token.
+permissions:
+  contents: read
+
+env:
+  # Images started with `docker run` below; renovate.json updates them via a regex manager.
+  TRIVY_IMAGE: aquasec/trivy:0.76.1
+  POSTGRES_IMAGE: postgres:18-alpine
+
+jobs:
+  # --- Backend: ruff, mypy, deptry, licenses, migrations, checks, OpenAPI, pytest ----
+  backend:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/astral-sh/uv:python3.14-trixie-slim
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: ci
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+        options: >-
+          --health-cmd "pg_isready -U ci -d ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      UV_LINK_MODE: copy
+      UV_PYTHON_DOWNLOADS: never
+      # The tests run against PostgreSQL like production, with the local dev settings.
+      DEBUG: "true"
+      SECRET_KEY: ci-only-not-secret
+      DB_TYPE: postgres
+      DB_HOST: postgres
+      DB_NAME: ci
+      DB_USER: ci
+      DB_PASSWORD: ci
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      # builtin:checkout runs git inside the job image; the -slim images lack it.
+      # Add the same system packages the Dockerfile installs for the app (if any).
+      # working-directory: / because backend/ does not exist yet.
+      - name: Install system packages
+        working-directory: /
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends git ca-certificates
+
+      - uses: builtin:checkout
+
+      - name: Install dependencies
+        # --locked also fails when uv.lock no longer matches pyproject.toml.
+        run: uv sync --locked
+
+      - name: Lint
+        run: |
+          uv run ruff check --output-format=concise .
+          uv run ruff format --check .
+
+      - name: Type-check
+        run: uv run mypy .
+
+      # Every declared package is imported, every imported one declared.
+      - name: Unused dependencies
+        run: uv run deptry .
+
+      # Production dependencies only; GPL, AGPL and SSPL would bind the whole app.
+      - name: Licenses
+        run: |
+          LICENSE_DIR=$(mktemp -d)
+          trap 'rm -rf "$LICENSE_DIR"' EXIT
+          uv export --locked --no-dev --no-hashes --format requirements.txt -o "$LICENSE_DIR/requirements.txt"
+          uv venv --quiet "$LICENSE_DIR/venv"
+          uv pip install --quiet --python "$LICENSE_DIR/venv" -r "$LICENSE_DIR/requirements.txt" pip-licenses
+          "$LICENSE_DIR/venv/bin/pip-licenses" --format=json \
+            --ignore-packages pip-licenses prettytable wcwidth \
+            | uv run python scripts/check_licenses.py
+
+      - name: Check for missing migrations
+        run: uv run python manage.py makemigrations --check --dry-run
+
+      - name: Django system checks
+        run: uv run python manage.py check --fail-level WARNING
+
+      # Production settings: secure cookies, no debug, no warnings left.
+      - name: Django deploy checks
+        env:
+          DEBUG: "false"
+          SECRET_KEY: ci-deploy-check-not-secret-but-long-and-random-enough-0123456789abcdef
+          APP_URLS: https://app.example.com
+        run: uv run python manage.py check --deploy --fail-level WARNING
+
+
+      # frontend/openapi.json must match the API (TypeScript types are generated from it).
+      # Generated with SQLite like locally: the database decides some integer limits.
+      - name: OpenAPI schema up to date
+        env:
+          DB_TYPE: sqlite
+        run: |
+          uv run python manage.py spectacular --validate --fail-on-warn --format openapi-json --file /tmp/openapi.json
+          diff -u ../frontend/openapi.json /tmp/openapi.json
+
+      - name: Tests
+        run: uv run pytest -q --cov --cov-report=term --cov-fail-under=90
+
+  # --- Frontend: prettier, oxlint, eslint, knip, type-check, vitest, build, size, audit
+  frontend:
+    runs-on: ubuntu-latest
+    container:
+      image: node:24-trixie-slim
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Install git
+        working-directory: /
+        run: apt-get update && apt-get install -y --no-install-recommends git ca-certificates
+
+      - uses: builtin:checkout
+
+      - name: Install dependencies
+        run: |
+          npm install -g pnpm@12.15.0
+          pnpm install --frozen-lockfile
+
+      # format:check, lint (oxlint, eslint, knip for unused code; no --fix), type-check and
+      # unit tests with their coverage minimum
+      - name: Checks
+        run: pnpm check
+
+      - name: Build
+        run: pnpm build-only
+
+      # Size budgets in package.json, so the app stays quick on a phone.
+      - name: Bundle size
+        run: pnpm size
+
+      - name: Licenses
+        run: pnpm check:licenses
+
+
+      # Known vulnerabilities in the dependencies that end up in the browser.
+      - name: Audit
+        run: pnpm audit --prod --audit-level high
+
+  # --- Repository: committed secrets, vulnerable lock files, Dockerfile/compose ----
+  repository:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: builtin:checkout
+
+      # Secrets, critical fixable vulnerabilities and Dockerfile/compose misconfigurations
+      # fail; HIGH vulnerabilities are reported. The database is cached in a volume of the
+      # runner's Docker. The runner talks to a Docker-in-Docker daemon, so a bind mount of
+      # the checkout would show an empty directory; the files are streamed into the
+      # scanner as a tar archive instead.
+      - name: Scan
+        run: |
+          trivy() {
+            tar -c --exclude=.git --exclude=node_modules --exclude=.venv . \
+              | docker run --rm -i -v trivy-cache:/root/.cache/trivy \
+                  --entrypoint sh "$TRIVY_IMAGE" -c \
+                  'mkdir /src && tar -x -C /src &&
+                   test -f /src/Dockerfile -a -f /src/backend/uv.lock || { echo "nothing to scan" >&2; exit 2; }
+                   exec trivy fs --no-progress --skip-version-check "$@" /src' \
+                  trivy "$@"
+          }
+          trivy --scanners secret --exit-code 1
+          trivy --scanners vuln --severity CRITICAL --ignore-unfixed --exit-code 1
+          trivy --scanners misconfig --severity HIGH,CRITICAL --exit-code 1
+          trivy --scanners vuln --severity HIGH
+
+  # --- Image: build, smoke-test, scan, push ---------------------------------------
+  image:
+    needs: [backend, frontend, repository]
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_BUILDKIT: "1"
+      PUSH: ${{ gitea.event_name != 'pull_request' }}
+    steps:
+      - uses: builtin:checkout
+
+      - name: Compute tags
+        id: meta
+        # Context values go in via env, never straight into the script: tag names
+        # may contain shell metacharacters.
+        env:
+          SERVER_URL: ${{ gitea.server_url }}
+          REPO: ${{ gitea.repository }}
+          REF: ${{ gitea.ref }}
+          REF_NAME: ${{ gitea.ref_name }}
+          SHA: ${{ gitea.sha }}
+        run: |
+          # Gitea's container registry lives on the instance's own host.
+          REGISTRY=$(echo "$SERVER_URL" | sed -E 's#^[a-z]+://##; s#/.*$##')
+          IMAGE=$(echo "$REGISTRY/$REPO" | tr '[:upper:]' '[:lower:]')
+          SHORT_SHA=$(echo "$SHA" | cut -c1-12)
+          TAGS="$IMAGE:sha-$SHORT_SHA"
+          case "$REF" in
+            refs/heads/main)
+              TAGS="$TAGS $IMAGE:latest"
+              ;;
+            refs/tags/v*)
+              VERSION="${REF_NAME#v}"
+              # Only docker-safe tag names; the tags end up in later scripts.
+              if ! echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$'; then
+                echo "Invalid version tag: $REF_NAME" >&2
+                exit 1
+              fi
+              TAGS="$TAGS $IMAGE:$VERSION"
+              # Also tag 1.2 and 1 for plain releases (no -rc/-beta suffix).
+              if echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+                TAGS="$TAGS $IMAGE:${VERSION%.*} $IMAGE:${VERSION%%.*}"
+              fi
+              ;;
+          esac
+          {
+            echo "registry=$REGISTRY"
+            echo "image=$IMAGE"
+            echo "ref=$IMAGE:sha-$SHORT_SHA"
+            echo "tags=$TAGS"
+          } >> "$GITHUB_OUTPUT"
+          echo "Tags: $TAGS"
+
+      - name: Login
+        if: env.PUSH == 'true'
+        env:
+          REGISTRY: ${{ steps.meta.outputs.registry }}
+          REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
+          REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
+        run: echo "$REGISTRY_TOKEN" | docker login "$REGISTRY" -u "$REGISTRY_USER" --password-stdin
+
+      - name: Build
+        env:
+          IMAGE: ${{ steps.meta.outputs.image }}
+          IMAGE_TAGS: ${{ steps.meta.outputs.tags }}
+          SOURCE: ${{ gitea.server_url }}/${{ gitea.repository }}
+          SHA: ${{ gitea.sha }}
+        run: |
+          read -ra tag_list <<< "$IMAGE_TAGS"
+          tag_args=()
+          for t in "${tag_list[@]}"; do tag_args+=(-t "$t"); done
+          # Reuse layers from the last pushed image when there is one.
+          docker pull "$IMAGE:latest" || true
+          docker build --pull \
+            --cache-from "$IMAGE:latest" \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --label "org.opencontainers.image.source=$SOURCE" \
+            --label "org.opencontainers.image.revision=$SHA" \
+            --label "org.opencontainers.image.created=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            "${tag_args[@]}" .
+
+      # Start the image against a throwaway PostgreSQL, hardened like compose.yml
+      # (read-only, no capabilities), so an image that cannot boot is never pushed.
+      # Then check that it stays up, that nginx serves the SPA, static files and the API,
+      # that /admin is closed and nothing runs as root. A program that keeps failing
+      # stops the container (docker/exit-on-fatal), which this catches too.
+      # TRUSTED_PROXIES=127.0.0.1 lets the probes act like a TLS proxy in front, so the
+      # https APP_URLS behave as in production.
+      - name: Smoke test
+        env:
+          IMAGE: ${{ steps.meta.outputs.ref }}
+          RUN_ID: ${{ gitea.run_id }}
+        run: |
+          NAME="smoke-$RUN_ID"
+          docker network create "$NAME"
+          trap 'docker logs "$NAME" || true; docker rm -f "$NAME" "$NAME-db" >/dev/null 2>&1 || true; docker volume rm "$NAME-data" >/dev/null 2>&1 || true; docker network rm "$NAME" >/dev/null 2>&1 || true' EXIT
+          docker run -d --name "$NAME-db" --network "$NAME" --network-alias db \
+            -e POSTGRES_DB=ci -e POSTGRES_USER=ci -e POSTGRES_PASSWORD=ci \
+            "$POSTGRES_IMAGE"
+          docker run -d --name "$NAME" --network "$NAME" \
+            --read-only --tmpfs /tmp -v "$NAME-data:/data" \
+            --security-opt no-new-privileges:true --cap-drop ALL \
+            -e SECRET_KEY=ci-smoke-test-not-secret-but-long-enough-for-the-check-0123456789 \
+            -e APP_URLS=https://app.example.com -e TRUSTED_PROXIES=127.0.0.1 \
+            -e DB_TYPE=postgres -e DB_HOST=db -e DB_NAME=ci -e DB_USER=ci -e DB_PASSWORD=ci \
+            -e ADMIN_USERNAME=admin -e ADMIN_EMAIL=admin@example.com \
+            -e ADMIN_PASSWORD=ci-smoke-admin-password-42 \
+            "$IMAGE"
+
+          probe() { docker exec "$NAME" python /usr/local/bin/healthcheck "$@"; }
+
+          healthy=false
+          for i in $(seq 1 45); do
+            if probe /api/health 200 >/dev/null 2>&1; then
+              echo "Healthy after ${i}x2s"; healthy=true; break
+            fi
+            sleep 2
+          done
+          if [ "$healthy" != true ]; then
+            echo "Container did not become healthy" >&2
+            exit 1
+          fi
+
+          # Long enough for supervisord to give up on a crashing program.
+          sleep 20
+          probe /api/health 200
+          probe / 200
+          probe /some/client/route 200
+          probe /django-static/admin/css/base.css 200
+          probe /admin/ 404
+          probe /api/pickups/00000000-0000-4000-8000-000000000000/ 404
+          probe /media/upload_chunks/x 404
+          docker exec "$NAME" supervisorctl -c /etc/supervisord.conf status
+          if docker exec "$NAME" supervisorctl -c /etc/supervisord.conf status | grep -v RUNNING; then
+            echo "Not all programs are running" >&2
+            exit 1
+          fi
+          docker logs "$NAME" 2>&1 | grep -q "Created admin user 'admin'"
+          docker exec "$NAME" sh -c 'test "$(id -u)" != 0 && mkdir -p /data/.probe && rmdir /data/.probe'
+          if docker exec "$NAME" sh -c 'touch /app/.probe' 2>/dev/null; then
+            echo "Root filesystem is writable" >&2
+            exit 1
+          fi
+          if docker exec "$NAME" sh -c "grep -l '^Uid:[[:space:]]0' /proc/[0-9]*/status" 2>/dev/null; then
+            echo "A process runs as root" >&2
+            exit 1
+          fi
+          echo "Image boots hardened, serves SPA, API and static files"
+
+      # Known vulnerabilities (OS packages, Python wheels) and secrets baked into the image.
+      # Critical fixable ones block the push; HIGH is reported. The runner talks to a
+      # Docker-in-Docker daemon, so neither paths nor its socket can be shared with the
+      # scanner; the image is streamed in with docker save instead.
+      - name: Vulnerability scan
+        env:
+          IMAGE: ${{ steps.meta.outputs.ref }}
+        run: |
+          trivy() {
+            docker save "$IMAGE" \
+              | docker run --rm -i -v trivy-cache:/root/.cache/trivy \
+                  --entrypoint sh "$TRIVY_IMAGE" -c \
+                  'cat > /tmp/image.tar &&
+                   exec trivy image --no-progress --skip-version-check --ignore-unfixed \
+                     --input /tmp/image.tar "$@"' \
+                  trivy "$@"
+          }
+          trivy --scanners vuln,secret --severity CRITICAL --exit-code 1
+          trivy --scanners vuln --severity HIGH
+
+      - name: Push
+        if: env.PUSH == 'true'
+        env:
+          IMAGE_TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          read -ra tag_list <<< "$IMAGE_TAGS"
+          for t in "${tag_list[@]}"; do docker push "$t"; done
+
+      - name: Logout
+        if: always() && env.PUSH == 'true'
+        env:
+          REGISTRY: ${{ steps.meta.outputs.registry }}
+        run: docker logout "$REGISTRY"

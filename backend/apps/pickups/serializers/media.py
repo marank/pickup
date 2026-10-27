@@ -1,10 +1,11 @@
+from django.core.files.uploadedfile import UploadedFile
 from rest_framework import serializers
 
 from ..models import Media
 from ..models.media import ALLOWED_EXTENSIONS, file_extension
 
 
-class MediaSerializer(serializers.ModelSerializer):
+class MediaSerializer(serializers.ModelSerializer[Media]):
     """Serializer for Media model."""
 
     file_size_display = serializers.SerializerMethodField()
@@ -38,24 +39,22 @@ class MediaSerializer(serializers.ModelSerializer):
             "is_video",
         ]
 
-    def get_file_size_display(self, obj):
+    def get_file_size_display(self, obj: Media) -> str:
         return obj.get_file_size_display()
 
-    def get_can_edit(self, obj):
+    def get_can_edit(self, obj: Media) -> bool:
         """Check if the current authenticated member owns this media's folder."""
         member = self.context.get("member")
-        if member and member.folder:
-            return member.folder_id == obj.folder_id
-        return False
+        return bool(member and member.owns(obj.folder_id))
 
-    def get_is_image(self, obj):
+    def get_is_image(self, obj: Media) -> bool:
         return obj.is_image
 
-    def get_is_video(self, obj):
+    def get_is_video(self, obj: Media) -> bool:
         return obj.is_video
 
 
-class UploadMediaSerializer(serializers.ModelSerializer):
+class UploadMediaSerializer(serializers.ModelSerializer[Media]):
     """Serializer for uploading media files."""
 
     class Meta:
@@ -63,9 +62,9 @@ class UploadMediaSerializer(serializers.ModelSerializer):
         fields = ["file", "caption"]
         extra_kwargs = {"caption": {"required": False, "allow_blank": True}}
 
-    def validate_file(self, value):
+    def validate_file(self, value: UploadedFile[bytes]) -> UploadedFile[bytes]:
         """Validate file size and type."""
-        if file_extension(value.name) not in ALLOWED_EXTENSIONS:
+        if file_extension(value.name or "") not in ALLOWED_EXTENSIONS:
             raise serializers.ValidationError(
                 "File type not supported. Please upload an image or video file."
             )

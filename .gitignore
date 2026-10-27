@@ -16,3 +16,6 @@ frontend/dist/
 !.vscode/tasks.json
 .coverage
 htmlcov/
+/backups/
+.mypy_cache/
+frontend/coverage/

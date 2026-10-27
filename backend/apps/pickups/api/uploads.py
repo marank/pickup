@@ -1,6 +1,7 @@
 import logging
 
 from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -9,6 +10,7 @@ from rest_framework.views import APIView
 from ..models import Folder, MediaChunk, Member, UploadSession
 from ..serializers import (
     CreateUploadSessionSerializer,
+    ErrorSerializer,
     MediaSerializer,
     UploadChunkSerializer,
     UploadSessionSerializer,
@@ -37,6 +39,10 @@ def _not_pending(session: UploadSession) -> Response:
 class UploadSessionCreateView(APIView):
     """Create a new chunked upload session."""
 
+    @extend_schema(
+        request=CreateUploadSessionSerializer,
+        responses={201: UploadSessionSerializer, 400: ErrorSerializer, 403: ErrorSerializer},
+    )
     def post(self, request: Request, pickup_id: str, folder_id: str) -> Response:
         """Create an upload session for a large file."""
         folder = get_object_or_404(Folder, id=folder_id, pickup_id=pickup_id, pickup__is_active=True)
@@ -53,6 +59,7 @@ class UploadSessionCreateView(APIView):
 class UploadSessionDetailView(APIView):
     """Get upload session details."""
 
+    @extend_schema(responses={200: UploadSessionSerializer, 403: ErrorSerializer})
     def get(self, request: Request, session_id: str) -> Response:
         """Return upload session with missing chunks."""
         session = get_object_or_404(UploadSession.objects.select_related("folder__pickup"), id=session_id)
@@ -64,6 +71,10 @@ class UploadSessionDetailView(APIView):
 class UploadChunkView(APIView):
     """Upload a single chunk for an upload session."""
 
+    @extend_schema(
+        request={"multipart/form-data": UploadChunkSerializer},
+        responses={200: UploadSessionSerializer, 400: ErrorSerializer, 403: ErrorSerializer},
+    )
     def post(self, request: Request, session_id: str) -> Response:
         """Store an uploaded chunk."""
         session = get_object_or_404(UploadSession.objects.select_related("folder__pickup"), id=session_id)
@@ -86,6 +97,7 @@ class UploadChunkView(APIView):
 class UploadSessionFinalizeView(APIView):
     """Finalize an upload session by combining chunks into a media file."""
 
+    @extend_schema(request=None, responses={201: MediaSerializer, 400: ErrorSerializer, 403: ErrorSerializer})
     def post(self, request: Request, session_id: str) -> Response:
         """Combine all chunks and create the Media object."""
         session = get_object_or_404(UploadSession.objects.select_related("folder__pickup"), id=session_id)

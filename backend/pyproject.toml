@@ -4,11 +4,11 @@ version = "0.1.0"
 description = "Pickup backend (Django + DRF)"
 requires-python = ">=3.14"
 dependencies = [
+    "django-stubs-ext>=6.1.2",
     "django[argon2]>=6.1.2",
     "djangorestframework>=3.18.3",
     "drf-spectacular>=0.30.0",
     "gunicorn>=26.2.0",
-    "pillow>=13.0.0",
     "psycopg[binary]>=3.3.6",
 ]
 
@@ -35,3 +35,31 @@ select = ["E", "F", "I", "UP", "B", "DJ", "SIM"]
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings"
 python_files = ["test_*.py"]
+
+[tool.mypy]
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+strict = true
+exclude = ["/migrations/"]
+
+[[tool.mypy.overrides]]
+module = ["*.migrations.*"]
+ignore_errors = true
+
+[tool.django-stubs]
+django_settings_module = "config.settings"
+
+[tool.deptry]
+# Tests use the dev dependencies (pytest, pytest-django).
+extend_exclude = [".*/tests/", "conftest\\.py"]
+
+[tool.deptry.per_rule_ignores]
+# Used at runtime, never imported: DB driver (ENGINE string) and the WSGI server.
+DEP002 = ["psycopg", "gunicorn"]
+
+[tool.coverage.run]
+source = ["apps", "config"]
+omit = ["*/migrations/*", "config/asgi.py", "config/wsgi.py", "manage.py"]
+
+[tool.coverage.report]
+skip_covered = true
+show_missing = true

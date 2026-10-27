@@ -3,7 +3,7 @@
     <div class="join-card">
       <h1>Join Pickup</h1>
       <p class="pickup-title">{{ pickup?.title || 'Untitled Pickup' }}</p>
-      
+
       <form @submit.prevent="handleSubmit" class="join-form">
         <div class="form-group">
           <label for="userName">Your Name *</label>
@@ -16,7 +16,7 @@
             class="form-input"
           />
         </div>
-        
+
         <div class="form-group">
           <label for="folderName">Folder Name *</label>
           <input
@@ -28,7 +28,7 @@
             class="form-input"
           />
         </div>
-        
+
         <div class="form-group">
           <label for="userEmail">Email (Optional)</label>
           <input
@@ -38,21 +38,15 @@
             placeholder="your@email.com"
             class="form-input"
           />
-          <small class="form-help">
-            We'll email you the share link for easy access
-          </small>
+          <small class="form-help"> We'll email you the share link for easy access </small>
         </div>
-        
-        <button 
-          type="submit" 
-          :disabled="loading"
-          class="submit-btn"
-        >
+
+        <button type="submit" :disabled="loading" class="submit-btn">
           <span v-if="loading">Joining...</span>
           <span v-else>Join Pickup</span>
         </button>
       </form>
-      
+
       <div v-if="error" class="error-message">
         {{ error }}
       </div>
@@ -83,11 +77,14 @@ const formData = ref<CreateFolderRequest>({
 })
 
 // Auto-fill folder name based on user name
-watch(() => formData.value.user_name, (newName) => {
-  if (newName) {
-    formData.value.name = newName
-  }
-})
+watch(
+  () => formData.value.user_name,
+  (newName) => {
+    if (newName) {
+      formData.value.name = newName
+    }
+  },
+)
 
 const loading = ref(false)
 const error = ref<string | null>(null)
@@ -98,13 +95,13 @@ const handleSubmit = async () => {
   try {
     loading.value = true
     error.value = null
-    
-    const response = await pickupStore.joinPickup(props.pickupId, formData.value)
-    
+
+    await pickupStore.joinPickup(props.pickupId, formData.value)
+
     toast.success('Successfully joined pickup!')
     // Joining already logged this browser in
     router.push(`/pickup/${props.pickupId}`)
-  } catch (err: any) {
+  } catch {
     error.value = pickupStore.error || 'Failed to join pickup'
     toast.error(error.value)
   } finally {
@@ -115,7 +112,7 @@ const handleSubmit = async () => {
 onMounted(async () => {
   try {
     await pickupStore.loadPickup(props.pickupId)
-  } catch (err) {
+  } catch {
     toast.error('Failed to load pickup')
     router.push('/')
   }
@@ -138,7 +135,9 @@ onMounted(async () => {
   padding: 2rem;
   width: 100%;
   max-width: 400px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
 h1 {
@@ -179,7 +178,9 @@ h1 {
   border: 1px solid #d1d5db;
   border-radius: 6px;
   font-size: 1rem;
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  transition:
+    border-color 0.15s ease-in-out,
+    box-shadow 0.15s ease-in-out;
 }
 
 .form-input:focus {
@@ -202,12 +203,16 @@ h1 {
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
 }
 
 .submit-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  box-shadow:
+    0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
 .submit-btn:disabled {

@@ -1,254 +1,116 @@
 {
+  // Everyday commands. The "check" tasks run what CI runs (.gitea/workflows/build.yaml);
+  // keep both in sync. Commands use only `&&` chaining and task options for cwd/env, so
+  // they work in bash, zsh, cmd and PowerShell 7.
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Start Backend",
+      "label": "dev",
+      "detail": "Django (:8000) and Vite (:5173) dev servers",
+      "dependsOn": ["dev: backend", "dev: frontend"],
+      "dependsOrder": "parallel",
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "dev: backend",
       "type": "shell",
       "command": "uv run python manage.py runserver",
-      "options": {
-        "cwd": "${workspaceFolder}/backend"
-      },
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "new",
-        "showReuseMessage": true,
-        "clear": false
-      },
-      "problemMatcher": [],
-      "detail": "Start Django development server"
+      "options": { "cwd": "${workspaceFolder}/backend" },
+      "isBackground": true,
+      "presentation": { "group": "dev", "panel": "dedicated" },
+      "problemMatcher": []
     },
     {
-      "label": "Start Frontend",
+      "label": "dev: frontend",
       "type": "shell",
-      "command": "npm run dev",
-      "options": {
-        "cwd": "${workspaceFolder}/frontend"
-      },
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "new",
-        "showReuseMessage": true,
-        "clear": false
-      },
-      "problemMatcher": [],
-      "detail": "Start Vue.js development server"
+      "command": "pnpm dev",
+      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "isBackground": true,
+      "presentation": { "group": "dev", "panel": "dedicated" },
+      "problemMatcher": []
     },
     {
-      "label": "Start Full Application",
-      "dependsOrder": "parallel",
-      "dependsOn": [
-        "Start Backend",
-        "Start Frontend"
-      ],
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
-      "detail": "Start both backend and frontend servers"
-    },
-    {
-      "label": "Install Backend Dependencies",
-      "type": "shell",
-      "command": "uv sync",
-      "options": {
-        "cwd": "${workspaceFolder}/backend"
-      },
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      },
-      "problemMatcher": [],
-      "detail": "Install Python dependencies for backend"
-    },
-    {
-      "label": "Install Frontend Dependencies",
-      "type": "shell",
-      "command": "npm install",
-      "options": {
-        "cwd": "${workspaceFolder}/frontend"
-      },
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      },
-      "problemMatcher": [],
-      "detail": "Install Node.js dependencies for frontend"
-    },
-    {
-      "label": "Setup Backend",
-      "type": "shell",
-      "command": "uv run python manage.py makemigrations && uv run python manage.py migrate",
-      "options": {
-        "cwd": "${workspaceFolder}/backend"
-      },
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      },
-      "problemMatcher": [],
-      "detail": "Run Django migrations to setup database"
-    },
-    {
-      "label": "Setup Full Project",
+      "label": "check",
+      "detail": "Everything CI checks, backend and frontend",
+      "dependsOn": ["check: backend", "check: deploy settings", "check: frontend"],
       "dependsOrder": "sequence",
-      "dependsOn": [
-        "Install Backend Dependencies",
-        "Install Frontend Dependencies",
-        "Setup Backend"
-      ],
-      "group": "build",
-      "detail": "Complete project setup (install dependencies and run migrations)"
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": []
     },
     {
-      "label": "Backend Migrations",
+      "label": "check: backend",
+      "detail": "ruff, mypy, deptry, migrations, Django checks, pytest with coverage",
       "type": "shell",
-      "command": "uv run python manage.py makemigrations && uv run python manage.py migrate",
-      "options": {
-        "cwd": "${workspaceFolder}/backend"
-      },
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      },
-      "problemMatcher": [],
-      "detail": "Create and apply Django migrations"
+      "command": "uv sync --locked && uv run ruff check . && uv run ruff format --check . && uv run mypy . && uv run deptry . && uv run python manage.py makemigrations --check --dry-run && uv run python manage.py check --fail-level WARNING && uv run python manage.py spectacular --validate --fail-on-warn --format openapi-json --file ../frontend/openapi.json && git diff --exit-code -- ../frontend/openapi.json && uv run pytest -q --cov --cov-report=term --cov-fail-under=90",
+      "options": { "cwd": "${workspaceFolder}/backend" },
+      "problemMatcher": []
     },
     {
-      "label": "Create Superuser",
+      "label": "check: deploy settings",
+      "detail": "Django deploy checks with production-like settings",
       "type": "shell",
-      "command": "uv run python manage.py createsuperuser",
+      "command": "uv run python manage.py check --deploy --fail-level WARNING",
       "options": {
-        "cwd": "${workspaceFolder}/backend"
+        "cwd": "${workspaceFolder}/backend",
+        "env": {
+          "DEBUG": "false",
+          "APP_URLS": "https://app.example.com",
+          "SECRET_KEY": "local-deploy-check-not-secret-but-long-and-random-enough-0123456789abcdef"
+        }
       },
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      },
-      "problemMatcher": [],
-      "detail": "Create Django superuser for admin access"
+      "hide": true,
+      "problemMatcher": []
     },
     {
-      "label": "Build Frontend",
+      "label": "check: frontend",
+      "detail": "prettier, oxlint, eslint, knip, type-check, vitest with coverage, build, size, licenses",
       "type": "shell",
-      "command": "npm run build",
-      "options": {
-        "cwd": "${workspaceFolder}/frontend"
-      },
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      },
-      "problemMatcher": [],
-      "detail": "Build Vue.js application for production"
+      "command": "pnpm install --frozen-lockfile && pnpm check && pnpm build-only && pnpm size && pnpm check:licenses",
+      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "problemMatcher": []
     },
     {
-      "label": "Frontend Lint",
+      "label": "api: export schema",
+      "detail": "After API changes: OpenAPI schema → frontend/openapi.json (checked by CI)",
       "type": "shell",
-      "command": "npm run lint",
-      "options": {
-        "cwd": "${workspaceFolder}/frontend"
-      },
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      },
-      "problemMatcher": ["$eslint-stylish"],
-      "detail": "Run ESLint on frontend code"
+      "command": "uv run python manage.py spectacular --validate --fail-on-warn --format openapi-json --file ../frontend/openapi.json",
+      "options": { "cwd": "${workspaceFolder}/backend", "env": { "DB_TYPE": "sqlite" } },
+      "problemMatcher": []
     },
     {
-      "label": "Frontend Type Check",
+      "label": "django: makemigrations",
       "type": "shell",
-      "command": "npm run type-check",
-      "options": {
-        "cwd": "${workspaceFolder}/frontend"
-      },
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      },
-      "problemMatcher": [],
-      "detail": "Run TypeScript type checking"
+      "command": "uv run python manage.py makemigrations",
+      "options": { "cwd": "${workspaceFolder}/backend" },
+      "problemMatcher": []
     },
     {
-      "label": "Backend Test",
+      "label": "django: migrate",
       "type": "shell",
-      "command": "uv run pytest",
-      "options": {
-        "cwd": "${workspaceFolder}/backend"
-      },
-      "group": "test",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      },
-      "problemMatcher": [],
-      "detail": "Run Django tests"
+      "command": "uv run python manage.py migrate",
+      "options": { "cwd": "${workspaceFolder}/backend" },
+      "problemMatcher": []
     },
     {
-      "label": "Frontend Test",
+      "label": "db: start dev postgres",
+      "detail": "Postgres for native development (DB_TYPE=postgres, DB_HOST=localhost in .env)",
       "type": "shell",
-      "command": "npm run test",
-      "options": {
-        "cwd": "${workspaceFolder}/frontend"
-      },
-      "group": "test",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      },
-      "problemMatcher": [],
-      "detail": "Run Vue.js tests"
+      "command": "docker compose -f compose.dev.yml up -d",
+      "problemMatcher": []
     },
     {
-      "label": "Stop All Servers",
+      "label": "docker: up",
+      "detail": "Build and start the production-like stack (http://localhost:8080)",
       "type": "shell",
-      "command": "pkill -f 'python manage.py runserver' && pkill -f 'npm run dev'",
-      "options": {
-        "cwd": "${workspaceFolder}"
-      },
-      "group": "build",
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "focus": false,
-        "panel": "shared"
-      },
-      "problemMatcher": [],
-      "detail": "Stop all development servers"
+      "command": "docker compose up -d --build",
+      "problemMatcher": []
+    },
+    {
+      "label": "docker: down",
+      "type": "shell",
+      "command": "docker compose down",
+      "problemMatcher": []
     }
   ]
 }

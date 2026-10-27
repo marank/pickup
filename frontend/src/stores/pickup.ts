@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { Pickup, Folder, Media, CreateFolderRequest } from '@/types'
-import { pickupApi, folderApi, mediaApi } from '@/services/api'
+import { pickupApi, folderApi, apiErrorMessage } from '@/services/api'
 
 export const usePickupStore = defineStore('pickup', () => {
   // State
@@ -17,8 +17,8 @@ export const usePickupStore = defineStore('pickup', () => {
   const isAuthenticated = computed(() => !!currentFolder.value)
   const isCreator = computed(() => currentPickup.value?.is_creator ?? false)
   const canEditCurrentFolder = computed(() => currentFolder.value?.can_edit ?? false)
-  const currentFolderMedia = computed(() => 
-    folderMedia.value.filter(media => media.folder === currentFolder.value?.id)
+  const currentFolderMedia = computed(() =>
+    folderMedia.value.filter((media) => media.folder === currentFolder.value?.id),
   )
 
   // Actions
@@ -50,8 +50,8 @@ export const usePickupStore = defineStore('pickup', () => {
       const response = await pickupApi.getPickup(pickupId)
       currentPickup.value = response.data
       return response.data
-    } catch (err: any) {
-      const message = err.response?.data?.error || 'Failed to load pickup'
+    } catch (err) {
+      const message = apiErrorMessage(err, 'Failed to load pickup')
       setError(message)
       throw err
     } finally {
@@ -68,11 +68,8 @@ export const usePickupStore = defineStore('pickup', () => {
       // The session now belongs to the new member (e.g. no longer the creator)
       currentPickup.value = (await pickupApi.getPickup(pickupId)).data
       return response.data
-    } catch (err: any) {
-      const data = err.response?.data
-      // Validation errors come per field: { user_name: ['...'] }
-      const fieldError = data && !data.error ? Object.values(data).flat()[0] : undefined
-      const message = data?.error || (fieldError as string | undefined) || 'Failed to join pickup'
+    } catch (err) {
+      const message = apiErrorMessage(err, 'Failed to join pickup')
       setError(message)
       throw err
     } finally {
@@ -87,8 +84,8 @@ export const usePickupStore = defineStore('pickup', () => {
       const response = await pickupApi.getFolders(pickupId)
       folders.value = response.data
       return response.data
-    } catch (err: any) {
-      const message = err.response?.data?.error || 'Failed to load folders'
+    } catch (err) {
+      const message = apiErrorMessage(err, 'Failed to load folders')
       setError(message)
       throw err
     } finally {
@@ -103,8 +100,8 @@ export const usePickupStore = defineStore('pickup', () => {
       const response = await pickupApi.getAllMedia(pickupId)
       allMedia.value = response.data
       return response.data
-    } catch (err: any) {
-      const message = err.response?.data?.error || 'Failed to load media'
+    } catch (err) {
+      const message = apiErrorMessage(err, 'Failed to load media')
       setError(message)
       throw err
     } finally {
@@ -120,8 +117,8 @@ export const usePickupStore = defineStore('pickup', () => {
       const response = await folderApi.getMedia(pickupId, folderId)
       folderMedia.value = response.data
       return response.data
-    } catch (err: any) {
-      const message = err.response?.data?.error || 'Failed to load folder media'
+    } catch (err) {
+      const message = apiErrorMessage(err, 'Failed to load folder media')
       setError(message)
       throw err
     } finally {
@@ -135,14 +132,14 @@ export const usePickupStore = defineStore('pickup', () => {
       clearError()
       await folderApi.clearFolder(pickupId, folderId)
       // Clear local media for this folder
-      folderMedia.value = folderMedia.value.filter(media => media.folder !== folderId)
+      folderMedia.value = folderMedia.value.filter((media) => media.folder !== folderId)
       // Update folder media count
-      const folder = folders.value.find(f => f.id === folderId)
+      const folder = folders.value.find((f) => f.id === folderId)
       if (folder) {
         folder.media_count = 0
       }
-    } catch (err: any) {
-      const message = err.response?.data?.error || 'Failed to clear folder'
+    } catch (err) {
+      const message = apiErrorMessage(err, 'Failed to clear folder')
       setError(message)
       throw err
     } finally {
@@ -155,31 +152,29 @@ export const usePickupStore = defineStore('pickup', () => {
     folderMedia.value.push(media)
     allMedia.value.push(media)
     // Update folder media count
-    const folder = folders.value.find(f => f.id === media.folder)
+    const folder = folders.value.find((f) => f.id === media.folder)
     if (folder) {
       folder.media_count += 1
     }
   }
 
   const removeMedia = (mediaId: string) => {
-    folderMedia.value = folderMedia.value.filter(media => media.id !== mediaId)
-    allMedia.value = allMedia.value.filter(media => media.id !== mediaId)
-    // Update folder media count
-    const media = folderMedia.value.find(m => m.id === mediaId)
-    if (media) {
-      const folder = folders.value.find(f => f.id === media.folder)
-      if (folder && folder.media_count > 0) {
-        folder.media_count -= 1
-      }
+    // Look the item up before removing it, to update its folder's count
+    const media = [...folderMedia.value, ...allMedia.value].find((m) => m.id === mediaId)
+    folderMedia.value = folderMedia.value.filter((m) => m.id !== mediaId)
+    allMedia.value = allMedia.value.filter((m) => m.id !== mediaId)
+    const folder = media && folders.value.find((f) => f.id === media.folder)
+    if (folder && folder.media_count > 0) {
+      folder.media_count -= 1
     }
   }
 
   const updateMediaCaption = (mediaId: string, caption: string) => {
-    const media = folderMedia.value.find(m => m.id === mediaId)
+    const media = folderMedia.value.find((m) => m.id === mediaId)
     if (media) {
       media.caption = caption
     }
-    const allMediaItem = allMedia.value.find(m => m.id === mediaId)
+    const allMediaItem = allMedia.value.find((m) => m.id === mediaId)
     if (allMediaItem) {
       allMediaItem.caption = caption
     }
@@ -205,13 +200,13 @@ export const usePickupStore = defineStore('pickup', () => {
     folderMedia,
     loading,
     error,
-    
+
     // Getters
     isAuthenticated,
     isCreator,
     canEditCurrentFolder,
     currentFolderMedia,
-    
+
     // Actions
     setLoading,
     setError,

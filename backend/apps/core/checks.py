@@ -1,13 +1,18 @@
 """System check: every model defined in our own apps must use a UUID primary key."""
 
-from django.apps import apps
+from collections.abc import Sequence
+from typing import Any
+
+from django.apps import AppConfig, apps
 from django.core import checks
 from django.db import models
 
 
 @checks.register(checks.Tags.models)
-def uuid_primary_keys(app_configs=None, **kwargs):
-    errors = []
+def uuid_primary_keys(
+    app_configs: Sequence[AppConfig] | None = None, **kwargs: Any
+) -> list[checks.CheckMessage]:
+    errors: list[checks.CheckMessage] = []
     configs = app_configs or apps.get_app_configs()
     for config in configs:
         if not config.name.startswith("apps."):

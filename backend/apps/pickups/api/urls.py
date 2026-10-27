@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 
 from .folders import FolderViewSet
 from .media import MediaViewSet
-from .pickups import CreatePickupView, PickupViewSet
+from .pickups import PickupViewSet
 from .uploads import (
     UploadChunkView,
     UploadSessionCreateView,
@@ -11,7 +11,6 @@ from .uploads import (
     UploadSessionFinalizeView,
 )
 
-# Paths are unchanged from before the restructure, so the SPA keeps working.
 router = DefaultRouter()
 router.register(r"pickups", PickupViewSet, basename="pickup")
 router.register(r"pickups/(?P<pickup_id>[^/.]+)/folders", FolderViewSet, basename="folder")
@@ -20,7 +19,6 @@ router.register(
 )
 
 urlpatterns = [
-    path("create-pickup/", CreatePickupView.as_view(), name="create-pickup"),
     path(
         "api/upload-sessions/",
         include(

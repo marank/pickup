@@ -43,7 +43,7 @@ const router = createRouter({
 })
 
 // Navigation guard to check authentication
-router.beforeEach(async (to, from) => {
+router.beforeEach(async (to) => {
   const pickupStore = usePickupStore()
 
   // Reset state when navigating to home
@@ -73,7 +73,7 @@ router.beforeEach(async (to, from) => {
     if (!pickupStore.currentPickup || pickupStore.currentPickup.id !== pickupId) {
       try {
         await pickupStore.loadPickup(pickupId)
-      } catch (error) {
+      } catch {
         // If pickup not found or error, redirect to join
         return { name: 'pickup-join', params: { pickupId } }
       }

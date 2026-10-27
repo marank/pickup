@@ -5,6 +5,7 @@ ADMIN_PASSWORD later has no effect (use `manage.py set_password <username>`).
 """
 
 import os
+from typing import Any
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -16,7 +17,7 @@ from config.env import INSECURE_SECRET_VALUES
 class Command(BaseCommand):
     help = "Create the initial superuser from ADMIN_USERNAME / ADMIN_EMAIL / ADMIN_PASSWORD."
 
-    def handle(self, *args, **options):
+    def handle(self, *args: Any, **options: Any) -> None:
         username = os.environ.get("ADMIN_USERNAME", "").strip()
         if not username:
             self.stdout.write("ADMIN_USERNAME not set, skipping admin creation.")

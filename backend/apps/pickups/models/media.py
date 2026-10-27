@@ -1,5 +1,6 @@
 import uuid
 from pathlib import PurePath
+from typing import Any
 
 from django.core.validators import FileExtensionValidator
 from django.db import models
@@ -73,14 +74,15 @@ class Media(UUIDModel):
     def __str__(self) -> str:
         return f"{self.original_filename} in {self.folder.name}"
 
-    def save(self, *args, **kwargs) -> None:  # type: ignore[no-untyped-def]
+    def save(self, *args: Any, **kwargs: Any) -> None:
         """Automatically determine media type and file size before saving."""
+        name = self.file.name or ""
         if self.file and not self.media_type:
-            self.media_type = media_type_for(self.file.name)
+            self.media_type = media_type_for(name)
         if self.file and not self.file_size:
             self.file_size = self.file.size
         if not self.original_filename:
-            self.original_filename = self.file.name
+            self.original_filename = name
         super().save(*args, **kwargs)
 
     @property

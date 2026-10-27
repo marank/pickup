@@ -2,7 +2,7 @@
   <div class="media-upload">
     <div
       class="upload-area"
-      :class="{ 'drag-over': isDragOver, 'uploading': hasActiveUploads }"
+      :class="{ 'drag-over': isDragOver, uploading: hasActiveUploads }"
       @drop="handleDrop"
       @dragover="handleDragOver"
       @dragenter="handleDragEnter"
@@ -16,7 +16,7 @@
         @change="handleFileSelect"
         class="file-input"
       />
-      
+
       <div class="upload-content">
         <div class="upload-icon">📤</div>
         <h3>Upload Media</h3>
@@ -24,12 +24,12 @@
         <p class="upload-hint">
           Supports all image/video formats. Large files use chunked upload (up to 10s of GB)
         </p>
-        
+
         <button @click="fileInput?.click()" class="browse-btn" :disabled="hasActiveUploads">
           {{ hasActiveUploads ? 'Uploading...' : 'Browse Files' }}
         </button>
       </div>
-      
+
       <!-- Upload Progress -->
       <div v-if="uploadQueue.length > 0" class="upload-progress">
         <h4>Uploads</h4>
@@ -38,7 +38,7 @@
             v-for="item in uploadQueue"
             :key="item.id"
             class="progress-item"
-            :class="{ 'completed': item.status === 'completed', 'error': item.status === 'error' }"
+            :class="{ completed: item.status === 'completed', error: item.status === 'error' }"
           >
             <div class="progress-info">
               <div class="file-info">
@@ -48,11 +48,7 @@
               </div>
               <div class="status-actions">
                 <span class="status">{{ getStatusText(item) }}</span>
-                <button
-                  v-if="item.status === 'error'"
-                  @click="retryUpload(item)"
-                  class="retry-btn"
-                >
+                <button v-if="item.status === 'error'" @click="retryUpload(item)" class="retry-btn">
                   Retry
                 </button>
                 <button
@@ -64,7 +60,10 @@
                 </button>
               </div>
             </div>
-            <div v-if="item.status === 'uploading' || item.status === 'paused'" class="progress-bar">
+            <div
+              v-if="item.status === 'uploading' || item.status === 'paused'"
+              class="progress-bar"
+            >
               <div class="progress-fill" :style="{ width: item.progress + '%' }"></div>
             </div>
             <div v-if="item.error" class="error-text">{{ item.error }}</div>
@@ -72,7 +71,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- Caption Input Modal -->
     <div v-if="showCaptionModal" class="caption-modal" @click="closeCaptionModal">
       <div class="modal-content" @click.stop>
@@ -83,16 +82,13 @@
             :src="pendingMedia.preview"
             :alt="pendingMedia.file.name"
           />
-          <video
-            v-else
-            :src="pendingMedia.preview"
-            controls
-            preload="metadata"
-          />
+          <video v-else :src="pendingMedia.preview" controls preload="metadata" />
         </div>
         <textarea
           v-model="pendingCaption"
-          :placeholder="pendingMedia ? `Add a caption for ${pendingMedia.file.name}...` : 'Add a caption...'"
+          :placeholder="
+            pendingMedia ? `Add a caption for ${pendingMedia.file.name}...` : 'Add a caption...'
+          "
           rows="3"
           class="caption-input"
         ></textarea>
@@ -111,8 +107,8 @@
 import { ref, computed } from 'vue'
 import { useToast } from 'vue-toastification'
 import { usePickupStore } from '@/stores/pickup'
-import { folderApi, uploadApi } from '@/services/api'
-import type { UploadMediaRequest } from '@/types'
+import { folderApi, uploadApi, apiErrorMessage } from '@/services/api'
+import type { Media, UploadMediaRequest } from '@/types'
 
 interface Props {
   pickupId: string
@@ -136,7 +132,7 @@ interface UploadItem {
 
 const props = defineProps<Props>()
 const emit = defineEmits<{
-  uploadComplete: [media: any]
+  uploadComplete: [media: Media]
   uploadError: [error: string]
 }>()
 
@@ -158,11 +154,12 @@ const pendingCaption = ref('')
 const pendingResolve = ref<(() => void) | null>(null)
 
 const hasActiveUploads = computed(() =>
-  uploadQueue.value.some(item => item.status === 'uploading' || item.status === 'pending')
+  uploadQueue.value.some((item) => item.status === 'uploading' || item.status === 'pending'),
 )
 
 const CHUNK_SIZE = 5 * 1024 * 1024 // 5MB chunks
-const DIRECT_UPLOAD_MAX_SIZE = 50 * 1024 * 1024 // 50MB direct upload limit
+// Above this, files go up in chunks; must stay below nginx client_max_body_size (25m)
+const DIRECT_UPLOAD_MAX_SIZE = 20 * 1024 * 1024
 
 const handleDragOver = (e: DragEvent) => {
   e.preventDefault()
@@ -199,7 +196,7 @@ const handleFileSelect = (e: Event) => {
 }
 
 const handleFiles = (files: File[]) => {
-  const validFiles = files.filter(file => {
+  const validFiles = files.filter((file) => {
     if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
       toast.error(`${file.name} is not a valid image or video file`)
       return false
@@ -209,7 +206,7 @@ const handleFiles = (files: File[]) => {
 
   if (validFiles.length === 0) return
 
-  validFiles.forEach(file => {
+  validFiles.forEach((file) => {
     const uploadItem: UploadItem = {
       id: Math.random().toString(36).substr(2, 9),
       file,
@@ -282,10 +279,10 @@ const uploadFile = async (item: UploadItem) => {
     } else {
       await uploadDirectFile(item)
     }
-  } catch (error: any) {
+  } catch (error) {
     if (item.cancelled) return
     item.status = 'error'
-    item.error = error.response?.data?.error || error.message || 'Upload failed'
+    item.error = apiErrorMessage(error, error instanceof Error ? error.message : 'Upload failed')
     toast.error(`Failed to upload ${item.file.name}: ${item.error}`)
     emit('uploadError', item.error || 'Upload failed')
   }
@@ -303,7 +300,7 @@ const uploadDirectFile = async (item: UploadItem) => {
     props.pickupId,
     props.folderId,
     uploadData,
-        item.abortController?.signal
+    item.abortController?.signal,
   )
 
   item.status = 'completed'
@@ -322,17 +319,13 @@ const uploadChunkedFile = async (item: UploadItem) => {
   const mediaType = item.file.type.startsWith('video/') ? 'video' : 'image'
 
   // Create upload session
-  const sessionResponse = await uploadApi.createSession(
-    props.pickupId,
-    props.folderId,
-    {
-      file_name: item.file.name,
-      file_size: item.file.size,
-      media_type: mediaType,
-      chunk_size: CHUNK_SIZE,
-      caption: item.caption,
-    }
-  )
+  const sessionResponse = await uploadApi.createSession(props.pickupId, props.folderId, {
+    file_name: item.file.name,
+    file_size: item.file.size,
+    media_type: mediaType,
+    chunk_size: CHUNK_SIZE,
+    caption: item.caption,
+  })
 
   item.sessionId = sessionResponse.data.id
   const sessionId = item.sessionId
@@ -361,19 +354,19 @@ const uploadChunkedFile = async (item: UploadItem) => {
             // Update progress for this chunk
             const chunkProgress = progress / 100
             item.uploadedChunks = i + chunkProgress
-            item.progress = Math.round((i + chunkProgress) / totalChunks * 100)
+            item.progress = Math.round(((i + chunkProgress) / totalChunks) * 100)
           },
-          item.abortController?.signal
+          item.abortController?.signal,
         )
         success = true
         item.uploadedChunks = i + 1
         item.progress = Math.round(((i + 1) / totalChunks) * 100)
-      } catch (error: any) {
+      } catch {
         retries++
         if (retries >= maxRetries) {
           throw new Error(`Chunk ${i} failed after ${maxRetries} retries`)
         }
-        await new Promise(resolve => setTimeout(resolve, 1000 * retries))
+        await new Promise((resolve) => setTimeout(resolve, 1000 * retries))
       }
     }
   }
@@ -414,13 +407,22 @@ const formatFileSize = (bytes: number): string => {
 
 const getStatusText = (item: UploadItem) => {
   switch (item.status) {
-    case 'pending': return 'Waiting...'
-    case 'uploading': return item.useChunks ? `Chunk ${Math.floor(item.uploadedChunks || 0)}/${item.totalChunks}` : 'Uploading...'
-    case 'paused': return 'Paused'
-    case 'completed': return '✓ Complete'
-    case 'error': return '✗ Failed'
-    case 'cancelled': return 'Cancelled'
-    default: return item.status
+    case 'pending':
+      return 'Waiting...'
+    case 'uploading':
+      return item.useChunks
+        ? `Chunk ${Math.floor(item.uploadedChunks || 0)}/${item.totalChunks}`
+        : 'Uploading...'
+    case 'paused':
+      return 'Paused'
+    case 'completed':
+      return '✓ Complete'
+    case 'error':
+      return '✗ Failed'
+    case 'cancelled':
+      return 'Cancelled'
+    default:
+      return item.status
   }
 }
 </script>
@@ -732,13 +734,13 @@ const getStatusText = (item: UploadItem) => {
   .upload-area {
     padding: 1.5rem 1rem;
   }
-  
+
   .progress-info {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
   }
-  
+
   .status-actions {
     width: 100%;
     justify-content: flex-end;

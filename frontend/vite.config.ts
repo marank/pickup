@@ -13,7 +13,7 @@ export default defineConfig({
   server: {
     // Same origin as in production: the Django dev server answers these paths.
     proxy: Object.fromEntries(
-      ['/api', '/create-pickup', '/admin', '/django-static', '/media'].map((path) => [
+      ['/api', '/admin', '/django-static', '/media'].map((path) => [
         path,
         'http://localhost:8000',
       ]),

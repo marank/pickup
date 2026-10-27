@@ -48,7 +48,7 @@ function editCaption() {
     <DialogContent
       v-if="item"
       :show-close-button="false"
-      class="flex h-dvh max-h-none w-screen max-w-none flex-col gap-0 rounded-none border-0 bg-ink p-0 text-paper sm:max-w-none"
+      class="flex h-dvh max-h-none w-screen max-w-none flex-col gap-0 rounded-none border-0 bg-stage p-0 text-paper sm:max-w-none"
       @keydown="onKey"
     >
       <header class="flex items-center gap-2 px-3 py-2">

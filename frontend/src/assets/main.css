@@ -29,6 +29,7 @@
   --color-ring: var(--ring);
   --color-pane: var(--pane);
   --color-ink: var(--ink);
+  --color-stage: var(--stage);
   --color-paper: var(--paper);
   --color-tomato: var(--tomato);
   --color-butter: var(--butter);
@@ -50,6 +51,8 @@
 :root {
   --paper: oklch(0.972 0.009 85);
   --ink: oklch(0.29 0.045 190);
+  /* Behind photos in the viewer. */
+  --stage: var(--ink);
   --tomato: oklch(0.64 0.19 37);
   --butter: oklch(0.86 0.14 88);
   --sage: oklch(0.67 0.06 160);
@@ -85,28 +88,31 @@
   --owner-6: oklch(0.55 0.08 200);
 }
 
+/* Dark: warm charcoal (no green cast), same tomato and butter accents. */
 .dark {
-  --background: oklch(0.2 0.025 195);
-  --foreground: oklch(0.94 0.012 85);
-  --card: oklch(0.24 0.028 195);
-  --card-foreground: oklch(0.94 0.012 85);
-  --popover: oklch(0.25 0.03 195);
-  --popover-foreground: oklch(0.94 0.012 85);
+  --ink: oklch(0.31 0.008 60);
+  --stage: oklch(0.13 0.004 60);
+  --background: oklch(0.185 0.005 60);
+  --foreground: oklch(0.94 0.008 85);
+  --card: oklch(0.215 0.006 60);
+  --card-foreground: oklch(0.94 0.008 85);
+  --popover: oklch(0.235 0.006 60);
+  --popover-foreground: oklch(0.94 0.008 85);
   --primary: oklch(0.7 0.17 40);
-  --primary-foreground: oklch(0.18 0.02 195);
-  --secondary: oklch(0.3 0.03 170);
-  --secondary-foreground: oklch(0.94 0.012 85);
-  --muted: oklch(0.27 0.025 195);
-  --muted-foreground: oklch(0.72 0.02 190);
-  --accent: oklch(0.33 0.05 88);
-  --accent-foreground: oklch(0.96 0.01 85);
+  --primary-foreground: oklch(0.18 0.01 60);
+  --secondary: oklch(0.28 0.008 60);
+  --secondary-foreground: oklch(0.94 0.008 85);
+  --muted: oklch(0.255 0.006 60);
+  --muted-foreground: oklch(0.71 0.01 75);
+  --accent: oklch(0.32 0.04 85);
+  --accent-foreground: oklch(0.96 0.008 85);
   --destructive: oklch(0.65 0.19 27);
-  --border: oklch(0.34 0.025 195);
-  --input: oklch(0.36 0.025 195);
+  --border: oklch(0.31 0.007 60);
+  --input: oklch(0.34 0.007 60);
   --ring: oklch(0.7 0.17 40);
-  --pane: oklch(0.225 0.027 195);
-  --selection: oklch(0.36 0.07 88);
-  --selection-border: oklch(0.6 0.12 85);
+  --pane: oklch(0.2 0.006 60);
+  --selection: oklch(0.36 0.06 85);
+  --selection-border: oklch(0.6 0.11 85);
 }
 
 @layer base {

@@ -166,6 +166,11 @@ jobs:
         run: pnpm check:licenses
 
 
+      - name: API types up to date
+        run: |
+          pnpm api:types
+          git diff --exit-code -- src/api/schema.d.ts
+
       # Known vulnerabilities in the dependencies that end up in the browser.
       - name: Audit
         run: pnpm audit --prod --audit-level high

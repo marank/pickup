@@ -2,12 +2,12 @@ from .folder import CreateFolderSerializer, FolderSerializer
 from .media import MediaSerializer, UploadMediaSerializer
 from .pickup import PickupSerializer
 from .responses import (
-    CaptionRequestSerializer,
+    CaptionSerializer,
     CreatedPickupSerializer,
     ErrorSerializer,
     JoinResponseSerializer,
     MessageSerializer,
-    SessionRequestSerializer,
+    SessionSerializer,
 )
 from .upload_session import (
     CreateUploadSessionSerializer,
@@ -16,12 +16,12 @@ from .upload_session import (
 )
 
 __all__ = [
-    "CaptionRequestSerializer",
+    "CaptionSerializer",
     "CreatedPickupSerializer",
     "ErrorSerializer",
     "JoinResponseSerializer",
     "MessageSerializer",
-    "SessionRequestSerializer",
+    "SessionSerializer",
     "CreateFolderSerializer",
     "CreateUploadSessionSerializer",
     "FolderSerializer",

@@ -1,22 +1,10 @@
 import './assets/main.css'
 
+import { VueQueryPlugin } from '@tanstack/vue-query'
 import { createApp } from 'vue'
-import { createPinia } from 'pinia'
-import Toast from 'vue-toastification'
-import 'vue-toastification/dist/index.css'
 
 import App from './App.vue'
+import { queryClient } from './lib/queryClient'
 import router from './router'
 
-const app = createApp(App)
-
-app.use(createPinia())
-app.use(router)
-app.use(Toast, {
-  timeout: 5000,
-  closeOnClick: true,
-  pauseOnHover: true,
-  position: 'top-right',
-})
-
-app.mount('#app')
+createApp(App).use(VueQueryPlugin, { queryClient }).use(router).mount('#app')

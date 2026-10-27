@@ -1,0 +1,68 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
+import { computed, toValue, type MaybeRefOrGetter } from 'vue'
+
+import { api } from '@/api/client'
+import { unwrap } from '@/api/errors'
+import type { JoinRequest } from '@/api/types'
+import { queryClient } from '@/lib/queryClient'
+
+import { pickupKeys } from '../queryKeys'
+
+export function usePickup(pickupId: MaybeRefOrGetter<string>) {
+  return useQuery({
+    queryKey: computed(() => pickupKeys.detail(toValue(pickupId))),
+    queryFn: () =>
+      unwrap(api.GET('/api/pickups/{id}/', { params: { path: { id: toValue(pickupId) } } })),
+  })
+}
+
+export function usePickupFolders(pickupId: MaybeRefOrGetter<string>) {
+  return useQuery({
+    queryKey: computed(() => pickupKeys.folders(toValue(pickupId))),
+    queryFn: () =>
+      unwrap(
+        api.GET('/api/pickups/{id}/folders/', { params: { path: { id: toValue(pickupId) } } }),
+      ),
+  })
+}
+
+export function usePickupMedia(pickupId: MaybeRefOrGetter<string>) {
+  return useQuery({
+    queryKey: computed(() => pickupKeys.media(toValue(pickupId))),
+    queryFn: () =>
+      unwrap(api.GET('/api/pickups/{id}/media/', { params: { path: { id: toValue(pickupId) } } })),
+  })
+}
+
+export function useCreatePickup() {
+  return useMutation({
+    mutationFn: () => unwrap(api.POST('/api/pickups/')),
+  })
+}
+
+export function useJoinPickup(pickupId: MaybeRefOrGetter<string>) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (body: JoinRequest) =>
+      unwrap(
+        api.POST('/api/pickups/{id}/join/', {
+          params: { path: { id: toValue(pickupId) } },
+          body,
+        }),
+      ),
+    // This browser is now a different member: everything about the pickup may differ.
+    onSuccess: () => client.invalidateQueries({ queryKey: pickupKeys.all(toValue(pickupId)) }),
+  })
+}
+
+/** Personal link: trade the access key for a session (used by the router guard). */
+export async function enterPickup(pickupId: string, accessKey: string): Promise<void> {
+  const pickup = await unwrap(
+    api.POST('/api/pickups/{id}/session/', {
+      params: { path: { id: pickupId } },
+      body: { access_key: accessKey },
+    }),
+  )
+  await queryClient.invalidateQueries({ queryKey: pickupKeys.all(pickupId) })
+  queryClient.setQueryData(pickupKeys.detail(pickupId), pickup)
+}

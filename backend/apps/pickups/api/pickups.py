@@ -16,7 +16,7 @@ from ..serializers import (
     JoinResponseSerializer,
     MediaSerializer,
     PickupSerializer,
-    SessionRequestSerializer,
+    SessionSerializer,
 )
 from ..services.members import (
     create_pickup,
@@ -101,7 +101,7 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
     @extend_schema(
         methods=["POST"],
         operation_id="pickup_session_create",
-        request=SessionRequestSerializer,
+        request=SessionSerializer,
         responses={200: PickupSerializer, 403: ErrorSerializer},
     )
     @extend_schema(methods=["DELETE"], operation_id="pickup_session_destroy", responses={204: None})
@@ -113,7 +113,7 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
             logout_member(request, pickup)
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-        key = SessionRequestSerializer(data=request.data)
+        key = SessionSerializer(data=request.data)
         member = member_for_key(pickup, key.validated_data["access_key"]) if key.is_valid() else None
         if member is None:
             return Response({"error": "This personal link is not valid."}, status=status.HTTP_403_FORBIDDEN)

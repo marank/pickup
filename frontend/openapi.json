@@ -278,17 +278,17 @@
                     "content": {
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/SessionRequestRequest"
+                                "$ref": "#/components/schemas/SessionRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/SessionRequestRequest"
+                                "$ref": "#/components/schemas/SessionRequest"
                             }
                         },
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/SessionRequestRequest"
+                                "$ref": "#/components/schemas/SessionRequest"
                             }
                         }
                     },
@@ -513,17 +513,17 @@
                     "content": {
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedCaptionRequestRequest"
+                                "$ref": "#/components/schemas/PatchedCaptionRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedCaptionRequestRequest"
+                                "$ref": "#/components/schemas/PatchedCaptionRequest"
                             }
                         },
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedCaptionRequestRequest"
+                                "$ref": "#/components/schemas/PatchedCaptionRequest"
                             }
                         }
                     }
@@ -1359,7 +1359,7 @@
                     "message"
                 ]
             },
-            "PatchedCaptionRequestRequest": {
+            "PatchedCaptionRequest": {
                 "type": "object",
                 "properties": {
                     "caption": {
@@ -1418,7 +1418,7 @@
                     "share_url"
                 ]
             },
-            "SessionRequestRequest": {
+            "SessionRequest": {
                 "type": "object",
                 "properties": {
                     "access_key": {

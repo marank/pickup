@@ -23,16 +23,20 @@ export default defineConfigWithVueTs(
   vueTsConfigs.recommended,
 
   {
+    // Vendored shadcn-vue components keep their single-word names (Button, Card, …).
+    name: 'app/shadcn-ui',
+    files: ['src/components/ui/**/*.vue'],
+    rules: { 'vue/multi-word-component-names': 'off' },
+  },
+
+  {
     ...pluginCypress.configs.recommended,
-    files: [
-      'cypress/e2e/**/*.{cy,spec}.{js,ts,jsx,tsx}',
-      'cypress/support/**/*.{js,ts,jsx,tsx}',
-    ],
+    files: ['cypress/e2e/**/*.{cy,spec}.{js,ts,jsx,tsx}', 'cypress/support/**/*.{js,ts,jsx,tsx}'],
   },
 
   {
     ...pluginVitest.configs.recommended,
-    files: ['src/**/__tests__/*'],
+    files: ['src/**/__tests__/*', 'src/test/**'],
   },
 
   ...pluginOxlint.buildFromOxlintConfigFile('.oxlintrc.json'),

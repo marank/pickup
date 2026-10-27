@@ -10,7 +10,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from ..models import Media, Pickup
-from ..serializers import CaptionRequestSerializer, ErrorSerializer, MediaSerializer
+from ..serializers import CaptionSerializer, ErrorSerializer, MediaSerializer
 from ..services.members import get_member_from_request
 
 _PICKUP_ID = OpenApiParameter("pickup_id", OpenApiTypes.UUID, OpenApiParameter.PATH)
@@ -66,7 +66,7 @@ class MediaViewSet(mixins.RetrieveModelMixin, mixins.DestroyModelMixin, viewsets
 
     @extend_schema(
         parameters=[_PICKUP_ID],
-        request=CaptionRequestSerializer,
+        request=CaptionSerializer,
         responses={200: MediaSerializer, 403: ErrorSerializer},
     )
     @action(detail=True, methods=["patch"])
@@ -84,7 +84,7 @@ class MediaViewSet(mixins.RetrieveModelMixin, mixins.DestroyModelMixin, viewsets
                 {"error": "You do not have permission to edit this media."},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        caption = CaptionRequestSerializer(data=request.data)
+        caption = CaptionSerializer(data=request.data)
         caption.is_valid(raise_exception=True)
         media.caption = caption.validated_data["caption"]
         media.save(update_fields=["caption"])

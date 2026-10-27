@@ -26,11 +26,11 @@ class JoinResponseSerializer(serializers.Serializer[Any]):
     member_url = serializers.CharField(help_text="Personal link with the secret access key")
 
 
-class SessionRequestSerializer(serializers.Serializer[Any]):
+class SessionSerializer(serializers.Serializer[Any]):
     access_key = serializers.CharField()
 
 
-class CaptionRequestSerializer(serializers.Serializer[Any]):
+class CaptionSerializer(serializers.Serializer[Any]):
     caption = serializers.CharField(allow_blank=True)
 
 

@@ -14,7 +14,7 @@ A web application for sharing images and videos without user accounts. Users cre
 ## Tech Stack
 
 - **Backend:** Python 3.14, Django 6.1, Django REST Framework, drf-spectacular (OpenAPI), PostgreSQL in production (SQLite for development), managed with [uv](https://docs.astral.sh/uv/)
-- **Frontend:** Vue 3, TypeScript, Pinia, Vue Router, Axios, Vite, managed with pnpm
+- **Frontend:** Vue 3, TypeScript, Vue Router, TanStack Query, openapi-fetch (types generated from the API schema), Tailwind CSS, shadcn-vue, Vite, managed with pnpm
 - **Runtime:** one hardened container (supervisord → nginx + gunicorn), Postgres, nightly backups
 - **CI:** Gitea Actions, Renovate
 
@@ -31,7 +31,12 @@ pickup/
 │   ├── scripts/              license check
 │   └── data/                 runtime data: uploaded media (DATA_DIR, not in git)
 ├── frontend/                 Vue 3 + Vite (pnpm)
-│   ├── src/                  components/, views/, stores/, services/, router/, types/
+│   ├── src/
+│   │   ├── api/              typed client (openapi-fetch + CSRF), generated schema.d.ts
+│   │   ├── features/         home/, pickups/, media/ — each with components/, composables/, views/
+│   │   ├── components/       shared components; ui/ = shadcn-vue (vendored)
+│   │   ├── router/           routes per feature
+│   │   └── test/             fake API and helpers for the Vitest component tests
 │   ├── openapi.json          API schema (generated, checked by CI)
 │   └── scripts/              license check
 ├── docker/                   nginx, supervisord, healthcheck, backup script
@@ -74,10 +79,14 @@ In VS Code, run the task **dev** (Terminal → Run Task). Without VS Code:
 | Backend checks only | `cd backend && uv run ruff check . && uv run mypy . && uv run pytest` |
 | Frontend checks only | `cd frontend && pnpm check` |
 | After model changes | `uv run python manage.py makemigrations` (task **django: makemigrations**) |
-| After API changes | task **api: export schema** (writes `frontend/openapi.json`, CI compares it) |
+| After API changes | task **api: types** (`frontend/openapi.json` → `src/api/schema.d.ts`; commit both, CI compares them) |
 | Postgres instead of SQLite | task **db: start dev postgres**, then `DB_TYPE=postgres`, `DB_HOST=localhost` in `.env` |
 
 Open http://localhost:5173. Vite proxies `/api`, `/admin`, `/django-static` and `/media` to Django, so both share one origin (no CORS). The admin is at http://localhost:5173/admin/.
+
+Pre-commit hooks (ruff, Prettier, oxlint and basic file checks) once per clone: `uv tool run pre-commit install`.
+
+Conventions for contributors and coding agents (structure, access-control rules, frontend patterns) are in [AGENTS.md](AGENTS.md).
 
 End-to-end tests use Cypress, whose binary is not downloaded on install: run `pnpm exec cypress install` once, then `pnpm test:e2e`.
 

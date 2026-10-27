@@ -9,12 +9,19 @@ export default mergeConfig(
       environment: 'jsdom',
       exclude: [...configDefaults.exclude, 'e2e/**'],
       root: fileURLToPath(new URL('./', import.meta.url)),
+      setupFiles: ['src/test/setup.ts'],
       coverage: {
         provider: 'v8',
-        // The logic layer (API client incl. CSRF, store, router guard). Components are
-        // added once they get tests (planned frontend overhaul).
-        include: ['src/services/**', 'src/stores/**', 'src/router/**'],
-        exclude: ['**/__tests__/**'],
+        include: ['src/**'],
+        // Vendored shadcn-vue components, generated API types, bootstrapping, test helpers.
+        exclude: [
+          'src/components/ui/**',
+          'src/api/schema.d.ts',
+          'src/main.ts',
+          'src/test/**',
+          '**/__tests__/**',
+          '**/*.d.ts',
+        ],
         thresholds: { lines: 90, functions: 90, branches: 90, statements: 90 },
       },
     },

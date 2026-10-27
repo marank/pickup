@@ -1,8 +1,9 @@
 // https://on.cypress.io/api
 
-describe('My First Test', () => {
-  it('visits the app root url', () => {
+describe('Start page', () => {
+  it('offers to create a pickup', () => {
     cy.visit('/')
-    cy.contains('h1', 'You did it!')
+    cy.contains('h1', 'Pickup')
+    cy.contains('button', 'Create new pickup')
   })
 })

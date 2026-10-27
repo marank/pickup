@@ -19,3 +19,4 @@ htmlcov/
 /backups/
 .mypy_cache/
 frontend/coverage/
+backend/.openapi-check.json

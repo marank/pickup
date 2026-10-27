@@ -68,7 +68,7 @@ const single = computed(() => (selected.value.length === 1 ? selected.value[0]! 
     aria-label="Commands"
   >
     <TreeToggle @open-tree="emit('openTree')" />
-    <Separator v-if="!explorer.page" orientation="vertical" class="mx-1 !h-5" />
+    <Separator v-if="!explorer.page" orientation="vertical" class="mx-1 !h-5 !self-center" />
     <!-- The creator's pages have no commands, only the tree toggle. -->
     <template v-if="explorer.page" />
     <template v-else-if="explorer.uploadTarget">
@@ -101,7 +101,7 @@ const single = computed(() => (selected.value.length === 1 ? selected.value[0]! 
     </Button>
 
     <template v-if="selected.length && !explorer.page">
-      <Separator orientation="vertical" class="mx-1 !h-5" />
+      <Separator orientation="vertical" class="mx-1 !h-5 !self-center" />
       <Button
         v-if="single?.editable"
         variant="ghost"

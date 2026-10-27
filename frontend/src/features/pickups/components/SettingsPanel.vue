@@ -10,6 +10,7 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { endOfDay, toDateInput } from '@/lib/format'
 
 import { usePickupAdmin } from '../composables/usePickupAdmin'
 
@@ -23,13 +24,18 @@ const form = reactive({
   visibility: 'members',
   join_policy: 'open',
   email_privacy: true,
+  expires: '',
 })
+const savedExpiry = () =>
+  props.pickup.expires_at ? toDateInput(new Date(props.pickup.expires_at)) : ''
+const today = toDateInput(new Date())
 const reset = () =>
   Object.assign(form, {
     title: props.pickup.title ?? '',
     visibility: props.pickup.visibility,
     join_policy: props.pickup.join_policy,
     email_privacy: props.pickup.email_privacy,
+    expires: savedExpiry(),
   })
 // Start from what is saved, and again after saving (the pickup is refetched).
 watch(() => props.pickup, reset, { immediate: true })
@@ -38,7 +44,8 @@ const dirty = computed(
     form.title !== (props.pickup.title ?? '') ||
     form.visibility !== props.pickup.visibility ||
     form.join_policy !== props.pickup.join_policy ||
-    form.email_privacy !== props.pickup.email_privacy,
+    form.email_privacy !== props.pickup.email_privacy ||
+    form.expires !== savedExpiry(),
 )
 
 const visibilityOptions = [
@@ -79,9 +86,13 @@ const turningPrivacyOn = computed(() => form.email_privacy && !props.pickup.emai
 
 async function save() {
   try {
-    await updateSettings.mutateAsync({ ...form, title: form.title.trim() } as Parameters<
-      typeof updateSettings.mutateAsync
-    >[0])
+    const { expires, ...settings } = form
+    await updateSettings.mutateAsync({
+      ...settings,
+      title: form.title.trim(),
+      // Unchanged dates stay as they are (an old one may lie in the past by now).
+      ...(expires !== savedExpiry() && { expires_at: expires ? endOfDay(expires) : null }),
+    } as Parameters<typeof updateSettings.mutateAsync>[0])
     toast.success('Settings saved')
   } catch (err) {
     toast.error(apiErrorMessage(err, 'Could not save the settings'))
@@ -164,6 +175,30 @@ async function removePickup() {
         </span>
       </label>
     </fieldset>
+
+    <div class="space-y-1.5">
+      <Label for="settings-expires">Delete automatically</Label>
+      <div class="flex gap-2">
+        <Input
+          id="settings-expires"
+          v-model="form.expires"
+          type="date"
+          :min="today"
+          class="w-48"
+          aria-describedby="settings-expires-hint"
+        />
+        <Button v-if="form.expires" type="button" variant="ghost" @click="form.expires = ''">
+          Never
+        </Button>
+      </div>
+      <p id="settings-expires-hint" class="text-sm text-muted-foreground">
+        {{
+          form.expires
+            ? `At the end of ${new Date(`${form.expires}T12:00`).toLocaleDateString(undefined, { dateStyle: 'long' })} the pickup is deleted with all photos and videos. Everyone sees the date.`
+            : 'Never: the pickup stays until you delete it.'
+        }}
+      </p>
+    </div>
 
     <label class="flex cursor-pointer gap-3 rounded-lg border p-3">
       <input v-model="form.email_privacy" type="checkbox" class="mt-1 accent-tomato" />

@@ -5,6 +5,8 @@ from ..models import Folder, Media, Member, Pickup, Visibility
 
 def can_view(pickup: Pickup, member: Member | None) -> bool:
     """Private pickups (the default) are only visible to participants; closed ones only to the creator."""
+    if pickup.is_expired:
+        return False
     if pickup.visibility == Visibility.CREATOR:
         return member is not None and member.is_creator
     return member is not None or pickup.visibility == Visibility.LINK
@@ -12,6 +14,8 @@ def can_view(pickup: Pickup, member: Member | None) -> bool:
 
 def is_closed_for(pickup: Pickup, member: Member | None) -> bool:
     """A closed pickup is frozen for everyone but the creator: no viewing, joining or uploading."""
+    if pickup.is_expired:
+        return True
     return pickup.visibility == Visibility.CREATOR and not (member is not None and member.is_creator)
 
 

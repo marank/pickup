@@ -23,6 +23,7 @@ export function pickup(overrides: Partial<Pickup> = {}): Pickup {
     visibility: 'members',
     join_policy: 'open',
     email_privacy: true,
+    expires_at: null,
     ...overrides,
   }
 }

@@ -535,11 +535,16 @@ describe('explorer: owner actions', () => {
   })
 
   it('offers the same actions in the item menu and the context menu', async () => {
-    const download = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    const hrefs: string[] = []
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
+      hrefs.push(this.getAttribute('href')!)
+    })
     await render(ALICE)
     await openMenu('Actions for clip.mp4')
     await chooseMenuItem('Download')
-    expect(download).toHaveBeenCalledOnce()
+    expect(hrefs).toEqual(['/media/2026/10/27/abc.jpg'])
 
     item('zebra.jpg').dispatchEvent(
       new MouseEvent('contextmenu', { bubbles: true, clientX: 10, clientY: 10 }),
@@ -554,13 +559,37 @@ describe('explorer: owner actions', () => {
     await click(item('apple.jpg'))
     await click(item('zebra.jpg'), { ctrlKey: true })
     await openMenu('Actions for zebra.jpg')
-    expect(pageText()).toContain('Download 2 files')
+    expect(pageText()).toContain('Download 2 items as ZIP')
     expect(pageText()).toContain('Delete 2 items')
-    await chooseMenuItem('Download 2 files')
-    expect(download).toHaveBeenCalledTimes(3)
+    await chooseMenuItem('Download 2 items as ZIP')
+    expect(hrefs.at(-1)).toBe(
+      `/api/pickups/${PICKUP_ID}/download/?folders=&media=m-apple%2Cm-zebra`,
+    )
 
+    await click(item('Beach'))
+    await click(item('apple.jpg'), { ctrlKey: true })
     findButton('Download').click()
-    expect(download).toHaveBeenCalledTimes(5)
+    expect(hrefs.at(-1)).toBe(`/api/pickups/${PICKUP_ID}/download/?folders=${BEACH}&media=m-apple`)
+  })
+
+  it('downloads the current folder or the whole pickup as ZIP', async () => {
+    const hrefs: string[] = []
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
+      hrefs.push(this.getAttribute('href')!)
+    })
+    await render(ALICE)
+    findButton('Download folder').click()
+    findButton('Up one level').click()
+    await settle()
+    findButton('Download all').click()
+    expect(hrefs).toEqual([
+      `/api/pickups/${PICKUP_ID}/download/?folders=${ALICE}`,
+      `/api/pickups/${PICKUP_ID}/download/`,
+    ])
+    await click(item('Alice'))
+    expect(document.body.querySelector('button[aria-label="Download all"]')).toBeNull()
   })
 
   it('uploads into the current folder, and from the root into the own folder', async () => {
@@ -637,6 +666,47 @@ describe('explorer: owner actions', () => {
     await flushPromises()
     expect(share).toHaveBeenCalledWith(expect.objectContaining({ title: 'Summer party' }))
     Reflect.deleteProperty(navigator, 'share')
+  })
+})
+
+describe('explorer: QR code', () => {
+  it('shows the share link as QR code and saves it as PNG', async () => {
+    const fillRect = vi.fn<(x: number, y: number, w: number, h: number) => void>()
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
+      fillRect,
+      fillStyle: '',
+    } as unknown as CanvasRenderingContext2D)
+    vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation((done) =>
+      done(new Blob(['png'])),
+    )
+    Object.assign(URL, { createObjectURL: () => 'blob:qr', revokeObjectURL: () => {} })
+    const saved: string[] = []
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
+      saved.push(this.download)
+    })
+    await render()
+    findButton('Share').click()
+    await flushPromises()
+    const qr = $('[role="img"][aria-label="QR code of the share link"] path')!
+    expect(qr.getAttribute('d')!.length).toBeGreaterThan(100)
+
+    findButton('Save QR code').click()
+    await settle()
+    expect(saved).toEqual(['Summer party – QR code.png'])
+    expect(fillRect.mock.calls.length).toBeGreaterThan(100)
+  })
+
+  it('reports when the browser cannot draw the image', async () => {
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
+    const error = vi.spyOn(toast, 'error')
+    await render()
+    findButton('Share').click()
+    await flushPromises()
+    findButton('Save QR code').click()
+    await settle()
+    expect(error).toHaveBeenCalledWith('Could not create the image')
   })
 })
 

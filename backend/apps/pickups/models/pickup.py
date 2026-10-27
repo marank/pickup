@@ -1,6 +1,7 @@
 import uuid
 
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 
 from apps.core.models import UUIDModel
@@ -16,6 +17,13 @@ class JoinPolicy(models.TextChoices):
     OPEN = "open", "Anyone with the link"
     INVITE = "invite", "Only invited people"
     CLOSED = "closed", "Nobody new"
+
+
+def live(prefix: str = "") -> Q:
+    """Pickups that can be opened: active and not expired. `prefix` for lookups across relations."""
+    return Q(**{f"{prefix}is_active": True}) & (
+        Q(**{f"{prefix}expires_at__isnull": True}) | Q(**{f"{prefix}expires_at__gt": timezone.now()})
+    )
 
 
 class Pickup(UUIDModel):
@@ -40,6 +48,12 @@ class Pickup(UUIDModel):
         default=True,
         help_text="Store e-mail addresses only as keyed hashes; off: also in plain text (creator sees them)",
     )
+    expires_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text="When the pickup is deleted with all files (empty: never)",
+    )
     join_policy = models.CharField(
         max_length=10,
         choices=JoinPolicy.choices,
@@ -57,6 +71,10 @@ class Pickup(UUIDModel):
 
     def __str__(self) -> str:
         return f"Pickup {self.id} - {self.title or 'Untitled'}"
+
+    @property
+    def is_expired(self) -> bool:
+        return self.expires_at is not None and self.expires_at <= timezone.now()
 
     @property
     def share_url(self) -> str:

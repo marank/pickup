@@ -15,3 +15,14 @@ export function formatRelativeDate(iso: string, now: Date = new Date()): string 
   if (days < 7) return `${days} days ago`
   return date.toLocaleDateString()
 }
+
+/** A local calendar day as `<input type="date">` uses it (YYYY-MM-DD). */
+export function toDateInput(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
+}
+
+/** The end of a local calendar day (YYYY-MM-DD) as ISO timestamp. */
+export function endOfDay(day: string): string {
+  return new Date(`${day}T23:59:59`).toISOString()
+}

@@ -1,13 +1,17 @@
 from typing import Any
+from urllib.parse import quote
+from uuid import UUID
 
 from django.db.models import QuerySet
-from drf_spectacular.utils import extend_schema
+from django.http import HttpResponseBase, StreamingHttpResponse
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from ..models import Media, Member, Pickup
+from ..models import Media, Member, Pickup, live
 from ..serializers import (
     CreatedPickupSerializer,
     CreatePickupSerializer,
@@ -23,6 +27,7 @@ from ..serializers import (
     SessionSerializer,
 )
 from ..services.access import can_view
+from ..services.archive import collect, safe_name, stream
 from ..services.identity import forget_plain_emails
 from ..services.members import (
     MembershipError,
@@ -53,7 +58,7 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
     lookup_value_converter = "uuid"
 
     def get_queryset(self) -> QuerySet[Pickup]:
-        return Pickup.objects.filter(is_active=True)
+        return Pickup.objects.filter(live())
 
     def _member(self) -> Member | None:
         if not hasattr(self, "_cached_member"):
@@ -125,6 +130,38 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
             return private()
         folders = pickup.folders.select_related("pickup").all()
         return Response(FolderSerializer(folders, many=True, context=self.get_serializer_context()).data)
+
+    @extend_schema(
+        operation_id="pickup_download",
+        parameters=[
+            OpenApiParameter(
+                "folders", str, description="Comma-separated folder ids (with everything inside)"
+            ),
+            OpenApiParameter("media", str, description="Comma-separated file ids"),
+        ],
+        responses={(200, "application/zip"): OpenApiTypes.BINARY, 400: ErrorSerializer, 403: ErrorSerializer},
+    )
+    @action(detail=True, methods=["get"])
+    def download(self, request: Request, id: str | None = None) -> HttpResponseBase:
+        """A ZIP of the selected folders and files; nothing selected: the whole pickup."""
+        pickup = self.get_object()
+        if not can_view(pickup, self._member()):
+            return private()
+        try:
+            folder_ids = [UUID(v) for v in request.query_params.get("folders", "").split(",") if v]
+            media_ids = [UUID(v) for v in request.query_params.get("media", "").split(",") if v]
+        except ValueError:
+            return Response({"error": "Invalid id."}, status=status.HTTP_400_BAD_REQUEST)
+        entries = collect(pickup, folder_ids, media_ids)
+        if not entries:
+            return Response({"error": "Nothing to download."}, status=status.HTTP_400_BAD_REQUEST)
+        top = {entry.path.split("/")[0] for entry in entries}
+        name = top.pop() if len(top) == 1 and folder_ids else safe_name(pickup.title or "pickup")
+        response = StreamingHttpResponse(stream(entries), content_type="application/zip")
+        response["Content-Disposition"] = f"attachment; filename*=UTF-8''{quote(name.removesuffix('/'))}.zip"
+        response["Cache-Control"] = "private, no-store"
+        response["X-Accel-Buffering"] = "no"  # nginx passes the stream on as it comes
+        return response
 
     @extend_schema(
         operation_id="pickup_media_list",

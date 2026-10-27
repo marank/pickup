@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { Share2Icon } from '@lucide/vue'
-import { computed } from 'vue'
+import { DownloadIcon, Share2Icon } from '@lucide/vue'
+import { computed, ref } from 'vue'
+import { toast } from 'vue-sonner'
 
 import CopyField from '@/components/CopyField.vue'
+import QrCode from '@/components/QrCode.vue'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -22,6 +24,21 @@ const open = defineModel<boolean>('open', { required: true })
 
 const url = computed(() => `${window.location.origin}/pickup/${props.pickupId}`)
 const canShare = typeof navigator.share === 'function'
+
+const qr = ref<InstanceType<typeof QrCode> | null>(null)
+
+async function downloadQr() {
+  const blob = await qr.value?.toPng()
+  if (!blob) {
+    toast.error('Could not create the image')
+    return
+  }
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(blob)
+  link.download = `${props.title} – QR code.png`
+  link.click()
+  URL.revokeObjectURL(link.href)
+}
 
 async function share() {
   try {
@@ -64,6 +81,23 @@ async function share() {
         </DialogDescription>
       </DialogHeader>
       <CopyField :value="url" label="Share link" />
+      <div class="flex items-center gap-4 rounded-xl border bg-pane p-3">
+        <QrCode
+          ref="qr"
+          :value="url"
+          label="QR code of the share link"
+          class="size-32 shrink-0 p-1"
+        />
+        <div class="space-y-2 text-sm">
+          <p class="text-muted-foreground">
+            Scan to open the pickup — handy on a table card or a slide at the party.
+          </p>
+          <Button variant="outline" size="sm" @click="downloadQr">
+            <DownloadIcon />
+            Save QR code
+          </Button>
+        </div>
+      </div>
       <Button v-if="canShare" class="w-full" @click="share">
         <Share2Icon />
         Share via …

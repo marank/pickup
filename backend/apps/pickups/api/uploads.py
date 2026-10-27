@@ -7,7 +7,7 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from ..models import Folder, MediaChunk, Member, UploadSession
+from ..models import Folder, MediaChunk, Member, UploadSession, live
 from ..serializers import (
     CreateUploadSessionSerializer,
     ErrorSerializer,
@@ -46,7 +46,7 @@ class UploadSessionCreateView(APIView):
     )
     def post(self, request: Request, pickup_id: str, folder_id: str) -> Response:
         """Create an upload session for a large file."""
-        folder = get_object_or_404(Folder, id=folder_id, pickup_id=pickup_id, pickup__is_active=True)
+        folder = get_object_or_404(Folder.objects.filter(live("pickup__")), id=folder_id, pickup_id=pickup_id)
         if not _owner(request, folder):
             return _forbidden()
 

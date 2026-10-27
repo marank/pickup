@@ -1,5 +1,7 @@
+from datetime import datetime
 from typing import Any
 
+from django.utils import timezone
 from rest_framework import serializers
 
 from ..models import Pickup
@@ -35,6 +37,7 @@ class PickupSerializer(serializers.ModelSerializer[Pickup]):
             "visibility",
             "join_policy",
             "email_privacy",
+            "expires_at",
         ]
         read_only_fields = [
             "id",
@@ -50,6 +53,7 @@ class PickupSerializer(serializers.ModelSerializer[Pickup]):
             "visibility",
             "join_policy",
             "email_privacy",
+            "expires_at",
         ]
 
     def _member(self) -> Any:
@@ -87,7 +91,12 @@ class PickupUpdateSerializer(serializers.ModelSerializer[Pickup]):
 
     class Meta:
         model = Pickup
-        fields = ["title", "visibility", "join_policy", "email_privacy"]
+        fields = ["title", "visibility", "join_policy", "email_privacy", "expires_at"]
+
+    def validate_expires_at(self, value: datetime | None) -> datetime | None:
+        if value is not None and value <= timezone.now():
+            raise serializers.ValidationError("Choose a date in the future.")
+        return value
 
 
 class CreatePickupSerializer(serializers.Serializer[Any]):

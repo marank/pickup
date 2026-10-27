@@ -222,14 +222,30 @@ function createExplorer(
     selection.clear()
   }
 
+  function save(href: string, name = '') {
+    const link = document.createElement('a')
+    link.href = href
+    link.download = name
+    link.click()
+  }
+
+  /** One file as it is; several items, or folders, as one ZIP built by the server. */
   function download(list: ExplorerItem[]) {
-    for (const item of list) {
-      if (item.kind !== 'file') continue
-      const link = document.createElement('a')
-      link.href = item.media.file
-      link.download = item.media.original_filename
-      link.click()
-    }
+    const only = list.length === 1 ? list[0]! : null
+    if (only?.kind === 'file') return save(only.media.file, only.media.original_filename)
+    const ids = (kind: ExplorerItem['kind']) =>
+      list
+        .filter((item) => item.kind === kind)
+        .map((item) => item.id)
+        .join(',')
+    const query = new URLSearchParams({ folders: ids('folder'), media: ids('file') })
+    save(`/api/pickups/${pickupId()}/download/?${query}`)
+  }
+
+  /** The current folder with everything inside, or at the top the whole pickup. */
+  function downloadAll() {
+    const id = folderId()
+    save(`/api/pickups/${pickupId()}/download/${id ? `?folders=${id}` : ''}`)
   }
 
   return reactive({
@@ -277,6 +293,7 @@ function createExplorer(
     closeDialog,
     confirmDelete,
     download,
+    downloadAll,
     run,
   })
 }

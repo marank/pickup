@@ -9,7 +9,7 @@ from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from ..models import Media, Pickup
+from ..models import Media, Pickup, live
 from ..serializers import CaptionSerializer, ErrorSerializer, MediaSerializer
 from ..services.access import can_delete_media, can_edit, can_view
 from ..services.members import get_member_from_request
@@ -32,9 +32,9 @@ class MediaViewSet(mixins.RetrieveModelMixin, mixins.DestroyModelMixin, viewsets
         if getattr(self, "swagger_fake_view", False):  # schema generation has no URL kwargs
             return Media.objects.none()
         return Media.objects.select_related("folder").filter(
+            live("folder__pickup__"),
             folder_id=self.kwargs["folder_id"],
             folder__pickup_id=self.kwargs["pickup_id"],
-            folder__pickup__is_active=True,
         )
 
     def get_serializer_context(self) -> dict[str, Any]:
@@ -42,7 +42,7 @@ class MediaViewSet(mixins.RetrieveModelMixin, mixins.DestroyModelMixin, viewsets
         context = dict(super().get_serializer_context())
         if getattr(self, "swagger_fake_view", False):
             return context
-        pickup = get_object_or_404(Pickup, id=self.kwargs["pickup_id"], is_active=True)
+        pickup = get_object_or_404(Pickup.objects.filter(live()), id=self.kwargs["pickup_id"])
         member = get_member_from_request(self.request, pickup)
         if member:
             member.touch()

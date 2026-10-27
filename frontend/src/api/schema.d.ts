@@ -95,6 +95,23 @@ export interface paths {
     patch: operations['pickups_partial_update']
     trace?: never
   }
+  '/api/pickups/{id}/download/': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** @description A ZIP of the selected folders and files; nothing selected: the whole pickup. */
+    get: operations['pickup_download']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/pickups/{id}/folders/': {
     parameters: {
       query?: never
@@ -482,6 +499,11 @@ export interface components {
       readonly join_policy: components['schemas']['JoinPolicyEnum']
       /** @description Store e-mail addresses only as keyed hashes; off: also in plain text (creator sees them) */
       readonly email_privacy: boolean
+      /**
+       * Format: date-time
+       * @description When the pickup is deleted with all files (empty: never)
+       */
+      readonly expires_at: string | null
       readonly member_url: string
     }
     EmailRequest: {
@@ -653,6 +675,11 @@ export interface components {
       join_policy?: components['schemas']['JoinPolicyEnum']
       /** @description Store e-mail addresses only as keyed hashes; off: also in plain text (creator sees them) */
       email_privacy?: boolean
+      /**
+       * Format: date-time
+       * @description When the pickup is deleted with all files (empty: never)
+       */
+      expires_at?: string | null
     }
     /** @description Serializer for Pickup model. */
     Pickup: {
@@ -693,6 +720,11 @@ export interface components {
       readonly join_policy: components['schemas']['JoinPolicyEnum']
       /** @description Store e-mail addresses only as keyed hashes; off: also in plain text (creator sees them) */
       readonly email_privacy: boolean
+      /**
+       * Format: date-time
+       * @description When the pickup is deleted with all files (empty: never)
+       */
+      readonly expires_at: string | null
     }
     SessionRequest: {
       access_key: string
@@ -946,6 +978,49 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['Pickup']
+        }
+      }
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+    }
+  }
+  pickup_download: {
+    parameters: {
+      query?: {
+        /** @description Comma-separated folder ids (with everything inside) */
+        folders?: string
+        /** @description Comma-separated file ids */
+        media?: string
+      }
+      header?: never
+      path: {
+        /** @description A UUID string identifying this pickup. */
+        id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/zip': string
+        }
+      }
+      400: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
         }
       }
       403: {

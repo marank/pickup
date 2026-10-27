@@ -279,6 +279,82 @@
                 }
             }
         },
+        "/api/pickups/{id}/download/": {
+            "get": {
+                "operationId": "pickup_download",
+                "description": "A ZIP of the selected folders and files; nothing selected: the whole pickup.",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "name": "folders",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Comma-separated folder ids (with everything inside)"
+                    },
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this pickup.",
+                        "required": true
+                    },
+                    {
+                        "in": "query",
+                        "name": "media",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "description": "Comma-separated file ids"
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/zip": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/pickups/{id}/folders/": {
             "get": {
                 "operationId": "pickup_folders_list",
@@ -2033,6 +2109,13 @@
                         "readOnly": true,
                         "description": "Store e-mail addresses only as keyed hashes; off: also in plain text (creator sees them)"
                     },
+                    "expires_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "When the pickup is deleted with all files (empty: never)"
+                    },
                     "member_url": {
                         "type": "string",
                         "readOnly": true
@@ -2042,6 +2125,7 @@
                     "can_view",
                     "created_at",
                     "email_privacy",
+                    "expires_at",
                     "folder_count",
                     "has_folder",
                     "id",
@@ -2483,6 +2567,12 @@
                     "email_privacy": {
                         "type": "boolean",
                         "description": "Store e-mail addresses only as keyed hashes; off: also in plain text (creator sees them)"
+                    },
+                    "expires_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true,
+                        "description": "When the pickup is deleted with all files (empty: never)"
                     }
                 }
             },
@@ -2566,12 +2656,20 @@
                         "type": "boolean",
                         "readOnly": true,
                         "description": "Store e-mail addresses only as keyed hashes; off: also in plain text (creator sees them)"
+                    },
+                    "expires_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "When the pickup is deleted with all files (empty: never)"
                     }
                 },
                 "required": [
                     "can_view",
                     "created_at",
                     "email_privacy",
+                    "expires_at",
                     "folder_count",
                     "has_folder",
                     "id",

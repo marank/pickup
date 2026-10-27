@@ -30,7 +30,6 @@ export function itemActions(explorer: Explorer, item: ExplorerItem): ItemAction[
       ? explorer.selectedItems
       : [item]
   const single = targets.length === 1
-  const files = targets.filter((target) => target.kind === 'file')
   const actions: ItemAction[] = []
 
   if (single) {
@@ -42,14 +41,16 @@ export function itemActions(explorer: Explorer, item: ExplorerItem): ItemAction[
       run: () => explorer.openItem(item),
     })
   }
-  if (files.length) {
-    actions.push({
-      id: 'download',
-      label: files.length > 1 ? `Download ${files.length} files` : 'Download',
-      icon: DownloadIcon,
-      run: () => explorer.download(files),
-    })
-  }
+  actions.push({
+    id: 'download',
+    label: single
+      ? item.kind === 'folder'
+        ? 'Download as ZIP'
+        : 'Download'
+      : `Download ${targets.length} items as ZIP`,
+    icon: DownloadIcon,
+    run: () => explorer.download(targets),
+  })
   if (single && item.editable) {
     actions.push(
       item.kind === 'folder'

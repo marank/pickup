@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PencilIcon, Share2Icon } from '@lucide/vue'
+import { HourglassIcon, PencilIcon, Share2Icon } from '@lucide/vue'
 import { computed } from 'vue'
 
 import { Button } from '@/components/ui/button'
@@ -10,6 +10,11 @@ import { useExplorer } from '../composables/useExplorer'
 const explorer = useExplorer()
 const pickup = computed(() => explorer.pickup.data)
 const title = computed(() => pickup.value?.title || 'Untitled pickup')
+const expires = computed(() =>
+  pickup.value?.expires_at
+    ? new Date(pickup.value.expires_at).toLocaleDateString(undefined, { dateStyle: 'medium' })
+    : '',
+)
 </script>
 
 <template>
@@ -30,6 +35,19 @@ const title = computed(() => pickup.value?.title || 'Untitled pickup')
         <PencilIcon class="size-3.5" />
       </button>
     </div>
+
+    <component
+      :is="pickup?.is_creator ? 'button' : 'span'"
+      v-if="expires"
+      :type="pickup?.is_creator ? 'button' : undefined"
+      class="flex min-w-0 items-center gap-1.5 rounded-full bg-butter/40 px-2.5 py-1 text-xs whitespace-nowrap"
+      :class="pickup?.is_creator && 'hover:bg-butter/60'"
+      :title="`Everything is deleted at the end of ${expires}`"
+      @click="pickup?.is_creator && explorer.openPage('settings')"
+    >
+      <HourglassIcon class="size-3.5 shrink-0" />
+      <span class="truncate"><span class="max-sm:hidden">Deleted after </span>{{ expires }}</span>
+    </component>
 
     <div class="ml-auto flex items-center gap-1">
       <Button

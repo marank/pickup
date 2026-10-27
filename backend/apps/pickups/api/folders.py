@@ -8,7 +8,7 @@ from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from ..models import Folder, Media, Pickup
+from ..models import Folder, Media, Pickup, live
 from ..serializers import (
     ErrorSerializer,
     FolderNameSerializer,
@@ -33,16 +33,16 @@ class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
         """Get folders for a specific pickup."""
         if getattr(self, "swagger_fake_view", False):  # schema generation has no URL kwargs
             return Folder.objects.none()
-        return Folder.objects.filter(
-            pickup_id=self.kwargs["pickup_id"], pickup__is_active=True
-        ).select_related("pickup")
+        return Folder.objects.filter(live("pickup__"), pickup_id=self.kwargs["pickup_id"]).select_related(
+            "pickup"
+        )
 
     def get_serializer_context(self) -> dict[str, Any]:
         """Add member to serializer context."""
         context = dict(super().get_serializer_context())
         if getattr(self, "swagger_fake_view", False):
             return context
-        pickup = get_object_or_404(Pickup, id=self.kwargs["pickup_id"], is_active=True)
+        pickup = get_object_or_404(Pickup.objects.filter(live()), id=self.kwargs["pickup_id"])
         member = get_member_from_request(self.request, pickup)
         if member:
             member.touch()

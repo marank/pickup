@@ -22,6 +22,8 @@ Members have no accounts. Keep these properties; tests in `apps/pickups/tests/` 
 - Viewsets expose only the actions the SPA uses; changes to a folder or its media require `member.owns(folder)`, which checks the folder's top-level folder (`Folder.root`), so subfolders belong to the member who owns the top-level folder.
 - Folders nest: `Folder.parent` is the containing folder, `Folder.root` the member's top-level folder (both empty for top-level folders). A member's top-level folder can be renamed but not deleted. Names are unique per parent (case-insensitive) and may not contain `/` (the address bar's separator). Subfolder logic lives in `services/folders.py`.
 - Email addresses (`services/identity.py`): always store `Member.email_hash` (HMAC with `EMAIL_HASH_KEY`, which must never change); the plain `Member.email` only while the pickup's `email_privacy` is off. Mails go out at the moment an address is entered (`services/mail.py`, sender "<name> via Pickup", reply-to only with a plain address), so nothing needs the plain address later. Endpoints that send mail must not reveal whether an address is known (`link-request` always answers 202), respect `Member.link_sent_at` (cooldown) and stay in nginx's `mail` rate limit.
+- Expired pickups (`expires_at` passed) count as gone: query pickups through `models.live()` (also across relations, `live("folder__pickup__")`), never `is_active=True` alone. The supervisord program `expiry` runs `delete_expired_pickups` hourly.
+- ZIP downloads (`services/archive.py`) are streamed with stdlib `zipfile` into a write-only sink — no temp files, stored not deflated. Archive paths go through `safe_name()`.
 - Files are never served publicly: the API returns `/api/files/{id}/`, which checks `can_view` and then hands the file to nginx via `X-Accel-Redirect` (`MEDIA_ACCEL_REDIRECT`; natively Django streams it). Don't add a public `/media/` location.
 - Uploads: images and videos only, no SVG; stored under random names below `DATA_DIR`. Files above 20 MB go through the chunked upload API (5 MB chunks), because nginx limits request bodies to 25 MB.
 
@@ -53,6 +55,6 @@ Members have no accounts. Keep these properties; tests in `apps/pickups/tests/` 
 ## Docker / runtime
 
 - The app container runs read-only, without capabilities, as an unprivileged user. Only `/data` (`DATA_DIR`, uploads) and `/tmp` are writable — new features must write there, not loosen the hardening.
-- supervisord runs gunicorn and nginx; nginx serves the SPA, delivers uploaded files from the internal `/protected-media/` location after Django's check, and proxies `/api` and `/admin`.
+- supervisord runs gunicorn, nginx and the hourly `expiry` cleanup; nginx serves the SPA, delivers uploaded files from the internal `/protected-media/` location after Django's check, and proxies `/api` and `/admin`.
 - `/admin` is closed in Docker unless `ADMIN_ENABLED=true`.
 - Backups (`docker/backup.sh`): nightly database dump plus hard-linked media snapshot. Anything new under `/data` that must survive belongs in that script too.

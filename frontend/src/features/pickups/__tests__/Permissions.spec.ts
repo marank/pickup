@@ -199,6 +199,32 @@ describe('creator tools', () => {
     expect(error).toHaveBeenCalledWith('Could not delete the pickup')
   })
 
+  it('sets and clears an expiry date, shown to everyone', async () => {
+    on('PATCH', '/api/pickups/:id/', { body: pickup() })
+    await renderAsCreator({ expires_at: '2026-12-24T22:59:59Z' })
+    expect($('[title^="Everything is deleted at the end of"]').textContent).toContain('2026')
+    $('[title^="Everything is deleted at the end of"]').click()
+    await settle()
+    expect(($('#settings-expires') as HTMLInputElement).value).toBe('2026-12-24')
+    expect(pageText()).toContain('the pickup is deleted with all photos and videos')
+
+    await submit('#settings-title') // unchanged: the date isn't sent again
+    expect(lastRequest('PATCH', `/pickups/${PICKUP_ID}/`)?.body).not.toHaveProperty('expires_at')
+
+    await type('#settings-expires', '2027-01-31')
+    await submit('#settings-title')
+    const body = lastRequest('PATCH', `/pickups/${PICKUP_ID}/`)!.body as { expires_at: string }
+    const sent = body.expires_at
+    expect(new Date(sent).getDate()).toBe(31)
+    expect(new Date(sent).getHours()).toBe(23)
+
+    findButton('Never').click()
+    await flushPromises()
+    expect(pageText()).toContain('Never: the pickup stays until you delete it.')
+    await submit('#settings-title')
+    expect(lastRequest('PATCH', `/pickups/${PICKUP_ID}/`)?.body).toHaveProperty('expires_at', null)
+  })
+
   it('reports failed settings', async () => {
     on('PATCH', '/api/pickups/:id/', { status: 500, body: {} })
     const error = vi.spyOn(toast, 'error')

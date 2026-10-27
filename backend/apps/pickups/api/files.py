@@ -9,7 +9,7 @@ from drf_spectacular.utils import extend_schema
 from rest_framework.request import Request
 from rest_framework.views import APIView
 
-from ..models import Media
+from ..models import Media, live
 from ..services.access import can_view
 from ..services.members import get_member_from_request
 
@@ -24,7 +24,7 @@ class MediaFileView(APIView):
     @extend_schema(responses={(200, "application/octet-stream"): OpenApiTypes.BINARY, 404: None})
     def get(self, request: Request, media_id: str) -> HttpResponseBase:
         media = get_object_or_404(
-            Media.objects.select_related("folder__pickup"), id=media_id, folder__pickup__is_active=True
+            Media.objects.select_related("folder__pickup").filter(live("folder__pickup__")), id=media_id
         )
         pickup = media.folder.pickup
         if not can_view(pickup, get_member_from_request(request, pickup)):

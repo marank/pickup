@@ -57,7 +57,6 @@ const canJoin = computed(
 )
 const selected = computed(() => explorer.selectedItems)
 const single = computed(() => (selected.value.length === 1 ? selected.value[0]! : null))
-const selectedFiles = computed(() => selected.value.filter((item) => item.kind === 'file'))
 </script>
 
 <template>
@@ -107,13 +106,7 @@ const selectedFiles = computed(() => selected.value.filter((item) => item.kind =
         <PencilIcon />
         <span class="max-md:hidden">{{ single.kind === 'folder' ? 'Rename' : 'Caption' }}</span>
       </Button>
-      <Button
-        v-if="selectedFiles.length"
-        variant="ghost"
-        size="sm"
-        aria-label="Download"
-        @click="explorer.download(selectedFiles)"
-      >
+      <Button variant="ghost" size="sm" aria-label="Download" @click="explorer.download(selected)">
         <DownloadIcon />
         <span class="max-md:hidden">Download</span>
       </Button>
@@ -131,6 +124,19 @@ const selectedFiles = computed(() => selected.value.filter((item) => item.kind =
     </template>
 
     <div class="ml-auto flex items-center gap-1">
+      <Button
+        v-if="!selected.length && explorer.items.length"
+        variant="ghost"
+        size="sm"
+        :aria-label="explorer.folderId ? 'Download folder' : 'Download all'"
+        :title="explorer.folderId ? 'Download this folder as ZIP' : 'Download everything as ZIP'"
+        @click="explorer.downloadAll()"
+      >
+        <DownloadIcon />
+        <span class="max-md:hidden">{{
+          explorer.folderId ? 'Download folder' : 'Download all'
+        }}</span>
+      </Button>
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
           <Button variant="ghost" size="sm" aria-label="Sort">

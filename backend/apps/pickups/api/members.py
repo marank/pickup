@@ -9,7 +9,7 @@ from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from ..models import Member, Pickup
+from ..models import Member, Pickup, live
 from ..serializers import ErrorSerializer, InviteSerializer, MemberSerializer, MessageSerializer
 from ..services.members import MembershipError, get_member_from_request, invite, remove_member, resend_invite
 
@@ -29,7 +29,7 @@ class MemberViewSet(mixins.ListModelMixin, viewsets.GenericViewSet[Member]):
     lookup_value_converter = "uuid"
 
     def _pickup(self) -> Pickup:
-        return get_object_or_404(Pickup, id=self.kwargs["pickup_id"], is_active=True)
+        return get_object_or_404(Pickup.objects.filter(live()), id=self.kwargs["pickup_id"])
 
     def _creator(self) -> Member | None:
         member = get_member_from_request(self.request, self._pickup())

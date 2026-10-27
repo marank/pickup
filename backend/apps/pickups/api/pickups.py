@@ -27,6 +27,7 @@ from ..services.identity import forget_plain_emails
 from ..services.members import (
     MembershipError,
     create_pickup,
+    delete_pickup,
     get_member_from_request,
     join_pickup,
     login_member,
@@ -98,6 +99,19 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
         if pickup.email_privacy:
             forget_plain_emails(pickup)
         return Response(PickupSerializer(pickup, context={"member": member}).data)
+
+    @extend_schema(responses={204: None, 403: ErrorSerializer})
+    def destroy(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """Delete the pickup with all folders and files for good (creator only)."""
+        pickup = self.get_object()
+        member = self._member()
+        if not member or not member.is_creator:
+            return Response(
+                {"error": "Only the creator can delete the pickup."}, status=status.HTTP_403_FORBIDDEN
+            )
+        delete_pickup(pickup)
+        logout_member(request, pickup)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @extend_schema(
         operation_id="pickup_folders_list",

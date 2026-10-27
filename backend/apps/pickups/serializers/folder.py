@@ -4,7 +4,7 @@ from rest_framework import serializers
 
 from ..models import Folder
 from ..models.folder import validate_folder_name
-from ..services.access import can_delete_folder
+from ..services.access import can_delete_folder, can_edit
 from ..services.identity import normalize_name
 from ..services.members import folder_name_taken, name_taken
 
@@ -43,7 +43,7 @@ class FolderSerializer(serializers.ModelSerializer[Folder]):
     def get_can_edit(self, obj: Folder) -> bool:
         """Check if the current authenticated member owns this folder."""
         member = self.context.get("member")
-        return bool(member and member.owns(obj))
+        return can_edit(member, obj)
 
     def get_can_delete(self, obj: Folder) -> bool:
         """Owner or creator (moderation); never a member's top-level folder."""

@@ -129,7 +129,6 @@ def test_member_id_parameter_is_no_longer_a_credential(joined: tuple[str, str]) 
     [
         ("get", "/api/pickups/"),
         ("put", "/api/pickups/{pickup}/"),
-        ("delete", "/api/pickups/{pickup}/"),
         ("post", "/api/pickups/{pickup}/folders/"),
         ("put", "/api/pickups/{pickup}/folders/{folder}/"),
         ("post", "/api/pickups/{pickup}/folders/{folder}/media/{media}/"),

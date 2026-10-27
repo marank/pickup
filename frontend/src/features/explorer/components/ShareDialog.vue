@@ -42,7 +42,11 @@ async function share() {
       <DialogHeader>
         <DialogTitle>Invite people</DialogTitle>
         <DialogDescription>
-          <template v-if="joinPolicy === 'invite'">
+          <template v-if="visibility === 'creator'">
+            The pickup is closed: with this link people only see that it exists. Open it again in
+            Settings.
+          </template>
+          <template v-else-if="joinPolicy === 'invite'">
             Only invited people can take part — invite them under People. With this link others
             {{
               visibility === 'link' ? 'can look at the photos' : 'only see that the pickup exists'

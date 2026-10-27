@@ -3,7 +3,7 @@ from rest_framework import serializers
 
 from ..models import Media
 from ..models.media import ALLOWED_EXTENSIONS, file_extension
-from ..services.access import can_delete_media
+from ..services.access import can_delete_media, can_edit
 
 
 class MediaSerializer(serializers.ModelSerializer[Media]):
@@ -59,7 +59,7 @@ class MediaSerializer(serializers.ModelSerializer[Media]):
     def get_can_edit(self, obj: Media) -> bool:
         """Check if the current authenticated member owns this media's folder."""
         member = self.context.get("member")
-        return bool(member and member.owns(obj.folder))
+        return can_edit(member, obj.folder)
 
     def get_is_image(self, obj: Media) -> bool:
         return obj.is_image

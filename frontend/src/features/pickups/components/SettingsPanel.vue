@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import { computed, reactive, watch } from 'vue'
+import { Trash2Icon } from '@lucide/vue'
+import { computed, reactive, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 
 import { apiErrorMessage } from '@/api/errors'
 import type { Pickup } from '@/api/types'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,7 +14,9 @@ import { Label } from '@/components/ui/label'
 import { usePickupAdmin } from '../composables/usePickupAdmin'
 
 const props = defineProps<{ pickup: Pickup }>()
-const { updateSettings } = usePickupAdmin(() => props.pickup.id, false)
+const router = useRouter()
+const { updateSettings, deletePickup } = usePickupAdmin(() => props.pickup.id, false)
+const confirmDelete = ref(false)
 
 const form = reactive({
   title: '',
@@ -47,6 +52,11 @@ const visibilityOptions = [
     label: 'Anyone with the link',
     hint: 'Everyone who has the link can look at all photos, without joining.',
   },
+  {
+    value: 'creator',
+    label: 'Nobody (closed)',
+    hint: 'Only you still see the contents. Participants can’t look or upload, and nobody can join, until you open it again.',
+  },
 ] as const
 const joinOptions = [
   {
@@ -75,6 +85,23 @@ async function save() {
     toast.success('Settings saved')
   } catch (err) {
     toast.error(apiErrorMessage(err, 'Could not save the settings'))
+  }
+}
+
+const count = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`
+const deleteDescription = computed(
+  () =>
+    `${count(props.pickup.folder_count, 'folder')} and ${count(props.pickup.media_count, 'file')} are deleted for everyone, and all links stop working. There is no way to get them back.`,
+)
+
+async function removePickup() {
+  const title = props.pickup.title || 'The pickup'
+  try {
+    await deletePickup.mutateAsync()
+    toast.success(`${title} was deleted`)
+    await router.push({ name: 'home' })
+  } catch (err) {
+    toast.error(apiErrorMessage(err, 'Could not delete the pickup'))
   }
 }
 </script>
@@ -160,4 +187,32 @@ async function save() {
       <Button v-if="dirty" type="button" variant="ghost" @click="reset">Discard</Button>
     </div>
   </form>
+
+  <section
+    class="mt-10 max-w-2xl space-y-3 rounded-xl border border-destructive/40 p-4"
+    aria-label="Delete pickup"
+  >
+    <div>
+      <h3 class="font-medium text-destructive">Delete this pickup</h3>
+      <p class="text-sm text-muted-foreground">
+        Removes the pickup with every folder, photo and video for everyone. This cannot be undone.
+      </p>
+    </div>
+    <Button
+      variant="destructive"
+      :disabled="deletePickup.isPending.value"
+      @click="confirmDelete = true"
+    >
+      <Trash2Icon />
+      Delete pickup
+    </Button>
+  </section>
+
+  <ConfirmDialog
+    v-model:open="confirmDelete"
+    :title="`Delete “${pickup.title || 'Untitled pickup'}” for good?`"
+    :description="deleteDescription"
+    confirm-label="Delete for good"
+    @confirm="removePickup"
+  />
 </template>

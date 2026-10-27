@@ -17,7 +17,7 @@ from ..serializers import (
     MessageSerializer,
     UploadMediaSerializer,
 )
-from ..services.access import can_delete_folder, can_view
+from ..services.access import can_delete_folder, can_edit, can_view
 from ..services.folders import FolderError, create_subfolder, delete_subfolder, rename_folder
 from ..services.members import get_member_from_request
 
@@ -80,7 +80,7 @@ class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
             serializer = MediaSerializer(items, many=True, context={"member": member})
             return Response(serializer.data)
 
-        if not member or not member.owns(folder):
+        if not member or not can_edit(member, folder):
             return Response(
                 {"error": "You do not have permission to upload to this folder."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -100,7 +100,7 @@ class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
         """Clear all media from a folder."""
         folder = self.get_object()
         member = get_member_from_request(request, folder.pickup)
-        if not member or not member.owns(folder):
+        if not member or not can_edit(member, folder):
             return Response(
                 {"error": "You do not have permission to clear this folder."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -115,7 +115,7 @@ class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
     def _owned(self, request: Request) -> tuple[Folder, Response | None]:
         folder = self.get_object()
         member = get_member_from_request(request, folder.pickup)
-        if not member or not member.owns(folder):
+        if not member or not can_edit(member, folder):
             return folder, Response(
                 {"error": "Only the owner can change this folder."}, status=status.HTTP_403_FORBIDDEN
             )

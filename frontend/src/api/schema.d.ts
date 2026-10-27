@@ -87,7 +87,8 @@ export interface paths {
     get: operations['pickups_retrieve']
     put?: never
     post?: never
-    delete?: never
+    /** @description Delete the pickup with all folders and files for good (creator only). */
+    delete: operations['pickups_destroy']
     options?: never
     head?: never
     /** @description Change title, visibility, join policy or e-mail privacy (creator only). */
@@ -468,6 +469,7 @@ export interface components {
        *
        *     * `members` - Only participants
        *     * `link` - Anyone with the link
+       *     * `creator` - Nobody (closed)
        */
       readonly visibility: components['schemas']['VisibilityEnum']
       /**
@@ -638,6 +640,7 @@ export interface components {
        *
        *     * `members` - Only participants
        *     * `link` - Anyone with the link
+       *     * `creator` - Nobody (closed)
        */
       visibility?: components['schemas']['VisibilityEnum']
       /**
@@ -677,6 +680,7 @@ export interface components {
        *
        *     * `members` - Only participants
        *     * `link` - Anyone with the link
+       *     * `creator` - Nobody (closed)
        */
       readonly visibility: components['schemas']['VisibilityEnum']
       /**
@@ -764,9 +768,10 @@ export interface components {
     /**
      * @description * `members` - Only participants
      *     * `link` - Anyone with the link
+     *     * `creator` - Nobody (closed)
      * @enum {string}
      */
-    VisibilityEnum: 'members' | 'link'
+    VisibilityEnum: 'members' | 'link' | 'creator'
   }
   responses: never
   parameters: never
@@ -884,6 +889,35 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['Pickup']
+        }
+      }
+    }
+  }
+  pickups_destroy: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        /** @description A UUID string identifying this pickup. */
+        id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description No response body */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
         }
       }
     }

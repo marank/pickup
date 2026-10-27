@@ -107,8 +107,8 @@ function openLink() {
           <Input id="creator-email" v-model="creatorEmail" type="email" autocomplete="email" />
         </div>
         <p class="text-xs text-muted-foreground sm:col-span-2">
-          With an email we send you your creator link, so you can always get back in. Invitations
-          show your name.
+          With your name you get your own folder right away, and invitations show it. With an email
+          we send you your creator link, so you can always get back in.
         </p>
       </div>
     </form>

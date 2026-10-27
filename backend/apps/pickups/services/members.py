@@ -6,7 +6,8 @@ from django.db import transaction
 from django.http import HttpRequest
 from django.utils import timezone
 
-from ..models import Folder, JoinPolicy, Media, Member, Pickup
+from ..models import Folder, JoinPolicy, Media, Member, Pickup, UploadSession
+from .access import is_closed_for
 from .folders import subtree_ids
 from .identity import email_hash, normalize_name, remember_email
 from .mail import send_personal_link
@@ -66,12 +67,19 @@ def folder_name_taken(pickup: Pickup, name: str) -> bool:
     ).exists()
 
 
+@transaction.atomic
 def create_pickup(
     request: HttpRequest, title: str, creator_name: str = "", creator_email: str = ""
 ) -> tuple[Pickup, Member]:
-    """Create a pickup with its creator; mail the creator link if an address was given."""
+    """
+    Create a pickup with its creator; a creator who gives their name gets a folder named
+    after them right away. Mail the creator link if an address was given.
+    """
     pickup = Pickup.objects.create(title=title)
-    creator = Member(pickup=pickup, user_name=normalize_name(creator_name) or "Creator", is_creator=True)
+    name = normalize_name(creator_name)
+    creator = Member(pickup=pickup, user_name=name or "Creator", is_creator=True)
+    if name:
+        creator.folder = Folder.objects.create(pickup=pickup, name=name, user_name=name)
     if creator_email:
         remember_email(creator, creator_email)
     creator.save()
@@ -97,6 +105,8 @@ def join_pickup(
     """
     if current is not None and current.folder_id is not None:
         raise MembershipError("You already have a folder in this pickup.")
+    if is_closed_for(pickup, current):
+        raise MembershipError("This pickup is closed.", status=403)
     if current is None and pickup.join_policy == JoinPolicy.INVITE:
         raise MembershipError("This pickup is invite-only. Ask the creator for an invitation.", status=403)
     if current is None and pickup.join_policy == JoinPolicy.CLOSED:
@@ -180,3 +190,20 @@ def remove_member(member: Member) -> int:
     if Member.objects.filter(id=member.id).exists():
         member.delete()
     return deleted
+
+
+@transaction.atomic
+def delete_pickup(pickup: Pickup) -> int:
+    """Delete a pickup for good: files on disk, unfinished uploads and every row; returns deleted files."""
+    media = list(Media.objects.filter(folder__pickup=pickup))
+    for session in UploadSession.objects.filter(folder__pickup=pickup):
+        session.cleanup_chunks()
+    files = [item.file for item in media]
+    pickup.delete()  # cascades to members, folders, media and upload sessions
+
+    def delete_files() -> None:
+        for file in files:
+            file.delete(save=False)
+
+    transaction.on_commit(delete_files)  # only once the rows are really gone
+    return len(files)

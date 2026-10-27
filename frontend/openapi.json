@@ -237,6 +237,46 @@
                         "description": ""
                     }
                 }
+            },
+            "delete": {
+                "operationId": "pickups_destroy",
+                "description": "Delete the pickup with all folders and files for good (creator only).",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this pickup.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
             }
         },
         "/api/pickups/{id}/folders/": {
@@ -1977,7 +2017,7 @@
                             }
                         ],
                         "readOnly": true,
-                        "description": "Who can see folders and files\n\n* `members` - Only participants\n* `link` - Anyone with the link"
+                        "description": "Who can see folders and files\n\n* `members` - Only participants\n* `link` - Anyone with the link\n* `creator` - Nobody (closed)"
                     },
                     "join_policy": {
                         "allOf": [
@@ -2430,7 +2470,7 @@
                                 "$ref": "#/components/schemas/VisibilityEnum"
                             }
                         ],
-                        "description": "Who can see folders and files\n\n* `members` - Only participants\n* `link` - Anyone with the link"
+                        "description": "Who can see folders and files\n\n* `members` - Only participants\n* `link` - Anyone with the link\n* `creator` - Nobody (closed)"
                     },
                     "join_policy": {
                         "allOf": [
@@ -2511,7 +2551,7 @@
                             }
                         ],
                         "readOnly": true,
-                        "description": "Who can see folders and files\n\n* `members` - Only participants\n* `link` - Anyone with the link"
+                        "description": "Who can see folders and files\n\n* `members` - Only participants\n* `link` - Anyone with the link\n* `creator` - Nobody (closed)"
                     },
                     "join_policy": {
                         "allOf": [
@@ -2716,10 +2756,11 @@
             "VisibilityEnum": {
                 "enum": [
                     "members",
-                    "link"
+                    "link",
+                    "creator"
                 ],
                 "type": "string",
-                "description": "* `members` - Only participants\n* `link` - Anyone with the link"
+                "description": "* `members` - Only participants\n* `link` - Anyone with the link\n* `creator` - Nobody (closed)"
             }
         },
         "securitySchemes": {

@@ -11,7 +11,7 @@ from rest_framework.response import Response
 
 from ..models import Media, Pickup
 from ..serializers import CaptionSerializer, ErrorSerializer, MediaSerializer
-from ..services.access import can_delete_media, can_view
+from ..services.access import can_delete_media, can_edit, can_view
 from ..services.members import get_member_from_request
 
 _PICKUP_ID = OpenApiParameter("pickup_id", OpenApiTypes.UUID, OpenApiParameter.PATH)
@@ -52,7 +52,7 @@ class MediaViewSet(mixins.RetrieveModelMixin, mixins.DestroyModelMixin, viewsets
     def _member_can_edit(self, request: Request, media: Media) -> bool:
         """Check if the authenticated member can edit this media's folder."""
         member = get_member_from_request(request, media.folder.pickup)
-        return member is not None and member.owns(media.folder)
+        return can_edit(member, media.folder)
 
     def retrieve(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         media = self.get_object()

@@ -8,7 +8,7 @@ A web application for sharing images and videos without user accounts. Users cre
 - 📁 **Personal Folders** - Each participant gets their own folder with any number of subfolders; only they can change it
 - 🗂️ **File explorer** - Folder tree, address bar you can type into, details/content/small/large views, sorting, search, keyboard shortcuts, right-click menus; works on the phone too
 - 🔗 **Easy Sharing** - One share link per pickup, one personal link per participant
-- 🔒 **Private by default** - Only participants see the photos; the creator decides who may look, who may join (anyone with the link, invited people only, nobody new) and can remove people and content
+- 🔒 **Private by default** - Only participants see the photos; the creator decides who may look (participants, anyone with the link, or nobody: closed), who may join (anyone with the link, invited people only, nobody new), can remove people and content, and can delete the whole pickup
 - ✉️ **Invitations** - The creator invites by email; everyone can have their personal link mailed again
 - 🕶️ **Privacy mode** - Email addresses are stored only as a keyed hash (default, switchable per pickup)
 - 📦 **Large Files** - Files above 20 MB are uploaded in resumable 5 MB chunks
@@ -146,12 +146,13 @@ docker compose start app
 ## Usage
 
 ### Creating a Pickup
-1. Visit the home page and click "Start a pickup". Optionally add your name (shown in invitations) and email (you get your creator link by mail).
+1. Visit the home page and click "Start a pickup". Optionally add your name (you get a folder with that name right away, and invitations show it) and email (you get your creator link by mail).
 2. Keep the **creator link** for yourself; it logs you back in as the creator.
 3. Send the **share link** to others, or invite people by email under **People** (bottom of the folder tree).
 4. **Settings** (bottom of the folder tree) decides:
-   - *Who can see the photos?* Only participants (default) or anyone with the link.
+   - *Who can see the photos?* Only participants (default), anyone with the link, or nobody (closed: only the creator still sees the contents; nobody else can look, upload or join until it is opened again).
    - *Who can join and upload?* Anyone with the link (with a new, unused name), only invited people, or nobody new.
+   - *Delete this pickup*: removes it with all folders and files for everyone, after a warning. It cannot be undone.
    - *Privacy mode* (default on): addresses are kept only as an HMAC fingerprint. Mails still work, because they are sent when someone types their address; the creator sees no addresses and must type an address again to resend. Turning it on deletes stored addresses.
 
 ### Joining a Pickup
@@ -177,7 +178,8 @@ Membership is a session: the personal link's access key is exchanged once (`POST
 | GET | `/api/csrf` | Sets the CSRF cookie |
 | POST | `/api/pickups/` | Create a pickup (returns the creator's personal link) |
 | GET | `/api/pickups/{id}/` | Pickup details, your role and what you may do (`can_view`, `is_member`, …) |
-| PATCH | `/api/pickups/{id}/` | Title, `visibility`, `join_policy`, `email_privacy` (creator) |
+| PATCH | `/api/pickups/{id}/` | Title, `visibility` (`members` / `link` / `creator`), `join_policy`, `email_privacy` (creator) |
+| DELETE | `/api/pickups/{id}/` | Delete the pickup with all folders and files (creator) |
 | POST / DELETE | `/api/pickups/{id}/session/` | Log in with `{access_key}` / leave |
 | POST | `/api/pickups/{id}/session/email/` | Store your address and mail your personal link |
 | POST | `/api/pickups/{id}/link-request/` | Mail the personal link to a known address (always 202) |

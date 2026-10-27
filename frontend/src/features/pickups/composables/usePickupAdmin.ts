@@ -47,6 +47,12 @@ export function usePickupAdmin(pickupId: Id, enabled: MaybeRefOrGetter<boolean> 
           }),
         ),
     }),
+    deletePickup: useMutation({
+      mutationFn: () =>
+        unwrap(api.DELETE('/api/pickups/{id}/', { params: { path: { id: toValue(pickupId) } } })),
+      // Gone for good: drop everything cached about it instead of refetching.
+      onSuccess: () => client.removeQueries({ queryKey: pickupKeys.all(toValue(pickupId)) }),
+    }),
     remove: useMutation({
       mutationFn: (memberId: string) =>
         unwrap(

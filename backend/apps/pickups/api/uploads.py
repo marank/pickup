@@ -15,6 +15,7 @@ from ..serializers import (
     UploadChunkSerializer,
     UploadSessionSerializer,
 )
+from ..services.access import can_edit
 from ..services.members import get_member_from_request
 from ..services.uploads import create_upload_session, finalize_upload, store_chunk
 
@@ -23,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 def _owner(request: Request, folder: Folder) -> Member | None:
     member = get_member_from_request(request, folder.pickup)
-    return member if member and member.owns(folder) else None
+    return member if can_edit(member, folder) else None
 
 
 def _forbidden() -> Response:

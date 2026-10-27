@@ -1,5 +1,6 @@
 """Privacy, join policies, e-mail identity, invitations and moderation."""
 
+import os
 from datetime import timedelta
 from typing import Any
 
@@ -10,7 +11,7 @@ from django.test import Client
 from django.utils import timezone
 from pytest_django.fixtures import Settings
 
-from apps.pickups.models import Folder, Media, Member, Pickup
+from apps.pickups.models import Folder, Media, Member, Pickup, UploadSession
 from apps.pickups.services.identity import email_hash
 
 pytestmark = pytest.mark.django_db
@@ -109,6 +110,59 @@ def test_files_are_handed_to_nginx_in_production(creator: Client, settings: Sett
     assert response["Cache-Control"] == "private, max-age=3600"
 
 
+def test_a_closed_pickup_is_only_visible_to_the_creator(creator: Client) -> None:
+    pickup_id = new_pickup(creator, creator_name="Anna")
+    alice = Client()
+    folder_id = join(alice, pickup_id, "Alice").json()["folder"]["id"]
+    media = alice.post(
+        f"/api/pickups/{pickup_id}/folders/{folder_id}/media/", {"file": SimpleUploadedFile("a.jpg", b"x")}
+    ).json()
+    assert settings_patch(creator, pickup_id, visibility="creator").json()["visibility"] == "creator"
+
+    detail = alice.get(f"/api/pickups/{pickup_id}/").json()
+    assert (detail["is_member"], detail["can_view"], detail["media_count"]) == (True, False, 0)
+    assert alice.get(f"/api/pickups/{pickup_id}/folders/").status_code == 403
+    assert alice.get(media["file"]).status_code == 404
+    upload = alice.post(
+        f"/api/pickups/{pickup_id}/folders/{folder_id}/media/", {"file": SimpleUploadedFile("b.jpg", b"y")}
+    )
+    assert upload.status_code == 403
+    assert "closed" in join(Client(), pickup_id, "Bob").json()["error"]
+
+    assert creator.get(f"/api/pickups/{pickup_id}/folders/").status_code == 200
+    assert creator.get(media["file"]).status_code == 200
+    item = creator.get(f"/api/pickups/{pickup_id}/folders/{folder_id}/media/").json()[0]
+    assert (item["can_edit"], item["can_delete"]) == (False, True)
+
+
+def test_the_creator_deletes_the_pickup_for_good(
+    creator: Client, django_capture_on_commit_callbacks: Any
+) -> None:
+    pickup_id = new_pickup(creator)
+    alice = Client()
+    folder_id = join(alice, pickup_id, "Alice").json()["folder"]["id"]
+    alice.post(
+        f"/api/pickups/{pickup_id}/folders/{folder_id}/media/", {"file": SimpleUploadedFile("a.jpg", b"x")}
+    )
+    stored = Media.objects.get().file
+    session = post(
+        alice,
+        f"/api/pickups/{pickup_id}/folders/{folder_id}/upload-sessions/",
+        {"file_name": "big.mp4", "file_size": 30, "media_type": "video", "chunk_size": 16},
+    ).json()
+    chunks_dir = UploadSession.objects.get(id=session["id"]).chunks_dir
+    assert os.path.isdir(chunks_dir)
+
+    assert alice.delete(f"/api/pickups/{pickup_id}/").status_code == 403
+    with django_capture_on_commit_callbacks(execute=True):
+        assert creator.delete(f"/api/pickups/{pickup_id}/").status_code == 204
+    assert not Pickup.objects.exists()
+    assert not (Member.objects.exists() or Folder.objects.exists() or Media.objects.exists())
+    assert not stored.storage.exists(stored.name or "")
+    assert not os.path.exists(chunks_dir)
+    assert creator.get(f"/api/pickups/{pickup_id}/").status_code == 404
+
+
 # --- join policies and names ------------------------------------------------------
 
 
@@ -137,8 +191,17 @@ def test_invite_only_and_closed_pickups_reject_strangers(creator: Client) -> Non
     assert settings_patch(Client(), pickup_id, join_policy="open").status_code == 403
 
 
+def test_a_named_creator_gets_a_folder_right_away(creator: Client) -> None:
+    pickup_id = new_pickup(creator, creator_name="  Oma  Ilse ")
+    detail = creator.get(f"/api/pickups/{pickup_id}/").json()
+    assert (detail["has_folder"], detail["member_name"]) == (True, "Oma Ilse")
+    folder = creator.get(f"/api/pickups/{pickup_id}/folders/").json()[0]
+    assert (folder["name"], folder["user_name"], folder["can_edit"]) == ("Oma Ilse", "Oma Ilse", True)
+    assert join(Client(), pickup_id, "oma ilse").status_code == 400  # the name is taken
+
+
 def test_the_creator_can_get_an_own_folder_and_stays_creator(creator: Client) -> None:
-    pickup_id = new_pickup(creator, creator_name="Ilse")
+    pickup_id = new_pickup(creator)
     settings_patch(creator, pickup_id, join_policy="closed")  # applies to new people, not to the creator
     response = join(creator, pickup_id, "Oma Ilse")
     assert response.status_code == 201

@@ -12,7 +12,11 @@ const props = defineProps<{ pickup: Pickup; invalidLink?: boolean }>()
 
 /** Signed in without a folder yet: the creator, or someone who was invited. */
 const claiming = computed(() => props.pickup.is_member && !props.pickup.has_folder)
-const canJoin = computed(() => claiming.value || props.pickup.join_policy === 'open')
+/** Closed by the creator: nobody else looks, uploads or joins. */
+const closed = computed(() => props.pickup.visibility === 'creator')
+const canJoin = computed(
+  () => !closed.value && (claiming.value || props.pickup.join_policy === 'open'),
+)
 const initialName = computed(() =>
   claiming.value && props.pickup.member_name !== 'Creator' ? props.pickup.member_name : '',
 )
@@ -27,16 +31,19 @@ const title = computed(() => props.pickup.title || 'this pickup')
         class="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground"
       >
         <LockIcon class="size-3.5" />
-        Private pickup
+        {{ closed ? 'Closed' : 'Private pickup' }}
       </p>
       <h1 class="text-2xl font-bold">
-        {{ claiming ? 'Choose your name' : canJoin ? `Join ${title}` : title }}
+        {{ !canJoin ? title : claiming ? 'Choose your name' : `Join ${title}` }}
       </h1>
       <p v-if="invalidLink" class="text-sm text-destructive">
         That personal link is not valid. Join below, or ask for a new link.
       </p>
       <p class="text-muted-foreground">
-        <template v-if="claiming"
+        <template v-if="closed"
+          >The creator has closed this pickup. Nobody can look at or add photos right now.</template
+        >
+        <template v-else-if="claiming"
           >Your folder gets this name; everyone in “{{ title }}” sees it.</template
         >
         <template v-else-if="canJoin">
@@ -49,7 +56,7 @@ const title = computed(() => props.pickup.title || 'this pickup')
       </p>
     </div>
     <JoinForm v-if="canJoin" :pickup-id="pickup.id" :initial-name="initialName" />
-    <template v-if="!pickup.is_member">
+    <template v-if="!pickup.is_member && !closed">
       <Separator />
       <LinkRequestForm :pickup-id="pickup.id" />
     </template>

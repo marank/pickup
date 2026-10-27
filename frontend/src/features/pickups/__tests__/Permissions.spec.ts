@@ -64,6 +64,20 @@ describe('joining by policy', () => {
     expect(error).toHaveBeenCalled()
   })
 
+  it('tells everyone but the creator that a closed pickup is closed', async () => {
+    await renderJoin({
+      visibility: 'creator',
+      can_view: false,
+      is_member: true,
+      has_folder: true,
+      member_name: 'Alice',
+    })
+    expect(pageText()).toContain('Closed')
+    expect(pageText()).toContain('The creator has closed this pickup')
+    expect(document.body.querySelector('#user_name')).toBeNull()
+    expect(document.body.querySelector('input[aria-label="Your email"]')).toBeNull()
+  })
+
   it('asks an invited person for their name, prefilled from the invitation', async () => {
     await renderJoin({ join_policy: 'invite', is_member: true, member_name: 'Mark' })
     expect(pageText()).toContain('Choose your name')
@@ -144,6 +158,45 @@ describe('creator tools', () => {
       email_privacy: true,
     })
     expect(success).toHaveBeenCalledWith('Settings saved')
+  })
+
+  it('deletes the pickup for good after a warning', async () => {
+    on('DELETE', '/api/pickups/:id/', { status: 204 })
+    const success = vi.spyOn(toast, 'success')
+    const { router } = await renderAsCreator()
+    findButton('Settings').click()
+    await settle()
+    $<HTMLInputElement>('input[name="visibility"][value="creator"]').click()
+    await flushPromises()
+    expect(pageText()).toContain('Only you still see the contents')
+
+    findButton('Delete pickup').click()
+    await settle()
+    const dialog = $('[role="alertdialog"]').textContent
+    expect(dialog).toContain('Delete “Summer party” for good?')
+    expect(dialog).toContain('4 folders and 4 files are deleted for everyone')
+    Array.from(document.body.querySelectorAll<HTMLButtonElement>('[role="alertdialog"] button'))
+      .find((button) => button.textContent?.trim() === 'Delete for good')!
+      .click()
+    await settle()
+    expect(lastRequest('DELETE', `/pickups/${PICKUP_ID}/`)).toBeDefined()
+    expect(success).toHaveBeenCalledWith('Summer party was deleted')
+    await vi.waitFor(() => expect(router.currentRoute.value.name).toBe('home'))
+  })
+
+  it('reports a failed deletion', async () => {
+    on('DELETE', '/api/pickups/:id/', { status: 500, body: {} })
+    const error = vi.spyOn(toast, 'error')
+    await renderAsCreator()
+    findButton('Settings').click()
+    await settle()
+    findButton('Delete pickup').click()
+    await settle()
+    Array.from(document.body.querySelectorAll<HTMLButtonElement>('[role="alertdialog"] button'))
+      .find((button) => button.textContent?.trim() === 'Delete for good')!
+      .click()
+    await settle()
+    expect(error).toHaveBeenCalledWith('Could not delete the pickup')
   })
 
   it('reports failed settings', async () => {

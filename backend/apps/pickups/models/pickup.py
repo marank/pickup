@@ -9,6 +9,7 @@ from apps.core.models import UUIDModel
 class Visibility(models.TextChoices):
     MEMBERS = "members", "Only participants"
     LINK = "link", "Anyone with the link"
+    CREATOR = "creator", "Nobody (closed)"
 
 
 class JoinPolicy(models.TextChoices):

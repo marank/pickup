@@ -33,13 +33,19 @@ ${REAL_IP_CONFIG}
 
 ${ADMIN_LOCATION}
 
-    # Uploaded media. Never run as a document: an uploaded file opened directly gets a
-    # sandbox without scripts, and browsers must not guess another content type.
-    location /media/ {
+    # Mails go out from these (join, link requests, invitations): per client, POSTs only.
+    location ~ ^/api/pickups/[^/]+/(join|link-request|members|session/email)/$ {
+        limit_req zone=mail burst=5 nodelay;
+        include /etc/nginx/django_proxy.conf;
+    }
+
+    # Uploaded media is only reachable through Django's access check (/api/files/<id>/),
+    # which answers with X-Accel-Redirect to this internal location. Files are never run
+    # as a document: opened directly they get a script-free sandbox and no type sniffing.
+    location /protected-media/ {
+        internal;
         alias /data/media/;
-        location /media/upload_chunks/ { return 404; }
-        expires 30d;
-        add_header Cache-Control "public";
+        add_header Cache-Control "private, max-age=3600" always;
         add_header Content-Security-Policy "default-src 'none'; img-src 'self'; media-src 'self'; style-src 'unsafe-inline'; sandbox" always;
         add_header X-Content-Type-Options "nosniff" always;
         add_header Cross-Origin-Resource-Policy "same-origin" always;

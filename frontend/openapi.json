@@ -22,6 +22,48 @@
                 }
             }
         },
+        "/api/files/{media_id}/": {
+            "get": {
+                "operationId": "files_retrieve",
+                "description": "A media file, after the same access check as the API (private pickups stay private).\nIn production nginx sends the bytes (X-Accel-Redirect to an internal location), so\nrange requests and large videos work without tying up a gunicorn worker.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "media_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "files"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/octet-stream": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
         "/api/health": {
             "get": {
                 "operationId": "health_retrieve",
@@ -53,6 +95,25 @@
                 "tags": [
                     "pickups"
                 ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreatePickupRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreatePickupRequest"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreatePickupRequest"
+                            }
+                        }
+                    }
+                },
                 "security": [
                     {
                         "cookieAuth": []
@@ -76,7 +137,7 @@
         "/api/pickups/{id}/": {
             "get": {
                 "operationId": "pickups_retrieve",
-                "description": "Anyone can create a pickup and read one with its link; no listing, editing or deleting.",
+                "description": "Anyone with the link sees a pickup's title and settings; its contents follow its visibility.",
                 "parameters": [
                     {
                         "in": "path",
@@ -113,7 +174,7 @@
             },
             "patch": {
                 "operationId": "pickups_partial_update",
-                "description": "Rename the pickup (creator only).",
+                "description": "Change title, visibility, join policy or e-mail privacy (creator only).",
                 "parameters": [
                     {
                         "in": "path",
@@ -216,6 +277,16 @@
                             }
                         },
                         "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
                     }
                 }
             }
@@ -223,7 +294,7 @@
         "/api/pickups/{id}/join/": {
             "post": {
                 "operationId": "pickups_join_create",
-                "description": "Join a pickup: create folder and member, log this session in as that member.",
+                "description": "Get a folder: as a new participant, or as the signed-in creator/invited person.",
                 "parameters": [
                     {
                         "in": "path",
@@ -243,17 +314,17 @@
                     "content": {
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/CreateFolderRequest"
+                                "$ref": "#/components/schemas/JoinRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/CreateFolderRequest"
+                                "$ref": "#/components/schemas/JoinRequest"
                             }
                         },
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/CreateFolderRequest"
+                                "$ref": "#/components/schemas/JoinRequest"
                             }
                         }
                     },
@@ -271,6 +342,85 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/JoinResponse"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/pickups/{id}/link-request/": {
+            "post": {
+                "operationId": "pickups_link_request_create",
+                "description": "Mail the personal link to a known address. Same answer for unknown ones.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this pickup.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EmailRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EmailRequest"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EmailRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "202": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Message"
                                 }
                             }
                         },
@@ -313,6 +463,16 @@
                                     "items": {
                                         "$ref": "#/components/schemas/Media"
                                     }
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
                                 }
                             }
                         },
@@ -420,6 +580,75 @@
                 }
             }
         },
+        "/api/pickups/{id}/session/email/": {
+            "post": {
+                "operationId": "pickups_session_email_create",
+                "description": "The signed-in participant adds their address and gets their personal link mailed.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this pickup.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EmailRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EmailRequest"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EmailRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Message"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/pickups/{pickup_id}/folders/{folder_id}/media/{id}/": {
             "get": {
                 "operationId": "pickups_folders_media_retrieve",
@@ -474,12 +703,22 @@
                             }
                         },
                         "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
                     }
                 }
             },
             "delete": {
                 "operationId": "pickups_folders_media_destroy",
-                "description": "Delete a media file.",
+                "description": "Delete a media file (owner, or the creator as moderator).",
                 "parameters": [
                     {
                         "in": "path",
@@ -756,6 +995,16 @@
                             }
                         },
                         "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
                     }
                 }
             },
@@ -847,7 +1096,7 @@
             },
             "delete": {
                 "operationId": "pickups_folders_destroy",
-                "description": "Delete a subfolder and everything in it (owner only).",
+                "description": "Delete a subfolder and everything in it (owner, or the creator as moderator).",
                 "parameters": [
                     {
                         "in": "path",
@@ -1173,6 +1422,262 @@
                 }
             }
         },
+        "/api/pickups/{pickup_id}/members/": {
+            "get": {
+                "operationId": "pickups_members_list",
+                "description": "The participant list: creator only.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "pickup_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Member"
+                                    }
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "pickups_members_create",
+                "description": "Invite someone by e-mail; an address that is already in the pickup gets its link again.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "pickup_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InviteRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InviteRequest"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InviteRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Member"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/pickups/{pickup_id}/members/{id}/": {
+            "delete": {
+                "operationId": "pickups_members_destroy",
+                "description": "Remove a participant together with their folder and files.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this member.",
+                        "required": true
+                    },
+                    {
+                        "in": "path",
+                        "name": "pickup_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/pickups/{pickup_id}/members/{id}/resend/": {
+            "post": {
+                "operationId": "pickups_members_resend_create",
+                "description": "Send the invitation again (only possible while addresses are stored).",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this member.",
+                        "required": true
+                    },
+                    {
+                        "in": "path",
+                        "name": "pickup_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Message"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/upload-sessions/{session_id}/": {
             "get": {
                 "operationId": "upload_sessions_retrieve",
@@ -1350,29 +1855,23 @@
     },
     "components": {
         "schemas": {
-            "CreateFolderRequest": {
+            "CreatePickupRequest": {
                 "type": "object",
-                "description": "Serializer for creating a new folder.",
+                "description": "A new pickup; the creator may give a name and an address for their creator link.",
                 "properties": {
-                    "name": {
+                    "title": {
                         "type": "string",
-                        "minLength": 1,
-                        "description": "Name of the folder",
+                        "maxLength": 200
+                    },
+                    "creator_name": {
+                        "type": "string",
                         "maxLength": 100
                     },
-                    "user_name": {
-                        "type": "string",
-                        "minLength": 1,
-                        "description": "Name of the member who owns this folder",
-                        "maxLength": 100
-                    },
-                    "user_email": {
-                        "description": "Optional email of the member (top-level folders)",
+                    "creator_email": {
                         "oneOf": [
                             {
                                 "type": "string",
-                                "format": "email",
-                                "maxLength": 254
+                                "format": "email"
                             },
                             {
                                 "type": "string",
@@ -1380,11 +1879,7 @@
                             }
                         ]
                     }
-                },
-                "required": [
-                    "name",
-                    "user_name"
-                ]
+                }
             },
             "CreateUploadSessionRequest": {
                 "type": "object",
@@ -1447,6 +1942,7 @@
                     },
                     "folder_count": {
                         "type": "integer",
+                        "description": "Private pickups don't tell outsiders how busy they are.",
                         "readOnly": true
                     },
                     "media_count": {
@@ -1458,19 +1954,78 @@
                         "description": "Check if the current authenticated member is the creator.",
                         "readOnly": true
                     },
+                    "is_member": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "has_folder": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "member_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "can_view": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "visibility": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/VisibilityEnum"
+                            }
+                        ],
+                        "readOnly": true,
+                        "description": "Who can see folders and files\n\n* `members` - Only participants\n* `link` - Anyone with the link"
+                    },
+                    "join_policy": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/JoinPolicyEnum"
+                            }
+                        ],
+                        "readOnly": true,
+                        "description": "Who can become a participant\n\n* `open` - Anyone with the link\n* `invite` - Only invited people\n* `closed` - Nobody new"
+                    },
+                    "email_privacy": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "description": "Store e-mail addresses only as keyed hashes; off: also in plain text (creator sees them)"
+                    },
                     "member_url": {
                         "type": "string",
                         "readOnly": true
                     }
                 },
                 "required": [
+                    "can_view",
                     "created_at",
+                    "email_privacy",
                     "folder_count",
+                    "has_folder",
                     "id",
                     "is_creator",
+                    "is_member",
+                    "join_policy",
                     "media_count",
+                    "member_name",
                     "member_url",
-                    "share_url"
+                    "share_url",
+                    "visibility"
+                ]
+            },
+            "EmailRequest": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "email"
                 ]
             },
             "Error": {
@@ -1540,9 +2095,15 @@
                         "type": "boolean",
                         "description": "Check if the current authenticated member owns this folder.",
                         "readOnly": true
+                    },
+                    "can_delete": {
+                        "type": "boolean",
+                        "description": "Owner or creator (moderation); never a member's top-level folder.",
+                        "readOnly": true
                     }
                 },
                 "required": [
+                    "can_delete",
                     "can_edit",
                     "created_at",
                     "id",
@@ -1580,6 +2141,64 @@
                     "status"
                 ]
             },
+            "InviteRequest": {
+                "type": "object",
+                "properties": {
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "minLength": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "maxLength": 100
+                    }
+                },
+                "required": [
+                    "email"
+                ]
+            },
+            "JoinPolicyEnum": {
+                "enum": [
+                    "open",
+                    "invite",
+                    "closed"
+                ],
+                "type": "string",
+                "description": "* `open` - Anyone with the link\n* `invite` - Only invited people\n* `closed` - Nobody new"
+            },
+            "JoinRequest": {
+                "type": "object",
+                "description": "Joining: the person's name, their top-level folder's name, optionally an address.",
+                "properties": {
+                    "user_name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                    },
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                    },
+                    "email": {
+                        "oneOf": [
+                            {
+                                "type": "string",
+                                "format": "email"
+                            },
+                            {
+                                "type": "string",
+                                "maxLength": 0
+                            }
+                        ]
+                    }
+                },
+                "required": [
+                    "name",
+                    "user_name"
+                ]
+            },
             "JoinResponse": {
                 "type": "object",
                 "properties": {
@@ -1612,9 +2231,8 @@
                     },
                     "file": {
                         "type": "string",
-                        "format": "uri",
-                        "description": "The uploaded media file",
-                        "pattern": "(?:avi|bmp|flv|gif|jpeg|jpg|mkv|mov|mp4|png|webm|webp|wmv)$"
+                        "description": "Files are served through an access check (private pickups), never straight from disk.",
+                        "readOnly": true
                     },
                     "original_filename": {
                         "type": "string",
@@ -1652,6 +2270,11 @@
                         "description": "Check if the current authenticated member owns this media's folder.",
                         "readOnly": true
                     },
+                    "can_delete": {
+                        "type": "boolean",
+                        "description": "Owner or creator (moderation).",
+                        "readOnly": true
+                    },
                     "owner_name": {
                         "type": "string",
                         "readOnly": true
@@ -1666,6 +2289,7 @@
                     }
                 },
                 "required": [
+                    "can_delete",
                     "can_edit",
                     "file",
                     "file_size",
@@ -1687,6 +2311,79 @@
                 ],
                 "type": "string",
                 "description": "* `image` - Image\n* `video` - Video"
+            },
+            "Member": {
+                "type": "object",
+                "description": "A participant as the creator sees them (addresses only without privacy mode).",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true
+                    },
+                    "user_name": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "Display name of the member"
+                    },
+                    "is_creator": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "description": "Whether this member is the pickup creator"
+                    },
+                    "has_folder": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "folder": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "The member's folder (optional, e.g. for creator without folder)"
+                    },
+                    "invited": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "has_email": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "readOnly": true,
+                        "description": "Plain address; only kept while the pickup's e-mail privacy mode is off"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "last_active_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true
+                    },
+                    "is_you": {
+                        "type": "boolean",
+                        "readOnly": true
+                    }
+                },
+                "required": [
+                    "created_at",
+                    "email",
+                    "folder",
+                    "has_email",
+                    "has_folder",
+                    "id",
+                    "invited",
+                    "is_creator",
+                    "is_you",
+                    "last_active_at",
+                    "user_name"
+                ]
             },
             "Message": {
                 "type": "object",
@@ -1726,6 +2423,26 @@
                         "type": "string",
                         "description": "Optional title for the pickup",
                         "maxLength": 200
+                    },
+                    "visibility": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/VisibilityEnum"
+                            }
+                        ],
+                        "description": "Who can see folders and files\n\n* `members` - Only participants\n* `link` - Anyone with the link"
+                    },
+                    "join_policy": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/JoinPolicyEnum"
+                            }
+                        ],
+                        "description": "Who can become a participant\n\n* `open` - Anyone with the link\n* `invite` - Only invited people\n* `closed` - Nobody new"
+                    },
+                    "email_privacy": {
+                        "type": "boolean",
+                        "description": "Store e-mail addresses only as keyed hashes; off: also in plain text (creator sees them)"
                     }
                 }
             },
@@ -1759,6 +2476,7 @@
                     },
                     "folder_count": {
                         "type": "integer",
+                        "description": "Private pickups don't tell outsiders how busy they are.",
                         "readOnly": true
                     },
                     "media_count": {
@@ -1769,15 +2487,61 @@
                         "type": "boolean",
                         "description": "Check if the current authenticated member is the creator.",
                         "readOnly": true
+                    },
+                    "is_member": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "has_folder": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "member_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
+                    "can_view": {
+                        "type": "boolean",
+                        "readOnly": true
+                    },
+                    "visibility": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/VisibilityEnum"
+                            }
+                        ],
+                        "readOnly": true,
+                        "description": "Who can see folders and files\n\n* `members` - Only participants\n* `link` - Anyone with the link"
+                    },
+                    "join_policy": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/JoinPolicyEnum"
+                            }
+                        ],
+                        "readOnly": true,
+                        "description": "Who can become a participant\n\n* `open` - Anyone with the link\n* `invite` - Only invited people\n* `closed` - Nobody new"
+                    },
+                    "email_privacy": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "description": "Store e-mail addresses only as keyed hashes; off: also in plain text (creator sees them)"
                     }
                 },
                 "required": [
+                    "can_view",
                     "created_at",
+                    "email_privacy",
                     "folder_count",
+                    "has_folder",
                     "id",
                     "is_creator",
+                    "is_member",
+                    "join_policy",
                     "media_count",
-                    "share_url"
+                    "member_name",
+                    "share_url",
+                    "visibility"
                 ]
             },
             "SessionRequest": {
@@ -1948,6 +2712,14 @@
                     "total_chunks",
                     "uploaded_chunks"
                 ]
+            },
+            "VisibilityEnum": {
+                "enum": [
+                    "members",
+                    "link"
+                ],
+                "type": "string",
+                "description": "* `members` - Only participants\n* `link` - Anyone with the link"
             }
         },
         "securitySchemes": {

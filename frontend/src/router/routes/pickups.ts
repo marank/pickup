@@ -22,6 +22,14 @@ export const pickupRoutes: RouteRecordRaw[] = [
     meta: { wide: true },
   },
   {
+    // The creator's pages, shown in the explorer's content pane.
+    path: '/pickup/:pickupId/:page(settings|people)',
+    name: 'explorer-page',
+    component: ExplorerView,
+    props: true,
+    meta: { wide: true },
+  },
+  {
     // Personal link: the access key is exchanged for a session, then the address bar
     // switches to the plain pickup URL so the key doesn't linger in history.
     path: '/pickup/:pickupId/member/:accessKey',

@@ -31,15 +31,16 @@ const title = computed(() => pickup.value?.title || 'Untitled pickup')
       </button>
     </div>
 
-    <Button
-      variant="outline"
-      size="sm"
-      class="ml-auto"
-      aria-label="Share"
-      @click="explorer.dialog = { kind: 'share' }"
-    >
-      <Share2Icon />
-      <span class="max-sm:hidden">Share</span>
-    </Button>
+    <div class="ml-auto flex items-center gap-1">
+      <Button
+        variant="outline"
+        size="sm"
+        aria-label="Share"
+        @click="explorer.dialog = { kind: 'share' }"
+      >
+        <Share2Icon />
+        <span class="max-sm:hidden">Share</span>
+      </Button>
+    </div>
   </div>
 </template>

@@ -8,7 +8,9 @@ A web application for sharing images and videos without user accounts. Users cre
 - 📁 **Personal Folders** - Each participant gets their own folder with any number of subfolders; only they can change it
 - 🗂️ **File explorer** - Folder tree, address bar you can type into, details/content/small/large views, sorting, search, keyboard shortcuts, right-click menus; works on the phone too
 - 🔗 **Easy Sharing** - One share link per pickup, one personal link per participant
-- 📧 **Email Reminders** - Optional email with the personal link
+- 🔒 **Private by default** - Only participants see the photos; the creator decides who may look, who may join (anyone with the link, invited people only, nobody new) and can remove people and content
+- ✉️ **Invitations** - The creator invites by email; everyone can have their personal link mailed again
+- 🕶️ **Privacy mode** - Email addresses are stored only as a keyed hash (default, switchable per pickup)
 - 📦 **Large Files** - Files above 20 MB are uploaded in resumable 5 MB chunks
 - 📱 **Responsive Design** - Works on all devices
 
@@ -83,7 +85,7 @@ In VS Code, run the task **dev** (Terminal → Run Task). Without VS Code:
 | After API changes | task **api: types** (`frontend/openapi.json` → `src/api/schema.d.ts`; commit both, CI compares them) |
 | Postgres instead of SQLite | task **db: start dev postgres**, then `DB_TYPE=postgres`, `DB_HOST=localhost` in `.env` |
 
-Open http://localhost:5173. Vite proxies `/api`, `/admin`, `/django-static` and `/media` to Django, so both share one origin (no CORS). The admin is at http://localhost:5173/admin/.
+Open http://localhost:5173. Vite proxies `/api`, `/admin` and `/django-static` to Django, so both share one origin (no CORS). The admin is at http://localhost:5173/admin/.
 
 Pre-commit hooks (ruff, Prettier, oxlint and basic file checks) once per clone: `uv tool run pre-commit install`.
 
@@ -101,7 +103,7 @@ docker compose up -d --build
 The app runs at http://localhost:8080 (`APP_PORT`). Compose starts three services:
 
 - **db** - PostgreSQL 18, data in the `db-data` volume.
-- **app** - nginx serves the SPA, `/media/` and static files, and proxies `/api` to gunicorn/Django. Migrations and the first admin user run on every start. The container is hardened: read-only root filesystem, no capabilities, unprivileged user; only `/data` (volume `app-data`, uploaded media) and `/tmp` are writable.
+- **app** - nginx serves the SPA and static files, delivers uploaded files only after Django's access check, and proxies `/api` to gunicorn/Django. Migrations and the first admin user run on every start. The container is hardened: read-only root filesystem, no capabilities, unprivileged user; only `/data` (volume `app-data`, uploaded media) and `/tmp` are writable.
 - **backup** - nightly backup, see below.
 
 `/admin` is closed in Docker unless `ADMIN_ENABLED=true`. Change the admin password with `docker compose exec app python manage.py set_password admin`.
@@ -144,14 +146,18 @@ docker compose start app
 ## Usage
 
 ### Creating a Pickup
-1. Visit the home page and click "Create New Pickup".
+1. Visit the home page and click "Start a pickup". Optionally add your name (shown in invitations) and email (you get your creator link by mail).
 2. Keep the **creator link** for yourself; it logs you back in as the creator.
-3. Send the **share link** to others.
+3. Send the **share link** to others, or invite people by email under **People** (bottom of the folder tree).
+4. **Settings** (bottom of the folder tree) decides:
+   - *Who can see the photos?* Only participants (default) or anyone with the link.
+   - *Who can join and upload?* Anyone with the link (with a new, unused name), only invited people, or nobody new.
+   - *Privacy mode* (default on): addresses are kept only as an HMAC fingerprint. Mails still work, because they are sent when someone types their address; the creator sees no addresses and must type an address again to resend. Turning it on deletes stored addresses.
 
 ### Joining a Pickup
-1. Open the share link.
-2. Enter your name and a folder name; optionally an email address for your personal link.
-3. Upload media. Your browser stays logged in; the personal link logs you in from another browser.
+1. Open the share link (or your personal invitation link).
+2. Enter your name and a folder name; optionally an email address for your personal link. Names are unique per pickup, so nobody can pose as someone else.
+3. Upload media. Your browser stays logged in; the personal link logs you in from another browser. Lost it? Enter your address on the pickup page ("Already part of it on another device?") and it is mailed to you again.
 
 ### Uploading and organising
 1. Open your folder (tree on the left, or the folder button on the phone).
@@ -170,18 +176,24 @@ Membership is a session: the personal link's access key is exchanged once (`POST
 | GET | `/api/health` | Health check |
 | GET | `/api/csrf` | Sets the CSRF cookie |
 | POST | `/api/pickups/` | Create a pickup (returns the creator's personal link) |
-| GET | `/api/pickups/{id}/` | Pickup details |
+| GET | `/api/pickups/{id}/` | Pickup details, your role and what you may do (`can_view`, `is_member`, …) |
+| PATCH | `/api/pickups/{id}/` | Title, `visibility`, `join_policy`, `email_privacy` (creator) |
 | POST / DELETE | `/api/pickups/{id}/session/` | Log in with `{access_key}` / leave |
-| POST | `/api/pickups/{id}/join/` | Join: create folder and member, log in |
+| POST | `/api/pickups/{id}/session/email/` | Store your address and mail your personal link |
+| POST | `/api/pickups/{id}/link-request/` | Mail the personal link to a known address (always 202) |
+| POST | `/api/pickups/{id}/join/` | Join: create folder and member, log in (or claim a folder after an invitation) |
+| GET / POST | `/api/pickups/{id}/members/` | People / invite by email (creator) |
+| POST | `/api/pickups/{id}/members/{member_id}/resend/` | Send the invitation again (creator) |
+| DELETE | `/api/pickups/{id}/members/{member_id}/` | Remove a person with their folder and files (creator) |
+| GET | `/api/files/{media_id}/` | The file itself, only for people who may see the pickup |
 | GET | `/api/pickups/{id}/folders/` | All folders (flat; `parent` builds the tree) |
 | GET | `/api/pickups/{id}/media/` | All media |
-| PATCH | `/api/pickups/{id}/` | Rename the pickup (creator) |
 | GET | `/api/pickups/{id}/folders/{folder_id}/` | Folder details |
-| PATCH / DELETE | `/api/pickups/{id}/folders/{folder_id}/` | Rename a folder / delete a subfolder with its contents (owner) |
+| PATCH / DELETE | `/api/pickups/{id}/folders/{folder_id}/` | Rename a folder / delete a subfolder with its contents (owner, or creator) |
 | POST | `/api/pickups/{id}/folders/{folder_id}/subfolders/` | Create a subfolder (owner) |
 | GET / POST | `/api/pickups/{id}/folders/{folder_id}/media/` | Folder media / upload (owner) |
 | DELETE | `/api/pickups/{id}/folders/{folder_id}/clear/` | Delete all media of a folder (owner) |
-| GET / DELETE | `/api/pickups/{id}/folders/{folder_id}/media/{media_id}/` | Media / delete (owner) |
+| GET / DELETE | `/api/pickups/{id}/folders/{folder_id}/media/{media_id}/` | Media / delete (owner, or creator) |
 | PATCH | `/api/pickups/{id}/folders/{folder_id}/media/{media_id}/caption/` | Edit caption (owner) |
 | POST | `/api/pickups/{id}/folders/{folder_id}/upload-sessions/` | Start a chunked upload (owner) |
 | GET | `/api/upload-sessions/{session_id}/` | Upload progress, missing chunks (owner) |
@@ -192,8 +204,9 @@ Membership is a session: the personal link's access key is exchanged once (`POST
 
 - Personal links carry a secret access key that is exchanged for a session; member ids are never credentials. Pickup ids (the share link) are random UUIDv4.
 - CSRF protection on every unsafe request, also for anonymous members.
-- Uploads are restricted to image and video types (no SVG), stored under random names, and served with a sandboxing Content-Security-Policy and `nosniff`.
-- nginx sets CSP and security headers for the SPA and rate-limits the admin login.
+- Uploads are restricted to image and video types (no SVG) and stored under random names. Files are never public: `/api/files/{id}/` checks access, then nginx delivers the file from an internal location (`X-Accel-Redirect`) with a sandboxing Content-Security-Policy and `nosniff`.
+- Email addresses: keyed hashes (`EMAIL_HASH_KEY`) in privacy mode; the plain address only when the creator turns privacy mode off. Never change `EMAIL_HASH_KEY` once in use, or stored addresses stop matching.
+- nginx sets CSP and security headers for the SPA and rate-limits the admin login and every endpoint that sends mail; personal links can be re-sent at most every two minutes.
 - The container runs read-only, unprivileged and without capabilities.
 
 ## Gitea Setup

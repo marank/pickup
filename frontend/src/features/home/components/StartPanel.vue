@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowRightIcon, LinkIcon, PlusIcon } from '@lucide/vue'
+import { ArrowRightIcon, ChevronDownIcon, LinkIcon, PlusIcon } from '@lucide/vue'
 import { ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -8,17 +8,25 @@ import { apiErrorMessage } from '@/api/errors'
 import type { CreatedPickup } from '@/api/types'
 import CopyField from '@/components/CopyField.vue'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { useCreatePickup } from '@/features/pickups/composables/usePickup'
 
 const router = useRouter()
 const createPickup = useCreatePickup()
 const created = ref<CreatedPickup | null>(null)
 const link = ref('')
+const moreOpen = ref(false)
+const creatorName = ref('')
+const creatorEmail = ref('')
 const absolute = (path: string) => `${window.location.origin}${path}`
 
 async function create() {
   try {
-    created.value = await createPickup.mutateAsync()
+    created.value = await createPickup.mutateAsync({
+      creator_name: creatorName.value.trim(),
+      creator_email: creatorEmail.value.trim(),
+    })
   } catch (err) {
     toast.error(apiErrorMessage(err, 'Could not create the pickup'))
   }
@@ -70,15 +78,40 @@ function openLink() {
   </div>
 
   <div v-else class="space-y-4">
-    <Button
-      size="lg"
-      class="h-12 px-5 text-base"
-      :disabled="createPickup.isPending.value"
-      @click="create"
-    >
-      <PlusIcon />
-      {{ createPickup.isPending.value ? 'Creating…' : 'Start a pickup' }}
-    </Button>
+    <form class="max-w-md space-y-3" @submit.prevent="create">
+      <Button
+        type="submit"
+        size="lg"
+        class="h-12 px-5 text-base"
+        :disabled="createPickup.isPending.value"
+      >
+        <PlusIcon />
+        {{ createPickup.isPending.value ? 'Creating…' : 'Start a pickup' }}
+      </Button>
+      <button
+        type="button"
+        class="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        :aria-expanded="moreOpen"
+        @click="moreOpen = !moreOpen"
+      >
+        Add your name and email (optional)
+        <ChevronDownIcon class="size-3.5 transition-transform" :class="moreOpen && 'rotate-180'" />
+      </button>
+      <div v-if="moreOpen" class="grid gap-3 rounded-xl border bg-card p-4 sm:grid-cols-2">
+        <div class="space-y-1.5">
+          <Label for="creator-name">Your name</Label>
+          <Input id="creator-name" v-model="creatorName" autocomplete="name" />
+        </div>
+        <div class="space-y-1.5">
+          <Label for="creator-email">Your email</Label>
+          <Input id="creator-email" v-model="creatorEmail" type="email" autocomplete="email" />
+        </div>
+        <p class="text-xs text-muted-foreground sm:col-span-2">
+          With an email we send you your creator link, so you can always get back in. Invitations
+          show your name.
+        </p>
+      </div>
+    </form>
     <form class="flex max-w-md gap-2" @submit.prevent="openLink">
       <label class="relative flex-1">
         <LinkIcon

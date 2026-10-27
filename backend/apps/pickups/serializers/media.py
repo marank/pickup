@@ -3,13 +3,16 @@ from rest_framework import serializers
 
 from ..models import Media
 from ..models.media import ALLOWED_EXTENSIONS, file_extension
+from ..services.access import can_delete_media
 
 
 class MediaSerializer(serializers.ModelSerializer[Media]):
     """Serializer for Media model."""
 
     file_size_display = serializers.SerializerMethodField()
+    file = serializers.SerializerMethodField()
     can_edit = serializers.SerializerMethodField()
+    can_delete = serializers.SerializerMethodField()
     owner_name = serializers.CharField(source="folder.user_name", read_only=True)
     is_image = serializers.SerializerMethodField()
     is_video = serializers.SerializerMethodField()
@@ -27,6 +30,7 @@ class MediaSerializer(serializers.ModelSerializer[Media]):
             "uploaded_at",
             "caption",
             "can_edit",
+            "can_delete",
             "owner_name",
             "is_image",
             "is_video",
@@ -40,6 +44,14 @@ class MediaSerializer(serializers.ModelSerializer[Media]):
             "is_image",
             "is_video",
         ]
+
+    def get_file(self, obj: Media) -> str:
+        """Files are served through an access check (private pickups), never straight from disk."""
+        return f"/api/files/{obj.id}/"
+
+    def get_can_delete(self, obj: Media) -> bool:
+        """Owner or creator (moderation)."""
+        return can_delete_media(self.context.get("member"), obj)
 
     def get_file_size_display(self, obj: Media) -> str:
         return obj.get_file_size_display()

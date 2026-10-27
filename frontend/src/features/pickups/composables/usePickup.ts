@@ -16,9 +16,13 @@ export function usePickup(pickupId: MaybeRefOrGetter<string>) {
   })
 }
 
-export function usePickupFolders(pickupId: MaybeRefOrGetter<string>) {
+export function usePickupFolders(
+  pickupId: MaybeRefOrGetter<string>,
+  enabled: MaybeRefOrGetter<boolean> = true,
+) {
   return useQuery({
     queryKey: computed(() => pickupKeys.folders(toValue(pickupId))),
+    enabled: computed(() => toValue(enabled)),
     queryFn: () =>
       unwrap(
         api.GET('/api/pickups/{id}/folders/', { params: { path: { id: toValue(pickupId) } } }),
@@ -28,7 +32,8 @@ export function usePickupFolders(pickupId: MaybeRefOrGetter<string>) {
 
 export function useCreatePickup() {
   return useMutation({
-    mutationFn: () => unwrap(api.POST('/api/pickups/')),
+    mutationFn: (body: { title?: string; creator_name?: string; creator_email?: string } = {}) =>
+      unwrap(api.POST('/api/pickups/', { body })),
   })
 }
 

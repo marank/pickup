@@ -10,6 +10,8 @@ export type ExplorerItem =
       date: string
       size: null
       editable: boolean
+      /** Owner, or the creator as moderator (never a member's top-level folder). */
+      deletable: boolean
       folder: Folder
     }
   | {
@@ -20,6 +22,7 @@ export type ExplorerItem =
       date: string
       size: number
       editable: boolean
+      deletable: boolean
       media: Media
     }
 
@@ -35,6 +38,7 @@ export function folderItem(folder: Folder): ExplorerItem {
     date: folder.created_at,
     size: null,
     editable: folder.can_edit,
+    deletable: folder.can_delete,
     folder,
   }
 }
@@ -48,6 +52,7 @@ export function fileItem(media: Media): ExplorerItem {
     date: media.uploaded_at,
     size: media.file_size,
     editable: media.can_edit,
+    deletable: media.can_delete,
     media,
   }
 }

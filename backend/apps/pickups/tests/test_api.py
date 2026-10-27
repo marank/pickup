@@ -23,7 +23,7 @@ def create_pickup(client: Client, title: str = "Party") -> dict[str, Any]:
 def join(client: Client, pickup_id: str, name: str = "Alice", email: str = "") -> TestResponse:
     return client.post(
         f"/api/pickups/{pickup_id}/join/",
-        {"name": f"{name} folder", "user_name": name, "user_email": email},
+        {"name": f"{name} folder", "user_name": name, "email": email},
         content_type="application/json",
     )
 
@@ -46,12 +46,13 @@ def test_create_pickup_logs_in_creator(client: Client) -> None:
 
 def test_pickup_never_exposes_member_ids_or_keys(client: Client, joined: tuple[str, str]) -> None:
     pickup_id, _ = joined
+    Pickup.objects.update(visibility="link")  # let strangers look at the contents
     stranger = Client()
     secrets = [str(m.id) for m in Member.objects.all()] + [m.access_key for m in Member.objects.all()]
     for url in [f"/api/pickups/{pickup_id}/", f"/api/pickups/{pickup_id}/folders/"]:
         body = stranger.get(url).content.decode()
         assert not any(secret in body for secret in secrets), url
-    assert "user_email" not in stranger.get(f"/api/pickups/{pickup_id}/folders/").json()[0]
+    assert "email" not in stranger.get(f"/api/pickups/{pickup_id}/folders/").json()[0]
     assert stranger.get(f"/api/pickups/{pickup_id}/").json()["is_creator"] is False
 
 
@@ -109,8 +110,8 @@ def test_personal_link_logs_in_another_browser(joined: tuple[str, str]) -> None:
     assert folder["can_edit"] is True
 
     assert other_browser.delete(url).status_code == 204
-    folder = other_browser.get(f"/api/pickups/{pickup_id}/folders/{folder_id}/").json()
-    assert folder["can_edit"] is False
+    # Signed out of a private pickup: no access at all anymore.
+    assert other_browser.get(f"/api/pickups/{pickup_id}/folders/{folder_id}/").status_code == 403
 
 
 def test_member_id_parameter_is_no_longer_a_credential(joined: tuple[str, str]) -> None:
@@ -205,6 +206,8 @@ def test_upload_caption_delete_and_clear(client: Client, joined: tuple[str, str]
 
     stranger = Client()
     base = f"/api/pickups/{pickup_id}/folders/{folder_id}/media/{media['id']}"
+    assert stranger.get(f"{base}/").status_code == 403  # private by default
+    Pickup.objects.update(visibility="link")
     assert stranger.get(f"{base}/").status_code == 200
     response = client.patch(f"{base}/caption/", {"caption": "new"}, content_type="application/json")
     assert response.json()["caption"] == "new"

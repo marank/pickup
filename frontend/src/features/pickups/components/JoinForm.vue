@@ -10,11 +10,15 @@ import { Label } from '@/components/ui/label'
 
 import { useJoinPickup } from '../composables/usePickup'
 
-const props = defineProps<{ pickupId: string }>()
+const props = defineProps<{ pickupId: string; initialName?: string }>()
 
 const router = useRouter()
 const join = useJoinPickup(() => props.pickupId)
-const form = reactive({ user_name: '', name: '', user_email: '' })
+const form = reactive({
+  user_name: props.initialName ?? '',
+  name: props.initialName ?? '',
+  email: '',
+})
 const fieldErrors = ref<Record<string, string>>({})
 
 // The folder is named after the person until they choose another name.
@@ -61,13 +65,13 @@ async function submit() {
       <p v-if="fieldErrors.name" class="text-sm text-destructive">{{ fieldErrors.name }}</p>
     </div>
     <div class="space-y-1.5">
-      <Label for="user_email">Email (optional)</Label>
-      <Input id="user_email" v-model="form.user_email" type="email" autocomplete="email" />
+      <Label for="email">Email (optional)</Label>
+      <Input id="email" v-model="form.email" type="email" autocomplete="email" />
       <p class="text-sm text-muted-foreground">
         We'll send you your personal link, so you can come back from any device.
       </p>
-      <p v-if="fieldErrors.user_email" class="text-sm text-destructive">
-        {{ fieldErrors.user_email }}
+      <p v-if="fieldErrors.email" class="text-sm text-destructive">
+        {{ fieldErrors.email }}
       </p>
     </div>
     <Button type="submit" class="w-full" :disabled="join.isPending.value">

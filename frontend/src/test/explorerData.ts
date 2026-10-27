@@ -1,6 +1,11 @@
 /** A small pickup for explorer tests: Alice (this browser) and Bob, with subfolders. */
 import { on } from './fakeApi'
+import type { Folder } from '@/api/types'
+import type { components } from '@/api/schema'
+
 import { folder, media, pickup, PICKUP_ID } from './factories'
+
+type Pickup = components['schemas']['Pickup']
 
 export const ALICE = 'aaaaaaaa-0000-4000-8000-000000000001'
 export const BEACH = 'aaaaaaaa-0000-4000-8000-000000000002'
@@ -69,12 +74,35 @@ export const aliceMedia = [
   }),
 ]
 
-/** Serve the pickup; `member` false: this browser hasn't joined (no folder is editable). */
-export function serveExplorer({ member = true, creator = false } = {}) {
-  const list = member ? folders : folders.map((f) => ({ ...f, can_edit: false }))
-  const files = member ? aliceMedia : aliceMedia.map((m) => ({ ...m, can_edit: false }))
+/**
+ * Serve the pickup. `member` false: this browser hasn't joined (nothing is editable);
+ * `creator`: signed in as the creator (without a folder unless `member`), who may delete
+ * everything but the top-level folders; `pickupOverrides` for settings such as visibility.
+ */
+export function serveExplorer({
+  member = true,
+  creator = false,
+  pickupOverrides = {} as Partial<Pickup>,
+} = {}) {
+  const ownsFolder = (f: Folder) => member && f.user_name === 'Alice'
+  const list = folders.map((f) => ({
+    ...f,
+    can_edit: ownsFolder(f),
+    can_delete: f.parent !== null && (ownsFolder(f) || creator),
+  }))
+  const files = aliceMedia.map((m) => ({ ...m, can_edit: member, can_delete: member || creator }))
+  const signedIn = member || creator
   on('GET', '/api/pickups/:id/', {
-    body: pickup({ title: 'Summer party', is_creator: creator, folder_count: 4, media_count: 4 }),
+    body: pickup({
+      title: 'Summer party',
+      is_creator: creator,
+      is_member: signedIn,
+      has_folder: member,
+      member_name: member ? 'Alice' : creator ? 'Creator' : '',
+      folder_count: 4,
+      media_count: 4,
+      ...pickupOverrides,
+    }),
   })
   on('GET', '/api/pickups/:id/folders/', { body: list })
   on('GET', '/api/pickups/:p/folders/:f/media/', (_request, { f }) => ({
@@ -88,6 +116,7 @@ export function serveExplorer({ member = true, creator = false } = {}) {
                 folder: BEACH,
                 original_filename: 'wave.jpg',
                 can_edit: member,
+                can_delete: member || creator,
               }),
             ]
           : [],

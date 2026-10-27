@@ -1,4 +1,4 @@
-import type { CreatedPickup, Folder, Media } from '@/api/types'
+import type { CreatedPickup, Folder, Media, Member } from '@/api/types'
 import type { components } from '@/api/schema'
 
 type Pickup = components['schemas']['Pickup']
@@ -16,6 +16,13 @@ export function pickup(overrides: Partial<Pickup> = {}): Pickup {
     folder_count: 1,
     media_count: 1,
     is_creator: false,
+    is_member: false,
+    has_folder: false,
+    member_name: '',
+    can_view: true,
+    visibility: 'members',
+    join_policy: 'open',
+    email_privacy: true,
     ...overrides,
   }
 }
@@ -36,6 +43,7 @@ export function folder(overrides: Partial<Folder> = {}): Folder {
     media_count: 1,
     subfolder_count: 0,
     can_edit: false,
+    can_delete: false,
     ...overrides,
   }
 }
@@ -52,9 +60,27 @@ export function media(overrides: Partial<Media> = {}): Media {
     uploaded_at: '2026-10-27T10:00:00Z',
     caption: 'Sunset',
     can_edit: false,
+    can_delete: false,
     owner_name: 'Alice',
     is_image: true,
     is_video: false,
+    ...overrides,
+  }
+}
+
+export function member(overrides: Partial<Member> = {}): Member {
+  return {
+    id: '44444444-4444-4444-8444-444444444444',
+    user_name: 'Bob',
+    is_creator: false,
+    has_folder: true,
+    folder: FOLDER_ID,
+    invited: false,
+    has_email: false,
+    email: '',
+    created_at: '2026-10-27T10:00:00Z',
+    last_active_at: '2026-10-27T10:00:00Z',
+    is_you: false,
     ...overrides,
   }
 }

@@ -26,9 +26,3 @@ urlpatterns = [*api_urlpatterns]
 # Defense in depth: nginx also answers /admin with 404 when ADMIN_ENABLED is false.
 if settings.ADMIN_ENABLED:
     urlpatterns.insert(0, path("admin/", admin.site.urls))
-
-# Uploaded media in native development; in Docker nginx serves /media/.
-if settings.DEBUG:
-    from django.conf.urls.static import static
-
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

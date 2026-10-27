@@ -1,8 +1,10 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
+from .files import MediaFileView
 from .folders import FolderViewSet
 from .media import MediaViewSet
+from .members import MemberViewSet
 from .pickups import PickupViewSet
 from .uploads import (
     UploadChunkView,
@@ -17,8 +19,10 @@ router.register(r"pickups/(?P<pickup_id>[^/.]+)/folders", FolderViewSet, basenam
 router.register(
     r"pickups/(?P<pickup_id>[^/.]+)/folders/(?P<folder_id>[^/.]+)/media", MediaViewSet, basename="media"
 )
+router.register(r"pickups/(?P<pickup_id>[^/.]+)/members", MemberViewSet, basename="member")
 
 urlpatterns = [
+    path("api/files/<uuid:media_id>/", MediaFileView.as_view(), name="media-file"),
     path(
         "api/upload-sessions/",
         include(

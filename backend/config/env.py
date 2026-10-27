@@ -110,3 +110,20 @@ def secret_key(debug: bool) -> str:
         "SECRET_KEY must be a random string of at least 40 characters. Generate one with:\n"
         '  python3 -c "import secrets; print(secrets.token_urlsafe(50))"'
     )
+
+
+def email_hash_key(debug: bool) -> str:
+    """Key for the HMAC of stored e-mail addresses; refuse to start without a real one.
+
+    Only hashes of e-mail addresses are stored. Without the key they cannot be
+    matched against guessed addresses; changing it makes every stored hash useless.
+    """
+    value = os.environ.get("EMAIL_HASH_KEY", "")
+    if value not in INSECURE_SECRET_VALUES and len(value) >= 32:
+        return value
+    if debug:
+        return "dev-only-email-hash-key-" + "x" * 32
+    raise ImproperlyConfigured(
+        "EMAIL_HASH_KEY must be a random string of at least 32 characters (and must never change). "
+        'Generate one with:\n  python3 -c "import secrets; print(secrets.token_urlsafe(48))"'
+    )

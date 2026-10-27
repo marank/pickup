@@ -21,6 +21,27 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/files/{media_id}/': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * @description A media file, after the same access check as the API (private pickups stay private).
+     *     In production nginx sends the bytes (X-Accel-Redirect to an internal location), so
+     *     range requests and large videos work without tying up a gunicorn worker.
+     */
+    get: operations['files_retrieve']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/health': {
     parameters: {
       query?: never
@@ -62,14 +83,14 @@ export interface paths {
       path?: never
       cookie?: never
     }
-    /** @description Anyone can create a pickup and read one with its link; no listing, editing or deleting. */
+    /** @description Anyone with the link sees a pickup's title and settings; its contents follow its visibility. */
     get: operations['pickups_retrieve']
     put?: never
     post?: never
     delete?: never
     options?: never
     head?: never
-    /** @description Rename the pickup (creator only). */
+    /** @description Change title, visibility, join policy or e-mail privacy (creator only). */
     patch: operations['pickups_partial_update']
     trace?: never
   }
@@ -99,8 +120,25 @@ export interface paths {
     }
     get?: never
     put?: never
-    /** @description Join a pickup: create folder and member, log this session in as that member. */
+    /** @description Get a folder: as a new participant, or as the signed-in creator/invited person. */
     post: operations['pickups_join_create']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/pickups/{id}/link-request/': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** @description Mail the personal link to a known address. Same answer for unknown ones. */
+    post: operations['pickups_link_request_create']
     delete?: never
     options?: never
     head?: never
@@ -142,6 +180,23 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/pickups/{id}/session/email/': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** @description The signed-in participant adds their address and gets their personal link mailed. */
+    post: operations['pickups_session_email_create']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/pickups/{pickup_id}/folders/{folder_id}/media/{id}/': {
     parameters: {
       query?: never
@@ -153,7 +208,7 @@ export interface paths {
     get: operations['pickups_folders_media_retrieve']
     put?: never
     post?: never
-    /** @description Delete a media file. */
+    /** @description Delete a media file (owner, or the creator as moderator). */
     delete: operations['pickups_folders_media_destroy']
     options?: never
     head?: never
@@ -205,7 +260,7 @@ export interface paths {
     get: operations['pickups_folders_retrieve']
     put?: never
     post?: never
-    /** @description Delete a subfolder and everything in it (owner only). */
+    /** @description Delete a subfolder and everything in it (owner, or the creator as moderator). */
     delete: operations['pickups_folders_destroy']
     options?: never
     head?: never
@@ -259,6 +314,58 @@ export interface paths {
     put?: never
     /** @description Create a subfolder (owner only). */
     post: operations['pickups_folders_subfolders_create']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/pickups/{pickup_id}/members/': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** @description The participant list: creator only. */
+    get: operations['pickups_members_list']
+    put?: never
+    /** @description Invite someone by e-mail; an address that is already in the pickup gets its link again. */
+    post: operations['pickups_members_create']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/pickups/{pickup_id}/members/{id}/': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    post?: never
+    /** @description Remove a participant together with their folder and files. */
+    delete: operations['pickups_members_destroy']
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/pickups/{pickup_id}/members/{id}/resend/': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** @description Send the invitation again (only possible while addresses are stored). */
+    post: operations['pickups_members_resend_create']
     delete?: never
     options?: never
     head?: never
@@ -320,14 +427,11 @@ export interface paths {
 export type webhooks = Record<string, never>
 export interface components {
   schemas: {
-    /** @description Serializer for creating a new folder. */
-    CreateFolderRequest: {
-      /** @description Name of the folder */
-      name: string
-      /** @description Name of the member who owns this folder */
-      user_name: string
-      /** @description Optional email of the member (top-level folders) */
-      user_email?: string
+    /** @description A new pickup; the creator may give a name and an address for their creator link. */
+    CreatePickupRequest: {
+      title?: string
+      creator_name?: string
+      creator_email?: string
     }
     /** @description Serializer for creating an upload session. */
     CreateUploadSessionRequest: {
@@ -350,11 +454,37 @@ export interface components {
       is_active?: boolean
       /** @description Returns the share URL for this pickup. */
       readonly share_url: string
+      /** @description Private pickups don't tell outsiders how busy they are. */
       readonly folder_count: number
       readonly media_count: number
       /** @description Check if the current authenticated member is the creator. */
       readonly is_creator: boolean
+      readonly is_member: boolean
+      readonly has_folder: boolean
+      readonly member_name: string
+      readonly can_view: boolean
+      /**
+       * @description Who can see folders and files
+       *
+       *     * `members` - Only participants
+       *     * `link` - Anyone with the link
+       */
+      readonly visibility: components['schemas']['VisibilityEnum']
+      /**
+       * @description Who can become a participant
+       *
+       *     * `open` - Anyone with the link
+       *     * `invite` - Only invited people
+       *     * `closed` - Nobody new
+       */
+      readonly join_policy: components['schemas']['JoinPolicyEnum']
+      /** @description Store e-mail addresses only as keyed hashes; off: also in plain text (creator sees them) */
+      readonly email_privacy: boolean
       readonly member_url: string
+    }
+    EmailRequest: {
+      /** Format: email */
+      email: string
     }
     Error: {
       error: string
@@ -388,6 +518,8 @@ export interface components {
       readonly subfolder_count: number
       /** @description Check if the current authenticated member owns this folder. */
       readonly can_edit: boolean
+      /** @description Owner or creator (moderation); never a member's top-level folder. */
+      readonly can_delete: boolean
     }
     /** @description Name for a new or renamed folder. */
     FolderNameRequest: {
@@ -395,6 +527,24 @@ export interface components {
     }
     Health: {
       status: string
+    }
+    InviteRequest: {
+      /** Format: email */
+      email: string
+      name?: string
+    }
+    /**
+     * @description * `open` - Anyone with the link
+     *     * `invite` - Only invited people
+     *     * `closed` - Nobody new
+     * @enum {string}
+     */
+    JoinPolicyEnum: 'open' | 'invite' | 'closed'
+    /** @description Joining: the person's name, their top-level folder's name, optionally an address. */
+    JoinRequest: {
+      user_name: string
+      name: string
+      email?: string
     }
     JoinResponse: {
       folder: components['schemas']['Folder']
@@ -410,11 +560,8 @@ export interface components {
        * @description The folder this media belongs to
        */
       folder: string
-      /**
-       * Format: uri
-       * @description The uploaded media file
-       */
-      file: string
+      /** @description Files are served through an access check (private pickups), never straight from disk. */
+      readonly file: string
       /** @description Original filename of the uploaded file */
       original_filename: string
       /**
@@ -433,6 +580,8 @@ export interface components {
       caption?: string
       /** @description Check if the current authenticated member owns this media's folder. */
       readonly can_edit: boolean
+      /** @description Owner or creator (moderation). */
+      readonly can_delete: boolean
       readonly owner_name: string
       readonly is_image: boolean
       readonly is_video: boolean
@@ -443,6 +592,33 @@ export interface components {
      * @enum {string}
      */
     MediaTypeEnum: 'image' | 'video'
+    /** @description A participant as the creator sees them (addresses only without privacy mode). */
+    Member: {
+      /** Format: uuid */
+      readonly id: string
+      /** @description Display name of the member */
+      readonly user_name: string
+      /** @description Whether this member is the pickup creator */
+      readonly is_creator: boolean
+      readonly has_folder: boolean
+      /**
+       * Format: uuid
+       * @description The member's folder (optional, e.g. for creator without folder)
+       */
+      readonly folder: string | null
+      readonly invited: boolean
+      readonly has_email: boolean
+      /**
+       * Format: email
+       * @description Plain address; only kept while the pickup's e-mail privacy mode is off
+       */
+      readonly email: string
+      /** Format: date-time */
+      readonly created_at: string
+      /** Format: date-time */
+      readonly last_active_at: string
+      readonly is_you: boolean
+    }
     Message: {
       message: string
     }
@@ -457,6 +633,23 @@ export interface components {
     PatchedPickupUpdateRequest: {
       /** @description Optional title for the pickup */
       title?: string
+      /**
+       * @description Who can see folders and files
+       *
+       *     * `members` - Only participants
+       *     * `link` - Anyone with the link
+       */
+      visibility?: components['schemas']['VisibilityEnum']
+      /**
+       * @description Who can become a participant
+       *
+       *     * `open` - Anyone with the link
+       *     * `invite` - Only invited people
+       *     * `closed` - Nobody new
+       */
+      join_policy?: components['schemas']['JoinPolicyEnum']
+      /** @description Store e-mail addresses only as keyed hashes; off: also in plain text (creator sees them) */
+      email_privacy?: boolean
     }
     /** @description Serializer for Pickup model. */
     Pickup: {
@@ -470,10 +663,32 @@ export interface components {
       is_active?: boolean
       /** @description Returns the share URL for this pickup. */
       readonly share_url: string
+      /** @description Private pickups don't tell outsiders how busy they are. */
       readonly folder_count: number
       readonly media_count: number
       /** @description Check if the current authenticated member is the creator. */
       readonly is_creator: boolean
+      readonly is_member: boolean
+      readonly has_folder: boolean
+      readonly member_name: string
+      readonly can_view: boolean
+      /**
+       * @description Who can see folders and files
+       *
+       *     * `members` - Only participants
+       *     * `link` - Anyone with the link
+       */
+      readonly visibility: components['schemas']['VisibilityEnum']
+      /**
+       * @description Who can become a participant
+       *
+       *     * `open` - Anyone with the link
+       *     * `invite` - Only invited people
+       *     * `closed` - Nobody new
+       */
+      readonly join_policy: components['schemas']['JoinPolicyEnum']
+      /** @description Store e-mail addresses only as keyed hashes; off: also in plain text (creator sees them) */
+      readonly email_privacy: boolean
     }
     SessionRequest: {
       access_key: string
@@ -546,6 +761,12 @@ export interface components {
       /** @description Return list of chunk indices that have not been uploaded. */
       readonly missing_chunks: number[]
     }
+    /**
+     * @description * `members` - Only participants
+     *     * `link` - Anyone with the link
+     * @enum {string}
+     */
+    VisibilityEnum: 'members' | 'link'
   }
   responses: never
   parameters: never
@@ -566,6 +787,34 @@ export interface operations {
     responses: {
       /** @description No response body */
       204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
+  files_retrieve: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        media_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/octet-stream': string
+        }
+      }
+      /** @description No response body */
+      404: {
         headers: {
           [name: string]: unknown
         }
@@ -599,7 +848,13 @@ export interface operations {
       path?: never
       cookie?: never
     }
-    requestBody?: never
+    requestBody?: {
+      content: {
+        'multipart/form-data': components['schemas']['CreatePickupRequest']
+        'application/x-www-form-urlencoded': components['schemas']['CreatePickupRequest']
+        'application/json': components['schemas']['CreatePickupRequest']
+      }
+    }
     responses: {
       201: {
         headers: {
@@ -689,6 +944,14 @@ export interface operations {
           'application/json': components['schemas']['Folder'][]
         }
       }
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
     }
   }
   pickups_join_create: {
@@ -703,9 +966,9 @@ export interface operations {
     }
     requestBody: {
       content: {
-        'multipart/form-data': components['schemas']['CreateFolderRequest']
-        'application/x-www-form-urlencoded': components['schemas']['CreateFolderRequest']
-        'application/json': components['schemas']['CreateFolderRequest']
+        'multipart/form-data': components['schemas']['JoinRequest']
+        'application/x-www-form-urlencoded': components['schemas']['JoinRequest']
+        'application/json': components['schemas']['JoinRequest']
       }
     }
     responses: {
@@ -715,6 +978,50 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['JoinResponse']
+        }
+      }
+      400: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+    }
+  }
+  pickups_link_request_create: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        /** @description A UUID string identifying this pickup. */
+        id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'multipart/form-data': components['schemas']['EmailRequest']
+        'application/x-www-form-urlencoded': components['schemas']['EmailRequest']
+        'application/json': components['schemas']['EmailRequest']
+      }
+    }
+    responses: {
+      202: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Message']
         }
       }
     }
@@ -737,6 +1044,14 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['Media'][]
+        }
+      }
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
         }
       }
     }
@@ -798,6 +1113,42 @@ export interface operations {
       }
     }
   }
+  pickups_session_email_create: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        /** @description A UUID string identifying this pickup. */
+        id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'multipart/form-data': components['schemas']['EmailRequest']
+        'application/x-www-form-urlencoded': components['schemas']['EmailRequest']
+        'application/json': components['schemas']['EmailRequest']
+      }
+    }
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Message']
+        }
+      }
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+    }
+  }
   pickups_folders_media_retrieve: {
     parameters: {
       query?: never
@@ -818,6 +1169,14 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['Media']
+        }
+      }
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
         }
       }
     }
@@ -954,6 +1313,14 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['Folder']
+        }
+      }
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
         }
       }
     }
@@ -1155,6 +1522,155 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['Folder']
+        }
+      }
+      400: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+    }
+  }
+  pickups_members_list: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        pickup_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Member'][]
+        }
+      }
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+    }
+  }
+  pickups_members_create: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        pickup_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'multipart/form-data': components['schemas']['InviteRequest']
+        'application/x-www-form-urlencoded': components['schemas']['InviteRequest']
+        'application/json': components['schemas']['InviteRequest']
+      }
+    }
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Member']
+        }
+      }
+      400: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+    }
+  }
+  pickups_members_destroy: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        /** @description A UUID string identifying this member. */
+        id: string
+        pickup_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description No response body */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      400: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+    }
+  }
+  pickups_members_resend_create: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        /** @description A UUID string identifying this member. */
+        id: string
+        pickup_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Message']
         }
       }
       400: {

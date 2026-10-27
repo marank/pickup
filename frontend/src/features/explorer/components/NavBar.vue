@@ -77,7 +77,7 @@ function toggleTree() {
           size="icon"
           aria-label="Up one level"
           title="Up one level (Backspace)"
-          :disabled="explorer.folderId === null"
+          :disabled="explorer.folderId === null && !explorer.page"
           @click="explorer.goUp()"
         >
           <ArrowUpIcon />
@@ -88,6 +88,7 @@ function toggleTree() {
           <RefreshCwIcon />
         </Button>
         <label
+          v-if="!explorer.page"
           class="relative flex h-9 items-center max-md:hidden md:w-48 lg:w-64"
           aria-label="Search this folder"
         >
@@ -100,6 +101,7 @@ function toggleTree() {
           />
         </label>
         <Button
+          v-if="!explorer.page"
           variant="ghost"
           size="icon"
           class="md:hidden"
@@ -111,7 +113,7 @@ function toggleTree() {
         </Button>
       </div>
     </div>
-    <label v-if="searchOpen" class="relative flex h-9 items-center md:hidden">
+    <label v-if="searchOpen && !explorer.page" class="relative flex h-9 items-center md:hidden">
       <SearchIcon class="pointer-events-none absolute left-2.5 size-4 text-muted-foreground" />
       <input
         v-model="explorer.search"

@@ -38,7 +38,22 @@ class Member(UUIDModel):
         help_text="The member's folder (optional, e.g. for creator without folder)",
     )
     user_name = models.CharField(max_length=100, help_text="Display name of the member")
-    user_email = models.EmailField(blank=True, help_text="Optional email of the member")
+    email = models.EmailField(
+        blank=True,
+        help_text="Plain address; only kept while the pickup's e-mail privacy mode is off",
+    )
+    email_hash = models.CharField(
+        max_length=64,
+        blank=True,
+        db_index=True,
+        help_text="Keyed hash (HMAC) of the member's e-mail address, see services/identity.py",
+    )
+    invited_at = models.DateTimeField(
+        null=True, blank=True, help_text="Set when the creator invited by e-mail"
+    )
+    link_sent_at = models.DateTimeField(
+        null=True, blank=True, help_text="Last personal-link mail, to throttle repeated requests"
+    )
     is_creator = models.BooleanField(default=False, help_text="Whether this member is the pickup creator")
     access_key = models.CharField(max_length=64, unique=True, default=generate_access_key, editable=False)
     created_at = models.DateTimeField(default=timezone.now)

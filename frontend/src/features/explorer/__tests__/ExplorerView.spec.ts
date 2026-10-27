@@ -684,6 +684,36 @@ describe('explorer: visitors and edge cases', () => {
     expect(pageText()).toContain('Pickup not found')
   })
 
+  it('lets the creator delete what others added, but not their top-level folders', async () => {
+    on('DELETE', '/api/pickups/:p/folders/:f/', { status: 204 })
+    await render(BOB, { member: false, creator: true })
+    expect(pageText()).toContain('Create your folder')
+    await click(item('Drone shots'))
+    await press('Delete')
+    confirmDialogButton('Delete').click()
+    await settle()
+    expect(
+      requests.some((r) => r.method === 'DELETE' && r.path.endsWith(`/folders/${DRONE}/`)),
+    ).toBe(true)
+
+    findButton('Up one level').click()
+    await settle()
+    await click(item("Bob's photos"))
+    await press('Delete')
+    expect($('[role="alertdialog"]')).toBeNull()
+  })
+
+  it('shows only how to join a private pickup, without loading its contents', async () => {
+    await render(undefined, {
+      member: false,
+      pickupOverrides: { can_view: false, join_policy: 'invite', folder_count: 0, media_count: 0 },
+    })
+    expect(pageText()).toContain('Private pickup')
+    expect(pageText()).toContain('Only invited people can take part')
+    expect(items()).toEqual([])
+    expect(requests.some((r) => r.path.endsWith('/folders/'))).toBe(false)
+  })
+
   it('redirects old folder links', async () => {
     const { router } = await render()
     await router.push(`/pickup/${PICKUP_ID}/folder/${ALICE}`)

@@ -6,6 +6,17 @@ from django.utils import timezone
 from apps.core.models import UUIDModel
 
 
+class Visibility(models.TextChoices):
+    MEMBERS = "members", "Only participants"
+    LINK = "link", "Anyone with the link"
+
+
+class JoinPolicy(models.TextChoices):
+    OPEN = "open", "Anyone with the link"
+    INVITE = "invite", "Only invited people"
+    CLOSED = "closed", "Nobody new"
+
+
 class Pickup(UUIDModel):
     """
     Represents a shared space where users can upload and view media.
@@ -18,6 +29,22 @@ class Pickup(UUIDModel):
     title = models.CharField(max_length=200, blank=True, help_text="Optional title for the pickup")
     created_at = models.DateTimeField(default=timezone.now)
     is_active = models.BooleanField(default=True, help_text="Whether this pickup is active")
+    visibility = models.CharField(
+        max_length=10,
+        choices=Visibility.choices,
+        default=Visibility.MEMBERS,
+        help_text="Who can see folders and files",
+    )
+    email_privacy = models.BooleanField(
+        default=True,
+        help_text="Store e-mail addresses only as keyed hashes; off: also in plain text (creator sees them)",
+    )
+    join_policy = models.CharField(
+        max_length=10,
+        choices=JoinPolicy.choices,
+        default=JoinPolicy.OPEN,
+        help_text="Who can become a participant",
+    )
 
     class Meta:
         db_table = "pickups"

@@ -56,7 +56,8 @@
         "env": {
           "DEBUG": "false",
           "APP_URLS": "https://app.example.com",
-          "SECRET_KEY": "local-deploy-check-not-secret-but-long-and-random-enough-0123456789abcdef"
+          "SECRET_KEY": "local-deploy-check-not-secret-but-long-and-random-enough-0123456789abcdef",
+          "EMAIL_HASH_KEY": "local-deploy-check-email-hash-key-0123456789abcdef"
         }
       },
       "hide": true,

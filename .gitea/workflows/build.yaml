@@ -114,6 +114,7 @@ jobs:
         env:
           DEBUG: "false"
           SECRET_KEY: ci-deploy-check-not-secret-but-long-and-random-enough-0123456789abcdef
+          EMAIL_HASH_KEY: ci-deploy-check-email-hash-key-0123456789abcdef
           APP_URLS: https://app.example.com
         run: uv run python manage.py check --deploy --fail-level WARNING
 
@@ -304,6 +305,7 @@ jobs:
             --read-only --tmpfs /tmp -v "$NAME-data:/data" \
             --security-opt no-new-privileges:true --cap-drop ALL \
             -e SECRET_KEY=ci-smoke-test-not-secret-but-long-enough-for-the-check-0123456789 \
+            -e EMAIL_HASH_KEY=ci-smoke-test-email-hash-key-0123456789abcdef \
             -e APP_URLS=https://app.example.com -e TRUSTED_PROXIES=127.0.0.1 \
             -e DB_TYPE=postgres -e DB_HOST=db -e DB_NAME=ci -e DB_USER=ci -e DB_PASSWORD=ci \
             -e ADMIN_USERNAME=admin -e ADMIN_EMAIL=admin@example.com \
@@ -332,7 +334,8 @@ jobs:
           probe /django-static/admin/css/base.css 200
           probe /admin/ 404
           probe /api/pickups/00000000-0000-4000-8000-000000000000/ 404
-          probe /media/upload_chunks/x 404
+          probe /protected-media/x 404
+          probe /api/files/00000000-0000-4000-8000-000000000000/ 404
           docker exec "$NAME" supervisorctl -c /etc/supervisord.conf status
           if docker exec "$NAME" supervisorctl -c /etc/supervisord.conf status | grep -v RUNNING; then
             echo "Not all programs are running" >&2

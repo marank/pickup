@@ -23,14 +23,14 @@ describe('JoinView', () => {
     expect((wrapper.find('#folder_name').element as HTMLInputElement).value).toBe('Bob')
     await wrapper.find('#folder_name').setValue('Bob uploads')
     await wrapper.find('#user_name').setValue('Bobby')
-    await wrapper.find('#user_email').setValue('bob@example.com')
+    await wrapper.find('#email').setValue('bob@example.com')
     await wrapper.find('form').trigger('submit')
     await flushPromises()
 
     expect(requests.find((r) => r.path.endsWith('/join/'))?.body).toEqual({
       user_name: 'Bobby',
       name: 'Bob uploads',
-      user_email: 'bob@example.com',
+      email: 'bob@example.com',
     })
     await vi.waitFor(() => expect(router.currentRoute.value.name).toBe('explorer-folder'))
   })
@@ -42,7 +42,7 @@ describe('JoinView', () => {
       body: {
         user_name: ['This name is already taken.'],
         name: ['Folder exists.'],
-        user_email: ['Bad email.'],
+        email: ['Bad email.'],
       },
     })
     const { wrapper, router } = await render()

@@ -4,6 +4,7 @@ import { computed, ref, watch } from 'vue'
 import { isNotFound } from '@/api/errors'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import NotFoundCard from '@/components/NotFoundCard.vue'
+import JoinPanel from '@/features/pickups/components/JoinPanel.vue'
 import {
   Sheet,
   SheetContent,
@@ -20,18 +21,20 @@ import FolderTree from '../components/FolderTree.vue'
 import MediaViewer from '../components/MediaViewer.vue'
 import NameDialog from '../components/NameDialog.vue'
 import NavBar from '../components/NavBar.vue'
+import PagePane from '../components/PagePane.vue'
 import PickupBar from '../components/PickupBar.vue'
 import ShareDialog from '../components/ShareDialog.vue'
 import StatusBar from '../components/StatusBar.vue'
 import UploadTray from '../components/UploadTray.vue'
-import { provideExplorer } from '../composables/useExplorer'
+import { provideExplorer, type ExplorerPage } from '../composables/useExplorer'
 import type { ExplorerItem } from '../lib/items'
 
-const props = defineProps<{ pickupId: string; folderId?: string }>()
+const props = defineProps<{ pickupId: string; folderId?: string; page?: ExplorerPage }>()
 
 const explorer = provideExplorer(
   () => props.pickupId,
   () => props.folderId ?? null,
+  () => props.page ?? null,
 )
 const { mutations } = explorer
 const treeOpen = ref(false)
@@ -121,6 +124,9 @@ function onFiles(event: Event) {
       title="Pickup not found"
       description="Check the link you got, or ask for a new one."
     />
+    <div v-else-if="explorer.pickup.data && !explorer.canView" class="py-6 sm:py-10">
+      <JoinPanel :pickup="explorer.pickup.data" />
+    </div>
     <div
       v-else
       class="flex h-[calc(100dvh-5.5rem)] min-h-[28rem] flex-col gap-2 sm:h-[calc(100dvh-6.5rem)]"
@@ -131,19 +137,22 @@ function onFiles(event: Event) {
       >
         <div class="space-y-1 border-b bg-pane px-2 py-2">
           <NavBar @open-tree="treeOpen = true" />
-          <CommandBar />
+          <CommandBar v-if="!page" />
         </div>
         <div class="flex min-h-0 flex-1">
           <aside
             v-if="explorer.prefs.treePane"
             class="w-64 shrink-0 overflow-y-auto border-r bg-pane p-2 max-md:hidden lg:w-72"
           >
-            <FolderTree />
+            <FolderTree class="min-h-full" />
           </aside>
-          <ContentPane />
-          <DetailsPane v-if="explorer.prefs.detailsPane" class="max-lg:hidden" />
+          <PagePane v-if="page" />
+          <template v-else>
+            <ContentPane />
+            <DetailsPane v-if="explorer.prefs.detailsPane" class="max-lg:hidden" />
+          </template>
         </div>
-        <StatusBar />
+        <StatusBar v-if="!page" />
       </div>
     </div>
 
@@ -153,7 +162,7 @@ function onFiles(event: Event) {
           <SheetTitle>Folders</SheetTitle>
           <SheetDescription class="sr-only">Choose a folder to open</SheetDescription>
         </SheetHeader>
-        <FolderTree @navigated="treeOpen = false" />
+        <FolderTree class="flex-1 pb-[env(safe-area-inset-bottom)]" @navigated="treeOpen = false" />
       </SheetContent>
     </Sheet>
 
@@ -212,6 +221,8 @@ function onFiles(event: Event) {
     />
     <ShareDialog
       v-model:open="shareOpen"
+      :visibility="explorer.pickup.data?.visibility"
+      :join-policy="explorer.pickup.data?.join_policy"
       :pickup-id="pickupId"
       :title="explorer.pickup.data?.title || 'Untitled pickup'"
     />

@@ -17,6 +17,7 @@ from ..serializers import (
     MessageSerializer,
     UploadMediaSerializer,
 )
+from ..services.access import can_delete_folder, can_view
 from ..services.folders import FolderError, create_subfolder, delete_subfolder, rename_folder
 from ..services.members import get_member_from_request
 
@@ -48,6 +49,16 @@ class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
         context["member"] = member
         return context
 
+    def _deny_private(self, folder: Folder) -> Response | None:
+        if can_view(folder.pickup, get_member_from_request(self.request, folder.pickup)):
+            return None
+        return Response({"error": "This pickup is private."}, status=status.HTTP_403_FORBIDDEN)
+
+    @extend_schema(responses={200: FolderSerializer, 403: ErrorSerializer})
+    def retrieve(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        denied = self._deny_private(self.get_object())
+        return denied or super().retrieve(request, *args, **kwargs)
+
     @extend_schema(methods=["GET"], operation_id="folder_media_list", responses=MediaSerializer(many=True))
     @extend_schema(
         methods=["POST"],
@@ -62,6 +73,9 @@ class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
         member = get_member_from_request(request, folder.pickup)
 
         if request.method == "GET":
+            denied = self._deny_private(folder)
+            if denied:
+                return denied
             items = folder.media.select_related("folder")
             serializer = MediaSerializer(items, many=True, context={"member": member})
             return Response(serializer.data)
@@ -144,10 +158,13 @@ class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
 
     @extend_schema(responses={204: None, 400: ErrorSerializer, 403: ErrorSerializer})
     def destroy(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        """Delete a subfolder and everything in it (owner only)."""
-        folder, denied = self._owned(request)
-        if denied:
-            return denied
+        """Delete a subfolder and everything in it (owner, or the creator as moderator)."""
+        folder = self.get_object()
+        member = get_member_from_request(request, folder.pickup)
+        if folder.parent_id is not None and not can_delete_folder(member, folder):
+            return Response(
+                {"error": "Only the owner can change this folder."}, status=status.HTTP_403_FORBIDDEN
+            )
         try:
             delete_subfolder(folder)
         except FolderError as exc:

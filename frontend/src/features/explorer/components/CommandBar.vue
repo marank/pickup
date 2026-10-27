@@ -51,6 +51,10 @@ const currentView = computed(
   () => views.find((view) => view.mode === explorer.prefs.view) ?? views[0]!,
 )
 
+/** Signed in without a folder (creator, invited person), or the pickup is open to everyone. */
+const canJoin = computed(
+  () => explorer.pickup.data?.is_member || explorer.pickup.data?.join_policy === 'open',
+)
 const selected = computed(() => explorer.selectedItems)
 const single = computed(() => (selected.value.length === 1 ? selected.value[0]! : null))
 const selectedFiles = computed(() => selected.value.filter((item) => item.kind === 'file'))
@@ -80,14 +84,14 @@ const selectedFiles = computed(() => selected.value.filter((item) => item.kind =
       </Button>
     </template>
     <Button
-      v-else-if="!explorer.isMember && explorer.folders.isSuccess"
+      v-else-if="!explorer.isMember && explorer.folders.isSuccess && canJoin"
       as-child
       size="sm"
       variant="secondary"
     >
       <RouterLink :to="{ name: 'pickup-join', params: { pickupId: explorer.pickupId } }">
         <UserPlusIcon />
-        Join to upload
+        {{ explorer.pickup.data?.is_member ? 'Create your folder' : 'Join to upload' }}
       </RouterLink>
     </Button>
 

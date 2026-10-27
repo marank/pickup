@@ -26,7 +26,9 @@ const segments = computed(() => [
   { id: null as string | null, name: title.value },
   ...explorer.path.map((folder) => ({ id: folder.id as string | null, name: folder.name })),
 ])
+const pageNames = { settings: 'Settings', people: 'People' } as const
 const pathText = computed(() => segments.value.map((segment) => segment.name).join(' / '))
+const isLast = (index: number) => index === segments.value.length - 1 && !explorer.page
 
 async function edit() {
   text.value = pathText.value
@@ -100,13 +102,22 @@ useEventListener(window, 'keydown', (event: KeyboardEvent) => {
           <button
             type="button"
             class="flex h-7 shrink-0 items-center gap-1.5 rounded px-1.5 text-sm whitespace-nowrap hover:bg-muted"
-            :class="index === segments.length - 1 ? 'font-semibold' : 'text-muted-foreground'"
-            :aria-current="index === segments.length - 1 ? 'location' : undefined"
+            :class="isLast(index) ? 'font-semibold' : 'text-muted-foreground'"
+            :aria-current="isLast(index) ? 'location' : undefined"
             @click="explorer.navigate(segment.id)"
           >
             <PackageOpenIcon v-if="index === 0" class="size-4 text-tomato" />
             {{ segment.name }}
           </button>
+        </template>
+        <template v-if="explorer.page">
+          <ChevronRightIcon class="mx-0.5 size-3.5 shrink-0 text-muted-foreground" />
+          <span
+            class="flex h-7 shrink-0 items-center px-1.5 text-sm font-semibold whitespace-nowrap"
+            aria-current="location"
+          >
+            {{ pageNames[explorer.page] }}
+          </span>
         </template>
         <span class="min-w-6 flex-1 self-stretch" @click="edit" />
       </div>

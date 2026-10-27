@@ -1,5 +1,14 @@
 <script setup lang="ts">
-import { ChevronDownIcon, CrownIcon, FolderIcon, LogOutIcon, UserPlusIcon } from '@lucide/vue'
+import {
+  ChevronDownIcon,
+  CrownIcon,
+  FolderIcon,
+  LogOutIcon,
+  MailIcon,
+  SettingsIcon,
+  UserPlusIcon,
+  UsersIcon,
+} from '@lucide/vue'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -20,23 +29,30 @@ import { ownerColor } from '@/lib/ownerColor'
 import { useTheme } from '@/lib/theme'
 
 import { useLeavePickup, usePickup, usePickupFolders } from '../composables/usePickup'
+import EmailLinkDialog from './EmailLinkDialog.vue'
 
 const props = defineProps<{ pickupId: string }>()
 
 const router = useRouter()
 const theme = useTheme()
 const pickup = usePickup(() => props.pickupId)
-const folders = usePickupFolders(() => props.pickupId)
+const folders = usePickupFolders(
+  () => props.pickupId,
+  () => pickup.data.value?.can_view ?? false,
+)
 const leave = useLeavePickup(() => props.pickupId)
 const confirmOpen = ref(false)
+const emailOpen = ref(false)
+const openPage = (page: 'settings' | 'people') =>
+  router.push({ name: 'explorer-page', params: { pickupId: props.pickupId, page } })
 
 const ownFolder = computed(() =>
   folders.data.value?.find((folder) => folder.can_edit && folder.parent === null),
 )
 const isCreator = computed(() => pickup.data.value?.is_creator ?? false)
 /** This browser is signed in as a member (with a folder, or as the creator). */
-const signedIn = computed(() => Boolean(ownFolder.value) || isCreator.value)
-const name = computed(() => ownFolder.value?.user_name ?? (isCreator.value ? 'Creator' : 'Guest'))
+const signedIn = computed(() => pickup.data.value?.is_member ?? false)
+const name = computed(() => (signedIn.value ? pickup.data.value?.member_name || 'You' : 'Guest'))
 const color = computed(() => (ownFolder.value ? ownerColor(name.value) : 'var(--muted-foreground)'))
 
 const leaveDescription = computed(() =>
@@ -96,12 +112,27 @@ async function confirmLeave() {
         Go to my folder
       </DropdownMenuItem>
       <DropdownMenuItem
-        v-if="!ownFolder"
+        v-if="!ownFolder && (signedIn || pickup.data.value?.join_policy === 'open')"
         @select="router.push({ name: 'pickup-join', params: { pickupId } })"
       >
         <UserPlusIcon />
-        Join this pickup
+        {{ signedIn ? 'Create my folder' : 'Join this pickup' }}
       </DropdownMenuItem>
+      <DropdownMenuItem v-if="signedIn" @select="emailOpen = true">
+        <MailIcon />
+        Email me my personal link
+      </DropdownMenuItem>
+      <template v-if="isCreator">
+        <DropdownMenuSeparator />
+        <DropdownMenuItem @select="openPage('people')">
+          <UsersIcon />
+          People &amp; invitations
+        </DropdownMenuItem>
+        <DropdownMenuItem @select="openPage('settings')">
+          <SettingsIcon />
+          Pickup settings
+        </DropdownMenuItem>
+      </template>
       <DropdownMenuSeparator />
       <DropdownMenuLabel class="text-xs text-muted-foreground">Appearance</DropdownMenuLabel>
       <DropdownMenuRadioGroup v-model="theme">
@@ -116,6 +147,8 @@ async function confirmLeave() {
       </template>
     </DropdownMenuContent>
   </DropdownMenu>
+
+  <EmailLinkDialog v-if="pickup.data.value" v-model:open="emailOpen" :pickup="pickup.data.value" />
 
   <ConfirmDialog
     v-model:open="confirmOpen"

@@ -1,17 +1,26 @@
-"""Membership: who is calling, creating pickups and joining them."""
+"""Membership: who is calling, creating pickups, joining, inviting and removing people."""
 
-import logging
+from datetime import timedelta
 
-from django.conf import settings
-from django.core.mail import send_mail
+from django.db import transaction
 from django.http import HttpRequest
+from django.utils import timezone
 
-from ..models import Folder, Member, Pickup
-
-logger = logging.getLogger(__name__)
-
+from ..models import Folder, JoinPolicy, Media, Member, Pickup
+from .folders import subtree_ids
+from .identity import email_hash, normalize_name, remember_email
+from .mail import send_personal_link
 
 SESSION_KEY = "pickup_members"  # {pickup_id: member_id} of the pickups this browser belongs to
+LINK_MAIL_COOLDOWN = timedelta(minutes=2)
+
+
+class MembershipError(Exception):
+    """A membership action that is not allowed; the message is shown to the user."""
+
+    def __init__(self, message: str, status: int = 400) -> None:
+        super().__init__(message)
+        self.status = status
 
 
 def get_member_from_request(request: HttpRequest, pickup: Pickup) -> Member | None:
@@ -19,7 +28,7 @@ def get_member_from_request(request: HttpRequest, pickup: Pickup) -> Member | No
     member_id = request.session.get(SESSION_KEY, {}).get(str(pickup.id))
     if not member_id:
         return None
-    return Member.objects.select_related("folder").filter(id=member_id, pickup=pickup).first()
+    return Member.objects.select_related("folder", "pickup").filter(id=member_id, pickup=pickup).first()
 
 
 def login_member(request: HttpRequest, member: Member) -> None:
@@ -43,38 +52,131 @@ def member_for_key(pickup: Pickup, access_key: str) -> Member | None:
     return Member.objects.filter(pickup=pickup, access_key=access_key).first()
 
 
-def create_pickup(title: str) -> tuple[Pickup, Member]:
-    """Create a pickup together with its creator member."""
+def name_taken(pickup: Pickup, user_name: str, exclude: Member | None = None) -> bool:
+    """Names identify people: no second "mark" next to "Mark", nor a lookalike with extra spaces."""
+    others = Member.objects.filter(pickup=pickup, user_name__iexact=normalize_name(user_name))
+    if exclude is not None:
+        others = others.exclude(id=exclude.id)
+    return others.exists()
+
+
+def folder_name_taken(pickup: Pickup, name: str) -> bool:
+    return Folder.objects.filter(
+        pickup=pickup, parent__isnull=True, name__iexact=normalize_name(name)
+    ).exists()
+
+
+def create_pickup(
+    request: HttpRequest, title: str, creator_name: str = "", creator_email: str = ""
+) -> tuple[Pickup, Member]:
+    """Create a pickup with its creator; mail the creator link if an address was given."""
     pickup = Pickup.objects.create(title=title)
-    creator = Member.objects.create(pickup=pickup, user_name="Creator", user_email="", is_creator=True)
+    creator = Member(pickup=pickup, user_name=normalize_name(creator_name) or "Creator", is_creator=True)
+    if creator_email:
+        remember_email(creator, creator_email)
+    creator.save()
+    if creator_email:
+        send_personal_link(creator, creator_email, request, "created")
     return pickup, creator
 
 
-def join_pickup(pickup: Pickup, *, name: str, user_name: str, user_email: str) -> Member:
-    """Create a folder and a member for a new participant."""
-    folder = Folder.objects.create(pickup=pickup, name=name, user_name=user_name, user_email=user_email)
-    return Member.objects.create(
-        pickup=pickup, folder=folder, user_name=user_name, user_email=user_email, is_creator=False
-    )
+@transaction.atomic
+def join_pickup(
+    request: HttpRequest,
+    pickup: Pickup,
+    current: Member | None,
+    *,
+    name: str,
+    user_name: str,
+    email: str = "",
+) -> Member:
+    """
+    Give a participant their folder. Someone already signed in without a folder (the
+    creator, or an invited person) gets it on their membership; everyone else becomes a
+    new member — if the pickup's join policy allows it.
+    """
+    if current is not None and current.folder_id is not None:
+        raise MembershipError("You already have a folder in this pickup.")
+    if current is None and pickup.join_policy == JoinPolicy.INVITE:
+        raise MembershipError("This pickup is invite-only. Ask the creator for an invitation.", status=403)
+    if current is None and pickup.join_policy == JoinPolicy.CLOSED:
+        raise MembershipError("This pickup doesn't take new participants anymore.", status=403)
+
+    user_name = normalize_name(user_name)
+    if name_taken(pickup, user_name, exclude=current):
+        raise MembershipError(
+            "This name is already taken in this pickup. If it is yours, open your personal link."
+        )
+    if folder_name_taken(pickup, name):
+        raise MembershipError("A folder with this name already exists in this pickup.")
+
+    folder = Folder.objects.create(pickup=pickup, name=normalize_name(name), user_name=user_name)
+    member = current or Member(pickup=pickup)
+    member.folder = folder
+    member.user_name = user_name
+    if email:
+        remember_email(member, email)
+    member.save()
+    if email:
+        send_personal_link(member, email, request, "joined")
+    return member
 
 
-def send_share_email(member: Member, request: HttpRequest) -> None:
-    """Send the member their personal link. Failures are logged, never raised."""
-    member_url = request.build_absolute_uri(member.personal_path)
-    subject = f"Your Pickup Share Link - {member.pickup.title or 'Untitled'}"
-    message = f"""
-Hello {member.user_name},
+def set_email(request: HttpRequest, member: Member, email: str) -> None:
+    """A participant adds (or changes) their address and gets their link mailed."""
+    remember_email(member, email)
+    member.save(update_fields=["email", "email_hash"])
+    send_personal_link(member, email, request, "requested")
 
-Thank you for joining the pickup! Here is your personal link:
 
-{member_url}
+def request_link(request: HttpRequest, pickup: Pickup, email: str) -> None:
+    """
+    Mail the personal link to whoever has this address in the pickup. Callers answer the
+    same either way, so nobody learns who participates; a cooldown stops mail bombing.
+    """
+    member = Member.objects.filter(pickup=pickup, email_hash=email_hash(email)).first()
+    if member is None:
+        return
+    if member.link_sent_at and timezone.now() - member.link_sent_at < LINK_MAIL_COOLDOWN:
+        return
+    send_personal_link(member, email, request, "requested")
 
-You can use this link to access your pickup and upload media files.
 
-Best regards,
-Pickup Team
-"""
-    try:
-        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [member.user_email])
-    except Exception:
-        logger.exception("Could not send share link to member %s", member.id)
+def invite(request: HttpRequest, pickup: Pickup, inviter: Member, email: str, name: str = "") -> Member:
+    """Invite by e-mail (creator). Inviting a known address again just resends the link."""
+    member = Member.objects.filter(pickup=pickup, email_hash=email_hash(email)).first()
+    if member is None:
+        name = normalize_name(name)
+        if name and name_taken(pickup, name):
+            raise MembershipError("Someone with this name is already in the pickup.")
+        member = Member(pickup=pickup, user_name=name, invited_at=timezone.now())
+        remember_email(member, email)
+        member.save()
+    elif not pickup.email_privacy and not member.email:
+        remember_email(member, email)
+        member.save(update_fields=["email", "email_hash"])
+    send_personal_link(member, email, request, "invited", inviter=inviter)
+    return member
+
+
+def resend_invite(request: HttpRequest, member: Member, inviter: Member) -> None:
+    """Without privacy mode the address is known, so the creator can resend with one click."""
+    if not member.email:
+        raise MembershipError("The address isn't stored (privacy mode). Enter it again to resend.")
+    send_personal_link(member, member.email, request, "invited", inviter=inviter)
+
+
+@transaction.atomic
+def remove_member(member: Member) -> int:
+    """Remove a participant with their folder and files; returns the number of deleted files."""
+    if member.is_creator:
+        raise MembershipError("The creator cannot be removed.")
+    deleted = 0
+    if member.folder is not None:
+        for item in Media.objects.filter(folder_id__in=subtree_ids(member.folder)):
+            item.file.delete(save=False)
+            deleted += 1
+        member.folder.delete()  # cascades to the member (OneToOne) and everything inside
+    if Member.objects.filter(id=member.id).exists():
+        member.delete()
+    return deleted

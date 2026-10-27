@@ -11,12 +11,15 @@ from rest_framework.response import Response
 
 from ..models import Media, Pickup
 from ..serializers import CaptionSerializer, ErrorSerializer, MediaSerializer
+from ..services.access import can_delete_media, can_view
 from ..services.members import get_member_from_request
 
 _PICKUP_ID = OpenApiParameter("pickup_id", OpenApiTypes.UUID, OpenApiParameter.PATH)
 
 
-@extend_schema_view(retrieve=extend_schema(parameters=[_PICKUP_ID]))
+@extend_schema_view(
+    retrieve=extend_schema(parameters=[_PICKUP_ID], responses={200: MediaSerializer, 403: ErrorSerializer})
+)
 class MediaViewSet(mixins.RetrieveModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet[Media]):
     """Media is read by anyone with the pickup link; deleting and captions need the folder owner."""
 
@@ -51,11 +54,17 @@ class MediaViewSet(mixins.RetrieveModelMixin, mixins.DestroyModelMixin, viewsets
         member = get_member_from_request(request, media.folder.pickup)
         return member is not None and member.owns(media.folder)
 
+    def retrieve(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        media = self.get_object()
+        if not can_view(media.folder.pickup, get_member_from_request(request, media.folder.pickup)):
+            return Response({"error": "This pickup is private."}, status=status.HTTP_403_FORBIDDEN)
+        return super().retrieve(request, *args, **kwargs)
+
     @extend_schema(parameters=[_PICKUP_ID], responses={204: None, 403: ErrorSerializer})
     def destroy(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        """Delete a media file."""
+        """Delete a media file (owner, or the creator as moderator)."""
         media = self.get_object()
-        if not self._member_can_edit(request, media):
+        if not can_delete_media(get_member_from_request(request, media.folder.pickup), media):
             return Response(
                 {"error": "You do not have permission to delete this media."},
                 status=status.HTTP_403_FORBIDDEN,

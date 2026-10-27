@@ -4,7 +4,7 @@ export const pickupKeys = {
   all: (pickupId: string) => ['pickup', pickupId] as const,
   detail: (pickupId: string) => ['pickup', pickupId, 'detail'] as const,
   folders: (pickupId: string) => ['pickup', pickupId, 'folders'] as const,
-  folder: (pickupId: string, folderId: string) => ['pickup', pickupId, 'folder', folderId] as const,
+  members: (pickupId: string) => ['pickup', pickupId, 'members'] as const,
   folderMedia: (pickupId: string, folderId: string) =>
     ['pickup', pickupId, 'folder', folderId, 'media'] as const,
 }

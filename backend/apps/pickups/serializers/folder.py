@@ -4,6 +4,9 @@ from rest_framework import serializers
 
 from ..models import Folder
 from ..models.folder import validate_folder_name
+from ..services.access import can_delete_folder
+from ..services.identity import normalize_name
+from ..services.members import folder_name_taken, name_taken
 
 
 class FolderSerializer(serializers.ModelSerializer[Folder]):
@@ -12,6 +15,7 @@ class FolderSerializer(serializers.ModelSerializer[Folder]):
     media_count = serializers.SerializerMethodField()
     subfolder_count = serializers.SerializerMethodField()
     can_edit = serializers.SerializerMethodField()
+    can_delete = serializers.SerializerMethodField()
 
     class Meta:
         model = Folder
@@ -26,6 +30,7 @@ class FolderSerializer(serializers.ModelSerializer[Folder]):
             "media_count",
             "subfolder_count",
             "can_edit",
+            "can_delete",
         ]
         read_only_fields = fields
 
@@ -40,33 +45,30 @@ class FolderSerializer(serializers.ModelSerializer[Folder]):
         member = self.context.get("member")
         return bool(member and member.owns(obj))
 
+    def get_can_delete(self, obj: Folder) -> bool:
+        """Owner or creator (moderation); never a member's top-level folder."""
+        return can_delete_folder(self.context.get("member"), obj)
 
-class CreateFolderSerializer(serializers.ModelSerializer[Folder]):
-    """Serializer for creating a new folder."""
 
-    class Meta:
-        model = Folder
-        fields = ["name", "user_name", "user_email"]
-        extra_kwargs = {"user_email": {"required": False, "allow_blank": True}}
+class JoinSerializer(serializers.Serializer[Any]):
+    """Joining: the person's name, their top-level folder's name, optionally an address."""
 
-    def validate_name(self, value: str) -> str:
-        """Validate that folder name is unique within the pickup."""
-        pickup_id = self.context.get("pickup_id")
-        if pickup_id and Folder.objects.filter(pickup_id=pickup_id, parent__isnull=True, name=value).exists():
-            raise serializers.ValidationError("A folder with this name already exists in this pickup.")
-        return value
+    user_name = serializers.CharField(max_length=100)
+    name = serializers.CharField(max_length=100, validators=[validate_folder_name])
+    email = serializers.EmailField(required=False, allow_blank=True)
 
     def validate_user_name(self, value: str) -> str:
         """Names identify people in a pickup; a taken name must not hand out its folder."""
-        pickup_id = self.context.get("pickup_id")
-        if (
-            pickup_id
-            and Folder.objects.filter(pickup_id=pickup_id, parent__isnull=True, user_name=value).exists()
-        ):
+        if name_taken(self.context["pickup"], value, exclude=self.context.get("member")):
             raise serializers.ValidationError(
                 "This name is already taken in this pickup. If it is yours, open your personal link."
             )
-        return value
+        return normalize_name(value)
+
+    def validate_name(self, value: str) -> str:
+        if folder_name_taken(self.context["pickup"], value):
+            raise serializers.ValidationError("A folder with this name already exists in this pickup.")
+        return normalize_name(value)
 
 
 class FolderNameSerializer(serializers.Serializer[Any]):

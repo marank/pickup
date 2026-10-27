@@ -12,7 +12,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 
-const props = defineProps<{ pickupId: string; title: string }>()
+const props = defineProps<{
+  pickupId: string
+  title: string
+  visibility?: string
+  joinPolicy?: string
+}>()
 const open = defineModel<boolean>('open', { required: true })
 
 const url = computed(() => `${window.location.origin}/pickup/${props.pickupId}`)
@@ -37,7 +42,21 @@ async function share() {
       <DialogHeader>
         <DialogTitle>Invite people</DialogTitle>
         <DialogDescription>
-          Everyone with this link can see the pickup and join with their own folder.
+          <template v-if="joinPolicy === 'invite'">
+            Only invited people can take part — invite them under People. With this link others
+            {{
+              visibility === 'link' ? 'can look at the photos' : 'only see that the pickup exists'
+            }}.
+          </template>
+          <template v-else-if="joinPolicy === 'closed'">
+            Nobody new can join right now.
+            {{ visibility === 'link' ? 'Everyone with this link can look at the photos.' : '' }}
+          </template>
+          <template v-else>
+            Everyone with this link can join with their own folder{{
+              visibility === 'link' ? ' and look at the photos' : ''
+            }}.
+          </template>
         </DialogDescription>
       </DialogHeader>
       <CopyField :value="url" label="Share link" />

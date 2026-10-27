@@ -16,7 +16,16 @@ from pathlib import Path
 import django_stubs_ext
 from django.utils.csp import CSP
 
-from .env import env_bool, env_int, env_list, env_str, load_dotenv, parse_app_urls, secret_key
+from .env import (
+    email_hash_key,
+    env_bool,
+    env_int,
+    env_list,
+    env_str,
+    load_dotenv,
+    parse_app_urls,
+    secret_key,
+)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -32,6 +41,8 @@ django_stubs_ext.monkeypatch()
 
 DEBUG = env_bool("DEBUG", False)
 SECRET_KEY = secret_key(DEBUG)  # >= 40 chars, else refuse to start (DEBUG: fixed dev key)
+# Stored e-mail addresses are HMAC hashes with this key (see apps/pickups/services/identity.py).
+EMAIL_HASH_KEY = email_hash_key(DEBUG)
 
 APP_URLS = parse_app_urls(env_list("APP_URLS", ["http://localhost:8080"]))
 if DEBUG:
@@ -205,6 +216,9 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 DATA_DIR = Path(env_str("DATA_DIR", str(BASE_DIR / "data")))
 MEDIA_ROOT = DATA_DIR / "media"
 MEDIA_URL = "/media/"
+# Media is served through /api/files/<id>/ after an access check. With nginx in front
+# (production), Django only answers with X-Accel-Redirect and nginx sends the file.
+MEDIA_ACCEL_REDIRECT = env_bool("MEDIA_ACCEL_REDIRECT", not DEBUG)
 
 # Large uploads: request bodies are streamed to disk instead of being held in memory.
 # Big files go through the chunked upload API (UPLOAD_CHUNK_SIZE per request).

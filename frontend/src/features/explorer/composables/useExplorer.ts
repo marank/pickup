@@ -22,17 +22,26 @@ type ExplorerDialog =
   | { kind: 'delete'; items: ExplorerItem[] }
   | { kind: 'share' }
 
+/** Pages of the pickup itself, shown in the content pane instead of a folder. */
+export type ExplorerPage = 'settings' | 'people'
+
 function folderRoute(pickupId: string, folderId: string | null) {
   return folderId
     ? { name: 'explorer-folder', params: { pickupId, folderId } }
     : { name: 'explorer', params: { pickupId } }
 }
 
-function createExplorer(pickupId: () => string, folderId: () => string | null) {
+function createExplorer(
+  pickupId: () => string,
+  folderId: () => string | null,
+  page: () => ExplorerPage | null,
+) {
   const router = useRouter()
   const pickup = usePickup(pickupId)
-  const folders = usePickupFolders(pickupId)
-  const media = useFolderMedia(pickupId, folderId)
+  /** Private pickups show outsiders only a join page; don't even ask for their contents. */
+  const canView = computed(() => pickup.data.value?.can_view ?? false)
+  const folders = usePickupFolders(pickupId, canView)
+  const media = useFolderMedia(pickupId, folderId, canView)
   const mutations = useExplorerMutations(pickupId)
   const uploads = useUploadQueue(pickupId)
   const prefs = useViewPrefs()
@@ -91,8 +100,12 @@ function createExplorer(pickupId: () => string, folderId: () => string | null) {
   )
 
   function navigate(id: string | null) {
-    if (id === folderId()) return
+    if (id === folderId() && !page()) return
     void router.push(folderRoute(pickupId(), id))
+  }
+  function openPage(target: ExplorerPage) {
+    if (target !== page())
+      void router.push({ name: 'explorer-page', params: { pickupId: pickupId(), page: target } })
   }
   const goUp = () => navigate(current.value?.parent ?? null)
   const goBack = () => router.back()
@@ -153,9 +166,9 @@ function createExplorer(pickupId: () => string, folderId: () => string | null) {
   }
 
   const canChange = (list: ExplorerItem[]) => list.length > 0 && list.every((item) => item.editable)
-  const isTopLevel = (item: ExplorerItem) => item.kind === 'folder' && item.folder.parent === null
-  /** Deletable: own items, except a member's top-level folder (that's their membership). */
-  const canDelete = (list: ExplorerItem[]) => canChange(list) && !list.some(isTopLevel)
+  /** Owners delete their own things, the creator anything (moderation); never a top-level folder. */
+  const canDelete = (list: ExplorerItem[]) =>
+    list.length > 0 && list.every((item) => item.deletable)
 
   function requestRename(item: ExplorerItem) {
     if (!item.editable) return
@@ -222,7 +235,9 @@ function createExplorer(pickupId: () => string, folderId: () => string | null) {
   return reactive({
     pickupId: computed(pickupId),
     folderId: computed(folderId),
+    page: computed(page),
     pickup,
+    canView,
     folders,
     tree,
     current,
@@ -247,6 +262,7 @@ function createExplorer(pickupId: () => string, folderId: () => string | null) {
     canGoBack,
     canGoForward,
     navigate,
+    openPage,
     goUp,
     goBack,
     goForward,
@@ -269,8 +285,12 @@ export type Explorer = ReturnType<typeof createExplorer>
 
 const KEY: InjectionKey<Explorer> = Symbol('explorer')
 
-export function provideExplorer(pickupId: () => string, folderId: () => string | null): Explorer {
-  const explorer = createExplorer(pickupId, folderId)
+export function provideExplorer(
+  pickupId: () => string,
+  folderId: () => string | null,
+  page: () => ExplorerPage | null = () => null,
+): Explorer {
+  const explorer = createExplorer(pickupId, folderId, page)
   provide(KEY, explorer)
   return explorer
 }

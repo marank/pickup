@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { toast } from 'vue-sonner'
 
 import HomeView from '@/features/home/views/HomeView.vue'
-import { on } from '@/test/fakeApi'
+import { on, requests } from '@/test/fakeApi'
 import { createdPickup, PICKUP_ID } from '@/test/factories'
 import { findButton, pageText, renderAt } from '@/test/render'
 
@@ -31,6 +31,21 @@ describe('HomeView', () => {
     await flushPromises()
     expect(writeText).toHaveBeenCalledWith(values[0])
     expect(pageText()).toContain('Open the pickup')
+  })
+
+  it('sends the optional creator name and email', async () => {
+    on('POST', '/api/pickups/', { status: 201, body: createdPickup() })
+    const { wrapper } = await renderAt(HomeView, '/')
+    findButton(/Add your name and email/).click()
+    await flushPromises()
+    await wrapper.find('#creator-name').setValue(' Anna ')
+    await wrapper.find('#creator-email').setValue('anna@example.com')
+    findButton(/Start a pickup/).click()
+    await flushPromises()
+    expect(requests.find((r) => r.method === 'POST' && r.path === '/api/pickups/')?.body).toEqual({
+      creator_name: 'Anna',
+      creator_email: 'anna@example.com',
+    })
   })
 
   it('explains how it works and answers questions', async () => {
@@ -71,7 +86,7 @@ describe('HomeView', () => {
   ])('opens a pickup from %s', async (input, pickupId) => {
     const { wrapper, router } = await renderAt(HomeView, '/')
     await wrapper.find('input[aria-label="Share link"]').setValue(input)
-    await wrapper.find('form').trigger('submit')
+    await wrapper.findAll('form').at(-1)!.trigger('submit')
     await vi.waitFor(() => expect(router.currentRoute.value.fullPath).toBe(`/pickup/${pickupId}`))
   })
 })

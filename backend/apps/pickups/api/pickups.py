@@ -7,31 +7,45 @@ from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from ..models import Media, Pickup
+from ..models import Media, Member, Pickup
 from ..serializers import (
     CreatedPickupSerializer,
-    CreateFolderSerializer,
+    CreatePickupSerializer,
+    EmailSerializer,
     ErrorSerializer,
     FolderSerializer,
     JoinResponseSerializer,
+    JoinSerializer,
     MediaSerializer,
+    MessageSerializer,
     PickupSerializer,
     PickupUpdateSerializer,
     SessionSerializer,
 )
+from ..services.access import can_view
+from ..services.identity import forget_plain_emails
 from ..services.members import (
+    MembershipError,
     create_pickup,
     get_member_from_request,
     join_pickup,
     login_member,
     logout_member,
     member_for_key,
-    send_share_email,
+    request_link,
+    set_email,
 )
 
 
+def private() -> Response:
+    return Response(
+        {"error": "This pickup is private. Join it or open your personal link."},
+        status=status.HTTP_403_FORBIDDEN,
+    )
+
+
 class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
-    """Anyone can create a pickup and read one with its link; no listing, editing or deleting."""
+    """Anyone with the link sees a pickup's title and settings; its contents follow its visibility."""
 
     serializer_class = PickupSerializer
     lookup_field = "id"
@@ -40,76 +54,102 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
     def get_queryset(self) -> QuerySet[Pickup]:
         return Pickup.objects.filter(is_active=True)
 
+    def _member(self) -> Member | None:
+        if not hasattr(self, "_cached_member"):
+            self._cached_member = get_member_from_request(self.request, self.get_object())
+            if self._cached_member:
+                self._cached_member.touch()
+        return self._cached_member
+
     def get_serializer_context(self) -> dict[str, Any]:
         """Add the session's member to the serializer context."""
         context = dict(super().get_serializer_context())
         if "id" in self.kwargs:
-            member = get_member_from_request(self.request, self.get_object())
-            if member:
-                member.touch()
-            context["member"] = member
+            context["member"] = self._member()
         return context
 
-    @extend_schema(request=None, responses={201: CreatedPickupSerializer})
+    @extend_schema(request=CreatePickupSerializer, responses={201: CreatedPickupSerializer})
     def create(self, request: Request) -> Response:
         """Create a new pickup with its creator member and log this session in as creator."""
-        title = request.data.get("title", "") if isinstance(request.data, dict) else ""
-        pickup, creator = create_pickup(str(title))
+        body = CreatePickupSerializer(data=request.data)
+        body.is_valid(raise_exception=True)
+        pickup, creator = create_pickup(
+            request,
+            body.validated_data.get("title", ""),
+            body.validated_data.get("creator_name", ""),
+            body.validated_data.get("creator_email", ""),
+        )
         login_member(request, creator)
         data = CreatedPickupSerializer(pickup, context={"member": creator}).data
         return Response(data, status=status.HTTP_201_CREATED)
 
-    @extend_schema(
-        request=PickupUpdateSerializer,
-        responses={200: PickupSerializer, 403: ErrorSerializer},
-    )
+    @extend_schema(request=PickupUpdateSerializer, responses={200: PickupSerializer, 403: ErrorSerializer})
     def partial_update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
-        """Rename the pickup (creator only)."""
+        """Change title, visibility, join policy or e-mail privacy (creator only)."""
         pickup = self.get_object()
-        member = get_member_from_request(request, pickup)
+        member = self._member()
         if not member or not member.is_creator:
             return Response(
-                {"error": "Only the creator can rename the pickup."}, status=status.HTTP_403_FORBIDDEN
+                {"error": "Only the creator can change the pickup."}, status=status.HTTP_403_FORBIDDEN
             )
         body = PickupUpdateSerializer(pickup, data=request.data, partial=True)
         body.is_valid(raise_exception=True)
         body.save()
+        if pickup.email_privacy:
+            forget_plain_emails(pickup)
         return Response(PickupSerializer(pickup, context={"member": member}).data)
 
-    @extend_schema(operation_id="pickup_folders_list", responses=FolderSerializer(many=True))
+    @extend_schema(
+        operation_id="pickup_folders_list",
+        responses={200: FolderSerializer(many=True), 403: ErrorSerializer},
+    )
     @action(detail=True, methods=["get"])
     def folders(self, request: Request, id: str | None = None) -> Response:
         """Get all folders in a pickup."""
         pickup = self.get_object()
-        context = self.get_serializer_context()
-        return Response(FolderSerializer(pickup.folders.all(), many=True, context=context).data)
+        if not can_view(pickup, self._member()):
+            return private()
+        folders = pickup.folders.select_related("pickup").all()
+        return Response(FolderSerializer(folders, many=True, context=self.get_serializer_context()).data)
 
-    @extend_schema(operation_id="pickup_media_list", responses=MediaSerializer(many=True))
+    @extend_schema(
+        operation_id="pickup_media_list",
+        responses={200: MediaSerializer(many=True), 403: ErrorSerializer},
+    )
     @action(detail=True, methods=["get"])
     def media(self, request: Request, id: str | None = None) -> Response:
         """Get all media in a pickup."""
         pickup = self.get_object()
-        context = self.get_serializer_context()
+        if not can_view(pickup, self._member()):
+            return private()
         media = Media.objects.filter(folder__pickup=pickup).select_related("folder")
-        return Response(MediaSerializer(media, many=True, context=context).data)
+        return Response(MediaSerializer(media, many=True, context=self.get_serializer_context()).data)
 
-    @extend_schema(request=CreateFolderSerializer, responses={201: JoinResponseSerializer})
+    @extend_schema(
+        request=JoinSerializer,
+        responses={201: JoinResponseSerializer, 400: ErrorSerializer, 403: ErrorSerializer},
+    )
     @action(detail=True, methods=["post"])
     def join(self, request: Request, id: str | None = None) -> Response:
-        """Join a pickup: create folder and member, log this session in as that member."""
+        """Get a folder: as a new participant, or as the signed-in creator/invited person."""
         pickup = self.get_object()
-        serializer = CreateFolderSerializer(data=request.data, context={"pickup_id": pickup.id})
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        data = serializer.validated_data
-        member = join_pickup(
-            pickup, name=data["name"], user_name=data["user_name"], user_email=data.get("user_email", "")
-        )
+        member = self._member()
+        body = JoinSerializer(data=request.data, context={"pickup": pickup, "member": member})
+        if not body.is_valid():
+            return Response(body.errors, status=status.HTTP_400_BAD_REQUEST)
+        data = body.validated_data
+        try:
+            member = join_pickup(
+                request,
+                pickup,
+                member,
+                name=data["name"],
+                user_name=data["user_name"],
+                email=data.get("email", ""),
+            )
+        except MembershipError as exc:
+            return Response({"error": str(exc)}, status=exc.status)
         login_member(request, member)
-        if member.user_email:
-            send_share_email(member, request)
-
         # The personal link is shown once so the member can come back from another browser.
         response = JoinResponseSerializer(
             {"folder": member.folder, "member_url": member.personal_path}, context={"member": member}
@@ -138,3 +178,27 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
         login_member(request, member)
         member.touch()
         return Response(PickupSerializer(pickup, context={"member": member}).data)
+
+    @extend_schema(request=EmailSerializer, responses={200: MessageSerializer, 403: ErrorSerializer})
+    @action(detail=True, methods=["post"], url_path="session/email")
+    def session_email(self, request: Request, id: str | None = None) -> Response:
+        """The signed-in participant adds their address and gets their personal link mailed."""
+        member = self._member()
+        if member is None:
+            return Response({"error": "Join the pickup first."}, status=status.HTTP_403_FORBIDDEN)
+        body = EmailSerializer(data=request.data)
+        body.is_valid(raise_exception=True)
+        set_email(request, member, body.validated_data["email"])
+        return Response({"message": "We sent you your personal link."})
+
+    @extend_schema(request=EmailSerializer, responses={202: MessageSerializer})
+    @action(detail=True, methods=["post"], url_path="link-request")
+    def link_request(self, request: Request, id: str | None = None) -> Response:
+        """Mail the personal link to a known address. Same answer for unknown ones."""
+        body = EmailSerializer(data=request.data)
+        body.is_valid(raise_exception=True)
+        request_link(request, self.get_object(), body.validated_data["email"])
+        return Response(
+            {"message": "If this address belongs to someone in this pickup, their link is on its way."},
+            status=status.HTTP_202_ACCEPTED,
+        )

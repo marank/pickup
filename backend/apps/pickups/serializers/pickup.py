@@ -1,6 +1,9 @@
+from typing import Any
+
 from rest_framework import serializers
 
 from ..models import Pickup
+from ..services.access import can_view
 
 
 class PickupSerializer(serializers.ModelSerializer[Pickup]):
@@ -9,6 +12,10 @@ class PickupSerializer(serializers.ModelSerializer[Pickup]):
     folder_count = serializers.SerializerMethodField()
     media_count = serializers.SerializerMethodField()
     is_creator = serializers.SerializerMethodField()
+    is_member = serializers.SerializerMethodField()
+    has_folder = serializers.SerializerMethodField()
+    member_name = serializers.SerializerMethodField()
+    can_view = serializers.SerializerMethodField()
 
     class Meta:
         model = Pickup
@@ -21,6 +28,13 @@ class PickupSerializer(serializers.ModelSerializer[Pickup]):
             "folder_count",
             "media_count",
             "is_creator",
+            "is_member",
+            "has_folder",
+            "member_name",
+            "can_view",
+            "visibility",
+            "join_policy",
+            "email_privacy",
         ]
         read_only_fields = [
             "id",
@@ -29,13 +43,38 @@ class PickupSerializer(serializers.ModelSerializer[Pickup]):
             "folder_count",
             "media_count",
             "is_creator",
+            "is_member",
+            "has_folder",
+            "member_name",
+            "can_view",
+            "visibility",
+            "join_policy",
+            "email_privacy",
         ]
 
+    def _member(self) -> Any:
+        return self.context.get("member")
+
+    def get_can_view(self, obj: Pickup) -> bool:
+        return can_view(obj, self._member())
+
+    def get_is_member(self, obj: Pickup) -> bool:
+        return self._member() is not None
+
+    def get_has_folder(self, obj: Pickup) -> bool:
+        member = self._member()
+        return bool(member and member.folder_id)
+
+    def get_member_name(self, obj: Pickup) -> str:
+        member = self._member()
+        return member.user_name if member else ""
+
     def get_folder_count(self, obj: Pickup) -> int:
-        return obj.get_folder_count()
+        """Private pickups don't tell outsiders how busy they are."""
+        return obj.get_folder_count() if can_view(obj, self._member()) else 0
 
     def get_media_count(self, obj: Pickup) -> int:
-        return obj.get_media_count()
+        return obj.get_media_count() if can_view(obj, self._member()) else 0
 
     def get_is_creator(self, obj: Pickup) -> bool:
         """Check if the current authenticated member is the creator."""
@@ -48,4 +87,12 @@ class PickupUpdateSerializer(serializers.ModelSerializer[Pickup]):
 
     class Meta:
         model = Pickup
-        fields = ["title"]
+        fields = ["title", "visibility", "join_policy", "email_privacy"]
+
+
+class CreatePickupSerializer(serializers.Serializer[Any]):
+    """A new pickup; the creator may give a name and an address for their creator link."""
+
+    title = serializers.CharField(max_length=200, required=False, allow_blank=True)
+    creator_name = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    creator_email = serializers.EmailField(required=False, allow_blank=True)

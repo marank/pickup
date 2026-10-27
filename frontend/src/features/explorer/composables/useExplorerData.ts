@@ -9,10 +9,14 @@ import { pickupKeys } from '@/features/pickups/queryKeys'
 type Id = MaybeRefOrGetter<string>
 
 /** Files directly in a folder (null: the pickup root, which holds only folders). */
-export function useFolderMedia(pickupId: Id, folderId: MaybeRefOrGetter<string | null>) {
+export function useFolderMedia(
+  pickupId: Id,
+  folderId: MaybeRefOrGetter<string | null>,
+  enabled: MaybeRefOrGetter<boolean> = true,
+) {
   return useQuery({
     queryKey: computed(() => pickupKeys.folderMedia(toValue(pickupId), toValue(folderId) ?? '')),
-    enabled: computed(() => toValue(folderId) !== null),
+    enabled: computed(() => toValue(folderId) !== null && toValue(enabled)),
     queryFn: () =>
       unwrap(
         api.GET('/api/pickups/{pickup_id}/folders/{id}/media/', {

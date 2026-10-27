@@ -46,7 +46,6 @@ class Folder(UUIDModel):
     )
     name = models.CharField(max_length=100, validators=[validate_folder_name], help_text="Name of the folder")
     user_name = models.CharField(max_length=100, help_text="Name of the member who owns this folder")
-    user_email = models.EmailField(blank=True, help_text="Optional email of the member (top-level folders)")
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:

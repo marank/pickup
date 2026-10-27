@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { CrownIcon, PencilIcon, Share2Icon } from '@lucide/vue'
+import { PencilIcon, Share2Icon } from '@lucide/vue'
 import { computed } from 'vue'
 
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { ownerColor } from '@/lib/ownerColor'
 
 import { useExplorer } from '../composables/useExplorer'
 
@@ -31,30 +30,6 @@ const title = computed(() => pickup.value?.title || 'Untitled pickup')
         <PencilIcon class="size-3.5" />
       </button>
     </div>
-
-    <span
-      v-if="pickup?.is_creator"
-      class="inline-flex shrink-0 items-center gap-1 rounded-full bg-butter/40 px-2.5 py-1 text-xs font-medium max-sm:hidden"
-    >
-      <CrownIcon class="size-3.5" />
-      Creator
-    </span>
-    <span
-      v-if="explorer.ownFolder"
-      class="inline-flex shrink-0 items-center gap-1.5 rounded-full border bg-card px-2.5 py-1 text-xs"
-    >
-      <span
-        class="size-2 rounded-full"
-        :style="{ background: ownerColor(explorer.ownFolder.user_name) }"
-      />
-      You: {{ explorer.ownFolder.user_name }}
-    </span>
-    <span
-      v-else-if="explorer.folders.isSuccess"
-      class="inline-flex items-center rounded-full border bg-card px-2.5 py-1 text-xs text-muted-foreground"
-    >
-      Viewing
-    </span>
 
     <Button
       variant="outline"

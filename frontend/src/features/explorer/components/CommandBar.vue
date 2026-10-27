@@ -76,7 +76,7 @@ const selectedFiles = computed(() => selected.value.filter((item) => item.kind =
         @click="explorer.requestNewFolder()"
       >
         <FolderPlusIcon />
-        <span class="max-sm:hidden">New folder</span>
+        New folder
       </Button>
     </template>
     <Button
@@ -134,7 +134,7 @@ const selectedFiles = computed(() => selected.value.filter((item) => item.kind =
             <span class="max-md:hidden">Sort</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="end" class="min-w-48 whitespace-nowrap">
           <DropdownMenuLabel>Sort by</DropdownMenuLabel>
           <DropdownMenuRadioGroup v-model="explorer.prefs.sortKey">
             <DropdownMenuRadioItem v-for="sort in sorts" :key="sort.key" :value="sort.key">
@@ -155,7 +155,7 @@ const selectedFiles = computed(() => selected.value.filter((item) => item.kind =
             <span class="max-md:hidden">{{ currentView.label }}</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="end" class="min-w-48 whitespace-nowrap">
           <DropdownMenuLabel>View</DropdownMenuLabel>
           <DropdownMenuRadioGroup v-model="explorer.prefs.view">
             <DropdownMenuRadioItem v-for="view in views" :key="view.mode" :value="view.mode">

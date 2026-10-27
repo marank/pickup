@@ -134,7 +134,10 @@ function onFiles(event: Event) {
           <CommandBar />
         </div>
         <div class="flex min-h-0 flex-1">
-          <aside class="w-64 shrink-0 overflow-y-auto border-r bg-pane p-2 max-md:hidden lg:w-72">
+          <aside
+            v-if="explorer.prefs.treePane"
+            class="w-64 shrink-0 overflow-y-auto border-r bg-pane p-2 max-md:hidden lg:w-72"
+          >
             <FolderTree />
           </aside>
           <ContentPane />

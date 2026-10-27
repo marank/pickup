@@ -3,9 +3,14 @@ import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 
 import PickupLogo from '@/components/PickupLogo.vue'
+import ThemeMenu from '@/components/ThemeMenu.vue'
+import AccountMenu from '@/features/pickups/components/AccountMenu.vue'
 
 const route = useRoute()
 const wide = computed(() => route.meta.wide === true)
+const pickupId = computed(() =>
+  typeof route.params.pickupId === 'string' ? route.params.pickupId : null,
+)
 </script>
 
 <template>
@@ -15,6 +20,10 @@ const wide = computed(() => route.meta.wide === true)
         <RouterLink to="/" class="flex h-7 items-center" aria-label="Pickup start page">
           <PickupLogo />
         </RouterLink>
+        <div class="ml-auto flex items-center gap-1">
+          <AccountMenu v-if="pickupId" :pickup-id="pickupId" />
+          <ThemeMenu v-else />
+        </div>
       </div>
     </header>
     <main v-if="wide">

@@ -32,6 +32,11 @@ export function useSelection(orderedIds: MaybeRefOrGetter<string[]>) {
     }
   }
 
+  /** Replace the selection, e.g. while dragging a selection rectangle. */
+  function replace(ids: Iterable<string>) {
+    selected.value = new Set(ids)
+  }
+
   function selectAll() {
     selected.value = new Set(toValue(orderedIds))
   }
@@ -51,5 +56,5 @@ export function useSelection(orderedIds: MaybeRefOrGetter<string[]>) {
   const count = computed(() => selected.value.size)
   const isSelected = (id: string) => selected.value.has(id)
 
-  return { selected, count, isSelected, select, selectAll, clear, prune }
+  return { selected, count, isSelected, select, replace, selectAll, clear, prune }
 }

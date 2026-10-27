@@ -6,10 +6,13 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 
 import { useExplorer } from '../composables/useExplorer'
+import { useMarquee } from '../composables/useMarquee'
 import ItemsDetails from './ItemsDetails.vue'
 import ItemsGrid from './ItemsGrid.vue'
 
 const explorer = useExplorer()
+const pane = ref<HTMLElement | null>(null)
+const marquee = useMarquee(pane, explorer)
 const dragDepth = ref(0)
 const dropping = computed(() => dragDepth.value > 0 && explorer.uploadTarget !== null)
 
@@ -59,12 +62,18 @@ const emptyMessage = computed(() => {
 
 <template>
   <section
+    ref="pane"
     class="relative min-h-0 flex-1 overflow-y-auto p-2 outline-none sm:p-3"
     tabindex="0"
     aria-label="Contents"
     data-testid="content-pane"
     @keydown="onKeydown"
+    @click.capture="marquee.onClickCapture"
     @click.self="explorer.selection.clear()"
+    @pointerdown="marquee.onPointerDown"
+    @pointermove="marquee.onPointerMove"
+    @pointerup="marquee.onPointerUp"
+    @pointercancel="marquee.onPointerUp"
     @dragenter.prevent="onDragEnter"
     @dragover.prevent
     @dragleave.prevent="onDragLeave"
@@ -108,6 +117,18 @@ const emptyMessage = computed(() => {
         </Button>
       </template>
     </div>
+
+    <div
+      v-if="marquee.box.value"
+      class="pointer-events-none absolute z-20 rounded-sm border border-tomato/70 bg-tomato/10"
+      data-testid="marquee"
+      :style="{
+        left: `${marquee.box.value.left}px`,
+        top: `${marquee.box.value.top}px`,
+        width: `${marquee.box.value.width}px`,
+        height: `${marquee.box.value.height}px`,
+      }"
+    />
 
     <div
       v-if="dropping"

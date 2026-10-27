@@ -15,11 +15,13 @@ export function useViewPrefs() {
   const sortKey = ref<SortKey>(readPreference('pickup.sort', SORT_KEYS, 'name'))
   const sortDirection = ref<SortDirection>(readPreference('pickup.sortDir', DIRECTIONS, 'asc'))
   const detailsPane = ref(readPreference('pickup.details', ['on', 'off'] as const, 'on') === 'on')
+  const treePane = ref(readPreference('pickup.tree', ['on', 'off'] as const, 'on') === 'on')
 
   watch(view, (value) => writePreference('pickup.view', value))
   watch(sortKey, (value) => writePreference('pickup.sort', value))
   watch(sortDirection, (value) => writePreference('pickup.sortDir', value))
   watch(detailsPane, (value) => writePreference('pickup.details', value ? 'on' : 'off'))
+  watch(treePane, (value) => writePreference('pickup.tree', value ? 'on' : 'off'))
 
   /** Click on a column header: same key flips the direction, a new key sorts ascending. */
   function sortBy(key: SortKey) {
@@ -30,5 +32,5 @@ export function useViewPrefs() {
     }
   }
 
-  return { view, sortKey, sortDirection, detailsPane, sortBy }
+  return { view, sortKey, sortDirection, detailsPane, treePane, sortBy }
 }

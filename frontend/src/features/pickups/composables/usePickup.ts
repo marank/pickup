@@ -47,6 +47,18 @@ export function useJoinPickup(pickupId: MaybeRefOrGetter<string>) {
   })
 }
 
+/** Sign this browser out of the pickup; it can still look, like any visitor. */
+export function useLeavePickup(pickupId: MaybeRefOrGetter<string>) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: () =>
+      unwrap(
+        api.DELETE('/api/pickups/{id}/session/', { params: { path: { id: toValue(pickupId) } } }),
+      ),
+    onSuccess: () => client.invalidateQueries({ queryKey: pickupKeys.all(toValue(pickupId)) }),
+  })
+}
+
 /** Personal link: trade the access key for a session (used by the router guard). */
 export async function enterPickup(pickupId: string, accessKey: string): Promise<void> {
   const pickup = await unwrap(

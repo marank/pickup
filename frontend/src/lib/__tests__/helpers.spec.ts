@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { nextTick } from 'vue'
 
 import { ownerColor } from '@/lib/ownerColor'
 import { readPreference, writePreference } from '@/lib/storage'
-import { followSystemTheme } from '@/lib/theme'
+import { initTheme, useTheme } from '@/lib/theme'
 
 afterEach(() => vi.restoreAllMocks())
 
@@ -30,8 +31,8 @@ describe('preferences', () => {
   })
 })
 
-describe('followSystemTheme', () => {
-  it('switches the dark class with the system setting', () => {
+describe('theme', () => {
+  it('follows the system until light or dark is chosen', async () => {
     let listener: () => void = () => {}
     const query = {
       matches: true,
@@ -41,10 +42,22 @@ describe('followSystemTheme', () => {
       () => query as unknown as MediaQueryList,
     )
     const root = document.createElement('html')
-    followSystemTheme(root)
+    initTheme(root)
+    const theme = useTheme()
+    expect(theme.value).toBe('system')
     expect(root.classList.contains('dark')).toBe(true)
     query.matches = false
     listener()
     expect(root.classList.contains('dark')).toBe(false)
+
+    theme.value = 'dark'
+    await nextTick()
+    expect(root.classList.contains('dark')).toBe(true)
+    expect(localStorage.getItem('pickup.theme')).toBe('dark')
+    theme.value = 'light'
+    await nextTick()
+    expect(root.classList.contains('dark')).toBe(false)
+    theme.value = 'system'
+    await nextTick()
   })
 })

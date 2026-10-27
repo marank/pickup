@@ -68,7 +68,7 @@ describe('explorer: browsing', () => {
     expect($('nav[aria-label="Folders"]')!.textContent).toContain('Summer party')
     expect($('[aria-current="location"]')!.textContent).toContain('Summer party')
     expect(pageText()).toContain('2 items')
-    expect(pageText()).toContain('You: Alice')
+    expect(pageText()).toContain('Your folder: Alice')
     expect(findButton('Up one level').disabled).toBe(true)
   })
 
@@ -288,6 +288,102 @@ describe('explorer: browsing', () => {
     await settle()
     expect(router.currentRoute.value.params.folderId).toBe(ALICE)
     expect($('[role="dialog"]')).toBeNull()
+  })
+
+  it('hides and shows the folder tree on wide screens', async () => {
+    window.matchMedia = vi.fn<(q: string) => MediaQueryList>(
+      (query) =>
+        ({
+          matches: query.includes('min-width'),
+          addEventListener() {},
+          removeEventListener() {},
+        }) as unknown as MediaQueryList,
+    )
+    await render()
+    expect($('nav[aria-label="Folders"]')).not.toBeNull()
+    findButton('Hide folders').click()
+    await flushPromises()
+    expect($('nav[aria-label="Folders"]')).toBeNull()
+    expect(localStorage.getItem('pickup.tree')).toBe('off')
+    findButton('Show folders').click()
+    await flushPromises()
+    expect($('nav[aria-label="Folders"]')).not.toBeNull()
+    expect($('[role="dialog"]')).toBeNull() // no slide-in panel on wide screens
+    Reflect.deleteProperty(window, 'matchMedia')
+  })
+
+  it('selects by dragging a rectangle over empty space, with auto-scroll at the edge', async () => {
+    await render(ALICE)
+    // jsdom has no layout: place the pane and four tiles (100x100, in a row) by hand.
+    const rect = (left: number, top: number, width: number, height: number) =>
+      ({
+        left,
+        top,
+        width,
+        height,
+        right: left + width,
+        bottom: top + height,
+        x: left,
+        y: top,
+        toJSON() {},
+      }) as DOMRect
+    vi.spyOn(pane(), 'getBoundingClientRect').mockReturnValue(rect(0, 0, 800, 400))
+    items().forEach((el, index) =>
+      vi.spyOn(el, 'getBoundingClientRect').mockReturnValue(rect(10 + index * 110, 10, 100, 100)),
+    )
+    const pointer = (type: string, x: number, y: number, init: MouseEventInit = {}) => {
+      const target = type === 'pointerdown' ? pane() : pane()
+      const event = new MouseEvent(type, {
+        bubbles: true,
+        clientX: x,
+        clientY: y,
+        button: 0,
+        ...init,
+      })
+      Object.defineProperty(event, 'pointerType', { value: 'mouse' })
+      target.dispatchEvent(event)
+    }
+    const selectedNames = () =>
+      items()
+        .filter((el) => el.getAttribute('aria-selected') === 'true')
+        .map((el) => el.dataset.item)
+
+    pointer('pointerdown', 300, 300)
+    pointer('pointermove', 302, 301) // below the threshold: no box yet
+    await flushPromises()
+    expect($('[data-testid="marquee"]')).toBeNull()
+    pointer('pointermove', 130, 50)
+    await flushPromises()
+    expect($('[data-testid="marquee"]')).not.toBeNull()
+    // Tiles sit at x = 10, 120, 230, 340: the box from x = 130 to 300 touches apple and clip.
+    expect(selectedNames()).toEqual(['m-apple', 'm-clip'])
+
+    pointer('pointerup', 130, 50)
+    await click(pane()) // the click after a drag must not clear the selection
+    await flushPromises()
+    expect($('[data-testid="marquee"]')).toBeNull()
+    expect(selectedNames()).toHaveLength(2)
+
+    // Ctrl adds to the existing selection (the box now also touches the Beach tile).
+    vi.useFakeTimers() // the auto-scroll timer starts with the press
+    pointer('pointerdown', 5, 200, { ctrlKey: true })
+    pointer('pointermove', 60, 60)
+    await flushPromises()
+    expect(selectedNames()).toHaveLength(3)
+    // At the bottom edge the pane scrolls, also while the mouse stands still.
+    pointer('pointermove', 60, 395)
+    vi.advanceTimersByTime(100)
+    vi.useRealTimers()
+    expect(pane().scrollTop).toBeGreaterThan(0)
+    pointer('pointerup', 60, 395)
+    await click(pane())
+
+    // Pressing on an item or with another button doesn't start a rectangle.
+    item('apple.jpg').dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0 }))
+    pointer('pointerdown', 300, 300, { button: 2 })
+    pointer('pointermove', 10, 10)
+    await flushPromises()
+    expect($('[data-testid="marquee"]')).toBeNull()
   })
 
   it('can go back and forward through the history', async () => {
@@ -515,7 +611,6 @@ describe('explorer: owner actions', () => {
   it('lets the creator rename the pickup', async () => {
     on('PATCH', '/api/pickups/:id/', { body: {} })
     await render(undefined, { creator: true })
-    expect(pageText()).toContain('Creator')
     findButton('Rename pickup').click()
     await flushPromises()
     await new DOMWrapper($<HTMLInputElement>('#name-dialog-input')!).setValue('Sommerfest')
@@ -548,7 +643,6 @@ describe('explorer: owner actions', () => {
 describe('explorer: visitors and edge cases', () => {
   it('lets visitors look but not change anything', async () => {
     await render(ALICE, { member: false })
-    expect(pageText()).toContain('Viewing')
     expect(pageText()).toContain('Viewing only')
     expect(pageText()).not.toContain('New folder')
     expect(document.body.querySelector('button[aria-label="Upload"]')).toBeNull()

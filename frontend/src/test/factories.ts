@@ -24,6 +24,7 @@ export function pickup(overrides: Partial<Pickup> = {}): Pickup {
     join_policy: 'open',
     email_privacy: true,
     expires_at: null,
+    storage: { used: 0, limit: null, own_used: null, own_limit: null },
     ...overrides,
   }
 }

@@ -3,6 +3,7 @@ import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 
 import { apiErrorMessage } from '@/api/errors'
+import { formatFileSize } from '@/lib/format'
 import type { Folder, Media } from '@/api/types'
 import { usePickup, usePickupFolders } from '@/features/pickups/composables/usePickup'
 
@@ -156,13 +157,40 @@ function createExplorer(
       toast.error('You can only upload into your own folders.')
       return
     }
+    let free = freeSpace()
     const accepted = list.filter((file) => {
       const ok = file.type.startsWith('image/') || file.type.startsWith('video/')
       if (!ok) toast.error(`${file.name} is not a photo or video`)
+      else if (free !== null && file.size > free) {
+        toast.error(
+          `${file.name} doesn't fit: ${formatFileSize(Math.max(free, 0))} of storage left`,
+        )
+        return false
+      } else if (free !== null) free -= file.size
       return ok
     })
     for (const file of accepted) void uploads.add(file, target.id)
     if (accepted.length && target.id !== folderId()) navigate(target.id)
+  }
+
+  /**
+   * Bytes this member may still upload (null: no limit), minus files waiting in the queue.
+   * The server checks again; this only spares people a transfer that would be refused.
+   */
+  function freeSpace(): number | null {
+    const storage = pickup.data.value?.storage
+    if (!storage) return null
+    const room = [
+      storage.limit === null ? null : storage.limit - storage.used,
+      storage.own_limit === null || storage.own_used === null
+        ? null
+        : storage.own_limit - storage.own_used,
+    ].filter((value): value is number => value !== null)
+    if (!room.length) return null
+    const waiting = uploads.items.value
+      .filter((item) => item.status === 'pending')
+      .reduce((sum, item) => sum + item.file.size, 0)
+    return Math.min(...room) - waiting
   }
 
   const canChange = (list: ExplorerItem[]) => list.length > 0 && list.every((item) => item.editable)

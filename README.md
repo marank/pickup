@@ -7,7 +7,8 @@ A web application for sharing images and videos without user accounts. Users cre
 - 🚀 **No Account Required** - Start sharing immediately
 - 📁 **Personal Folders** - Each participant gets their own folder with any number of subfolders; only they can change it
 - 🗂️ **File explorer** - Folder tree, address bar you can type into, details/content/small/large views, sorting, search, keyboard shortcuts, right-click menus; works on the phone too
-- 🔗 **Easy Sharing** - One share link per pickup (also as QR code to print), one personal link per participant
+- 🔗 **Easy Sharing** - One share link per pickup (also as a designed QR card to print), one personal link per participant
+- 💾 **Storage limits** - Per pickup and per participant from `.env`, adjustable per pickup by an admin
 - 🗜️ **ZIP download** - Everything, a folder or a selection as one ZIP, streamed while it is packed
 - ⏳ **Expiry date** - Optional: the pickup deletes itself with all files after a chosen day
 - 🔒 **Private by default** - Only participants see the photos; the creator decides who may look (participants, anyone with the link, or nobody: closed), who may join (anyone with the link, invited people only, nobody new), can remove people and content, and can delete the whole pickup
@@ -206,6 +207,21 @@ Membership is a session: the personal link's access key is exchanged once (`POST
 | GET | `/api/upload-sessions/{session_id}/` | Upload progress, missing chunks (owner) |
 | POST | `/api/upload-sessions/{session_id}/chunks/` | Upload one chunk (owner) |
 | POST | `/api/upload-sessions/{session_id}/finalize/` | Assemble the file (owner) |
+
+## Storage limits
+
+`PICKUP_STORAGE_LIMIT` (default 20GB) and `MEMBER_STORAGE_LIMIT` (default 5GB) in `.env` cap all files of a pickup and one participant's folders; `0` means unlimited. Uploads that would go over a limit are refused with a message (the SPA checks before uploading, the server again at the start and end of every upload). Participants see their usage in the status bar, the creator the pickup's in Settings.
+
+An admin can override the limits for one pickup:
+
+```bash
+# Show usage and limits
+uv run python manage.py storage_limits <pickup id>
+# Change them: sizes like 50GB, "unlimited", or "default" (back to the .env values)
+uv run python manage.py storage_limits <pickup id> --pickup 50GB --member unlimited
+# In Docker
+docker compose exec app python manage.py storage_limits <pickup id> --member 10GB
+```
 
 ## Security
 

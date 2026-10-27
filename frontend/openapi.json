@@ -1062,6 +1062,16 @@
                             }
                         },
                         "description": ""
+                    },
+                    "413": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
                     }
                 }
             }
@@ -1437,6 +1447,16 @@
                         "description": ""
                     },
                     "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "413": {
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1964,6 +1984,16 @@
                             }
                         },
                         "description": ""
+                    },
+                    "413": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
                     }
                 }
             }
@@ -2116,6 +2146,14 @@
                         "nullable": true,
                         "description": "When the pickup is deleted with all files (empty: never)"
                     },
+                    "storage": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/Storage"
+                            }
+                        ],
+                        "readOnly": true
+                    },
                     "member_url": {
                         "type": "string",
                         "readOnly": true
@@ -2136,6 +2174,7 @@
                     "member_name",
                     "member_url",
                     "share_url",
+                    "storage",
                     "visibility"
                 ]
             },
@@ -2663,6 +2702,14 @@
                         "readOnly": true,
                         "nullable": true,
                         "description": "When the pickup is deleted with all files (empty: never)"
+                    },
+                    "storage": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/Storage"
+                            }
+                        ],
+                        "readOnly": true
                     }
                 },
                 "required": [
@@ -2679,6 +2726,7 @@
                     "media_count",
                     "member_name",
                     "share_url",
+                    "storage",
                     "visibility"
                 ]
             },
@@ -2703,6 +2751,36 @@
                 ],
                 "type": "string",
                 "description": "* `pending` - Pending\n* `complete` - Complete\n* `error` - Error\n* `cancelled` - Cancelled"
+            },
+            "Storage": {
+                "type": "object",
+                "properties": {
+                    "used": {
+                        "type": "integer",
+                        "description": "Bytes of all files (and uploads in progress)"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "nullable": true,
+                        "description": "Limit for the pickup; null: unlimited"
+                    },
+                    "own_used": {
+                        "type": "integer",
+                        "nullable": true,
+                        "description": "Bytes in your folders (members)"
+                    },
+                    "own_limit": {
+                        "type": "integer",
+                        "nullable": true,
+                        "description": "Your limit; null: unlimited"
+                    }
+                },
+                "required": [
+                    "limit",
+                    "own_limit",
+                    "own_used",
+                    "used"
+                ]
             },
             "UploadChunkRequest": {
                 "type": "object",

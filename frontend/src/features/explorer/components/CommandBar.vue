@@ -29,9 +29,11 @@ import {
 import { Separator } from '@/components/ui/separator'
 
 import { useExplorer } from '../composables/useExplorer'
+import TreeToggle from './TreeToggle.vue'
 import type { ViewMode } from '../composables/useViewPrefs'
 import type { SortKey } from '../lib/items'
 
+const emit = defineEmits<{ openTree: [] }>()
 const explorer = useExplorer()
 
 const views: { mode: ViewMode; label: string; icon: unknown }[] = [
@@ -65,7 +67,11 @@ const single = computed(() => (selected.value.length === 1 ? selected.value[0]! 
     role="toolbar"
     aria-label="Commands"
   >
-    <template v-if="explorer.uploadTarget">
+    <TreeToggle @open-tree="emit('openTree')" />
+    <Separator v-if="!explorer.page" orientation="vertical" class="mx-1 !h-5" />
+    <!-- The creator's pages have no commands, only the tree toggle. -->
+    <template v-if="explorer.page" />
+    <template v-else-if="explorer.uploadTarget">
       <Button size="sm" title="Upload photos or videos" @click="explorer.fileInput?.click()">
         <UploadIcon />
         Upload
@@ -94,7 +100,7 @@ const single = computed(() => (selected.value.length === 1 ? selected.value[0]! 
       </RouterLink>
     </Button>
 
-    <template v-if="selected.length">
+    <template v-if="selected.length && !explorer.page">
       <Separator orientation="vertical" class="mx-1 !h-5" />
       <Button
         v-if="single?.editable"
@@ -123,7 +129,7 @@ const single = computed(() => (selected.value.length === 1 ? selected.value[0]! 
       </Button>
     </template>
 
-    <div class="ml-auto flex items-center gap-1">
+    <div v-if="!explorer.page" class="ml-auto flex items-center gap-1">
       <Button
         v-if="!selected.length && explorer.items.length"
         variant="ghost"

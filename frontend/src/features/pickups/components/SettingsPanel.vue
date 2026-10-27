@@ -10,7 +10,7 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { endOfDay, toDateInput } from '@/lib/format'
+import { endOfDay, formatFileSize, toDateInput } from '@/lib/format'
 
 import { usePickupAdmin } from '../composables/usePickupAdmin'
 
@@ -98,6 +98,17 @@ async function save() {
     toast.error(apiErrorMessage(err, 'Could not save the settings'))
   }
 }
+
+const storage = computed(() => {
+  const { used, limit } = props.pickup.storage
+  return {
+    text:
+      limit === null
+        ? `${formatFileSize(used)} used`
+        : `${formatFileSize(used)} of ${formatFileSize(limit)} used`,
+    percent: limit ? Math.min(100, Math.round((used / limit) * 100)) : null,
+  }
+})
 
 const count = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`
 const deleteDescription = computed(
@@ -222,6 +233,29 @@ async function removePickup() {
       <Button v-if="dirty" type="button" variant="ghost" @click="reset">Discard</Button>
     </div>
   </form>
+
+  <section class="mt-10 max-w-2xl space-y-2" aria-label="Storage">
+    <h3 class="font-medium">Storage</h3>
+    <div
+      v-if="storage.percent !== null"
+      class="h-2 overflow-hidden rounded-full bg-muted"
+      role="progressbar"
+      :aria-valuenow="storage.percent"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      aria-label="Storage used"
+    >
+      <div
+        class="h-full rounded-full"
+        :class="storage.percent >= 90 ? 'bg-destructive' : 'bg-sage'"
+        :style="{ width: `${storage.percent}%` }"
+      />
+    </div>
+    <p class="text-sm">{{ storage.text }}</p>
+    <p class="text-sm text-muted-foreground">
+      The limits are set by whoever runs this server; ask them if you need more space.
+    </p>
+  </section>
 
   <section
     class="mt-10 max-w-2xl space-y-3 rounded-xl border border-destructive/40 p-4"

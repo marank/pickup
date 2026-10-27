@@ -6,6 +6,12 @@ import { formatFileSize } from '@/lib/format'
 import { useExplorer } from '../composables/useExplorer'
 
 const explorer = useExplorer()
+const own = computed(() => {
+  const storage = explorer.pickup.data?.storage
+  if (!storage || storage.own_used === null) return ''
+  const used = formatFileSize(storage.own_used)
+  return storage.own_limit === null ? used : `${used} of ${formatFileSize(storage.own_limit)}`
+})
 const selectedSize = computed(() =>
   explorer.selectedItems.reduce((sum, item) => sum + (item.size ?? 0), 0),
 )
@@ -23,7 +29,7 @@ const selectedSize = computed(() =>
       >
     </span>
     <span v-if="explorer.isMember" class="ml-auto truncate max-sm:hidden">
-      Your folder: {{ explorer.ownFolder?.name }}
+      Your folder: {{ explorer.ownFolder?.name }}<template v-if="own"> · {{ own }}</template>
     </span>
     <span v-else class="ml-auto max-sm:hidden">Viewing only</span>
   </footer>

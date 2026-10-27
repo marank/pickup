@@ -592,6 +592,29 @@ describe('explorer: owner actions', () => {
     expect(document.body.querySelector('button[aria-label="Download all"]')).toBeNull()
   })
 
+  it('refuses files that would not fit and shows the own usage', async () => {
+    on('POST', '/api/pickups/:p/folders/:f/media/', { status: 201, body: media() })
+    await render(ALICE, {
+      pickupOverrides: {
+        storage: { used: 9_000, limit: 100_000, own_used: 9_000, own_limit: 10_240 },
+      },
+    })
+    expect(pageText()).toContain('Your folder: Alice · 8.8 KB of 10 KB')
+    const input = $<HTMLInputElement>('[data-testid="file-input"]')!
+    Object.defineProperty(input, 'files', {
+      value: [
+        new File(['x'.repeat(1_000)], 'small.jpg', { type: 'image/jpeg' }),
+        new File(['x'.repeat(1_000)], 'second.jpg', { type: 'image/jpeg' }),
+      ],
+      configurable: true,
+    })
+    const error = vi.spyOn(toast, 'error')
+    input.dispatchEvent(new Event('change'))
+    await settle()
+    expect(error).toHaveBeenCalledWith("second.jpg doesn't fit: 240 B of storage left")
+    expect(requests.filter((r) => r.method === 'POST')).toHaveLength(1)
+  })
+
   it('uploads into the current folder, and from the root into the own folder', async () => {
     on('POST', '/api/pickups/:p/folders/:f/media/', { status: 201, body: media() })
     const { router } = await render()
@@ -670,16 +693,33 @@ describe('explorer: owner actions', () => {
 })
 
 describe('explorer: QR code', () => {
-  it('shows the share link as QR code and saves it as PNG', async () => {
-    const fillRect = vi.fn<(x: number, y: number, w: number, h: number) => void>()
-    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
-      fillRect,
-      fillStyle: '',
-    } as unknown as CanvasRenderingContext2D)
+  /** A 2D context that records what is drawn; text is 20 px per character. */
+  function fakeContext() {
+    const texts: string[] = []
+    const context = new Proxy(
+      {},
+      {
+        get: (_target, key) =>
+          key === 'fillText'
+            ? (text: string) => texts.push(text)
+            : key === 'measureText'
+              ? (text: string) => ({ width: text.length * 20 })
+              : () => {},
+        set: () => true,
+      },
+    ) as CanvasRenderingContext2D
+    return { context, texts }
+  }
+
+  it('shows the QR card and saves it as PNG', async () => {
+    const { context, texts } = fakeContext()
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(context)
     vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation((done) =>
       done(new Blob(['png'])),
     )
     Object.assign(URL, { createObjectURL: () => 'blob:qr', revokeObjectURL: () => {} })
+    const hadPath2D = 'Path2D' in globalThis
+    if (!hadPath2D) Object.assign(globalThis, { Path2D: class {} })
     const saved: string[] = []
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (
       this: HTMLAnchorElement,
@@ -688,14 +728,14 @@ describe('explorer: QR code', () => {
     })
     await render()
     findButton('Share').click()
-    await flushPromises()
-    const qr = $('[role="img"][aria-label="QR code of the share link"] path')!
-    expect(qr.getAttribute('d')!.length).toBeGreaterThan(100)
+    await settle()
+    expect($('canvas[aria-label="QR code card for “Summer party”"]')).not.toBeNull()
+    expect(texts).toEqual(expect.arrayContaining(['pickup', 'Summer party']))
 
-    findButton('Save QR code').click()
+    findButton('Save QR card').click()
     await settle()
     expect(saved).toEqual(['Summer party – QR code.png'])
-    expect(fillRect.mock.calls.length).toBeGreaterThan(100)
+    if (!hadPath2D) Reflect.deleteProperty(globalThis, 'Path2D')
   })
 
   it('reports when the browser cannot draw the image', async () => {
@@ -704,7 +744,7 @@ describe('explorer: QR code', () => {
     await render()
     findButton('Share').click()
     await flushPromises()
-    findButton('Save QR code').click()
+    findButton('Save QR card').click()
     await settle()
     expect(error).toHaveBeenCalledWith('Could not create the image')
   })

@@ -21,6 +21,7 @@ from .env import (
     env_bool,
     env_int,
     env_list,
+    env_size,
     env_str,
     load_dotenv,
     parse_app_urls,
@@ -224,6 +225,10 @@ MEDIA_ACCEL_REDIRECT = env_bool("MEDIA_ACCEL_REDIRECT", not DEBUG)
 # Big files go through the chunked upload API (UPLOAD_CHUNK_SIZE per request).
 DATA_UPLOAD_MAX_MEMORY_SIZE = None
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
+# Storage limits (0 = unlimited); an admin can override them per pickup with
+# `manage.py storage_limits <pickup id>`.
+PICKUP_STORAGE_LIMIT = env_size("PICKUP_STORAGE_LIMIT", "20GB")
+MEMBER_STORAGE_LIMIT = env_size("MEMBER_STORAGE_LIMIT", "5GB")
 FILE_UPLOAD_TEMP_DIR = DATA_DIR / "upload_tmp"
 os.makedirs(FILE_UPLOAD_TEMP_DIR, exist_ok=True)
 UPLOAD_CHUNK_SIZE = 5 * 1024 * 1024

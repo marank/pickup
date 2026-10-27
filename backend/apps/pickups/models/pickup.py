@@ -54,6 +54,16 @@ class Pickup(UUIDModel):
         db_index=True,
         help_text="When the pickup is deleted with all files (empty: never)",
     )
+    storage_limit = models.BigIntegerField(
+        null=True,
+        blank=True,
+        help_text="Bytes for all files of the pickup; empty: PICKUP_STORAGE_LIMIT, 0: unlimited",
+    )
+    member_storage_limit = models.BigIntegerField(
+        null=True,
+        blank=True,
+        help_text="Bytes per participant; empty: MEMBER_STORAGE_LIMIT, 0: unlimited",
+    )
     join_policy = models.CharField(
         max_length=10,
         choices=JoinPolicy.choices,

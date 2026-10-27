@@ -25,6 +25,7 @@ Members have no accounts. Keep these properties; tests in `apps/pickups/tests/` 
 - Expired pickups (`expires_at` passed) count as gone: query pickups through `models.live()` (also across relations, `live("folder__pickup__")`), never `is_active=True` alone. The supervisord program `expiry` runs `delete_expired_pickups` hourly.
 - ZIP downloads (`services/archive.py`) are streamed with stdlib `zipfile` into a write-only sink — no temp files, stored not deflated. Archive paths go through `safe_name()`.
 - Files are never served publicly: the API returns `/api/files/{id}/`, which checks `can_view` and then hands the file to nginx via `X-Accel-Redirect` (`MEDIA_ACCEL_REDIRECT`; natively Django streams it). Don't add a public `/media/` location.
+- Storage limits live in `services/storage.py`: every upload path calls `check_room()` (direct upload, upload-session start, finalize); pending upload sessions count with their full size. Defaults from `PICKUP_STORAGE_LIMIT` / `MEMBER_STORAGE_LIMIT`, per-pickup overrides in `Pickup.storage_limit` / `member_storage_limit` (null: default, 0: unlimited), set with `manage.py storage_limits`.
 - Uploads: images and videos only, no SVG; stored under random names below `DATA_DIR`. Files above 20 MB go through the chunked upload API (5 MB chunks), because nginx limits request bodies to 25 MB.
 
 ## Backend rules

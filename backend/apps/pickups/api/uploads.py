@@ -17,6 +17,7 @@ from ..serializers import (
 )
 from ..services.access import can_edit
 from ..services.members import get_member_from_request
+from ..services.storage import StorageError, check_room
 from ..services.uploads import create_upload_session, finalize_upload, store_chunk
 
 logger = logging.getLogger(__name__)
@@ -37,12 +38,21 @@ def _not_pending(session: UploadSession) -> Response:
     return Response({"error": f"Upload session is {session.status}"}, status=status.HTTP_400_BAD_REQUEST)
 
 
+def _too_large(exc: StorageError) -> Response:
+    return Response({"error": str(exc)}, status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
+
+
 class UploadSessionCreateView(APIView):
     """Create a new chunked upload session."""
 
     @extend_schema(
         request=CreateUploadSessionSerializer,
-        responses={201: UploadSessionSerializer, 400: ErrorSerializer, 403: ErrorSerializer},
+        responses={
+            201: UploadSessionSerializer,
+            400: ErrorSerializer,
+            403: ErrorSerializer,
+            413: ErrorSerializer,
+        },
     )
     def post(self, request: Request, pickup_id: str, folder_id: str) -> Response:
         """Create an upload session for a large file."""
@@ -53,6 +63,10 @@ class UploadSessionCreateView(APIView):
         serializer = CreateUploadSessionSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            check_room(folder, serializer.validated_data["file_size"])
+        except StorageError as exc:
+            return _too_large(exc)
         session = create_upload_session(folder, serializer.validated_data)
         return Response(UploadSessionSerializer(session).data, status=status.HTTP_201_CREATED)
 
@@ -98,7 +112,10 @@ class UploadChunkView(APIView):
 class UploadSessionFinalizeView(APIView):
     """Finalize an upload session by combining chunks into a media file."""
 
-    @extend_schema(request=None, responses={201: MediaSerializer, 400: ErrorSerializer, 403: ErrorSerializer})
+    @extend_schema(
+        request=None,
+        responses={201: MediaSerializer, 400: ErrorSerializer, 403: ErrorSerializer, 413: ErrorSerializer},
+    )
     def post(self, request: Request, session_id: str) -> Response:
         """Combine all chunks and create the Media object."""
         session = get_object_or_404(UploadSession.objects.select_related("folder__pickup"), id=session_id)
@@ -112,6 +129,15 @@ class UploadSessionFinalizeView(APIView):
         if uploaded_chunks < session.total_chunks:
             missing = session.total_chunks - uploaded_chunks
             return Response({"error": f"Missing {missing} chunks"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            # Again: an admin may have lowered the limit while the file was uploading.
+            check_room(session.folder, session.file_size, exclude_session=session.id)
+        except StorageError as exc:
+            session.status = "error"
+            session.error_message = str(exc)
+            session.save(update_fields=["status", "error_message"])
+            session.cleanup_chunks()
+            return _too_large(exc)
 
         try:
             media = finalize_upload(session)

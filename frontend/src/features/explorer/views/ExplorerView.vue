@@ -136,8 +136,8 @@ function onFiles(event: Event) {
         class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card shadow-sm select-none"
       >
         <div class="space-y-1 border-b bg-pane px-2 py-2">
-          <NavBar @open-tree="treeOpen = true" />
-          <CommandBar v-if="!page" />
+          <NavBar />
+          <CommandBar @open-tree="treeOpen = true" />
         </div>
         <div class="flex min-h-0 flex-1">
           <aside

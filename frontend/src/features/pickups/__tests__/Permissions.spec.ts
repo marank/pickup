@@ -101,7 +101,10 @@ describe('creator tools', () => {
     expect(router.currentRoute.value.fullPath).toBe(`/pickup/${PICKUP_ID}/settings`)
     expect($('[aria-current="location"]').textContent).toContain('Settings')
     expect($('[aria-current="page"]').textContent).toContain('Settings')
-    expect(document.body.querySelector('[role="toolbar"][aria-label="Commands"]')).toBeNull()
+    const commands = $('[role="toolbar"][aria-label="Commands"]')
+    expect(Array.from(commands.querySelectorAll('button')).map((b) => b.ariaLabel)).toEqual([
+      'Show folders',
+    ])
     expect(findButton('Up one level').disabled).toBe(false)
 
     findButton('Account').dispatchEvent(
@@ -223,6 +226,23 @@ describe('creator tools', () => {
     expect(pageText()).toContain('Never: the pickup stays until you delete it.')
     await submit('#settings-title')
     expect(lastRequest('PATCH', `/pickups/${PICKUP_ID}/`)?.body).toHaveProperty('expires_at', null)
+  })
+
+  it('shows how much storage the pickup uses', async () => {
+    await renderAsCreator({ storage: { used: 950, limit: 1_000, own_used: null, own_limit: null } })
+    findButton('Settings').click()
+    await settle()
+    const bar = $('[role="progressbar"][aria-label="Storage used"]')
+    expect(bar.getAttribute('aria-valuenow')).toBe('95')
+    expect(pageText()).toContain('950 B of 1000 B used')
+  })
+
+  it('shows plain usage without a limit', async () => {
+    await renderAsCreator({ storage: { used: 2048, limit: null, own_used: null, own_limit: null } })
+    findButton('Settings').click()
+    await settle()
+    expect(document.body.querySelector('[role="progressbar"]')).toBeNull()
+    expect(pageText()).toContain('2 KB used')
   })
 
   it('reports failed settings', async () => {

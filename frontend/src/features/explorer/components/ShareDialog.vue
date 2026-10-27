@@ -4,7 +4,7 @@ import { computed, ref } from 'vue'
 import { toast } from 'vue-sonner'
 
 import CopyField from '@/components/CopyField.vue'
-import QrCode from '@/components/QrCode.vue'
+import QrCard from '@/components/QrCard.vue'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -25,7 +25,7 @@ const open = defineModel<boolean>('open', { required: true })
 const url = computed(() => `${window.location.origin}/pickup/${props.pickupId}`)
 const canShare = typeof navigator.share === 'function'
 
-const qr = ref<InstanceType<typeof QrCode> | null>(null)
+const qr = ref<InstanceType<typeof QrCard> | null>(null)
 
 async function downloadQr() {
   const blob = await qr.value?.toPng()
@@ -81,22 +81,16 @@ async function share() {
         </DialogDescription>
       </DialogHeader>
       <CopyField :value="url" label="Share link" />
-      <div class="flex items-center gap-4 rounded-xl border bg-pane p-3">
-        <QrCode
-          ref="qr"
-          :value="url"
-          label="QR code of the share link"
-          class="size-32 shrink-0 p-1"
-        />
-        <div class="space-y-2 text-sm">
-          <p class="text-muted-foreground">
-            Scan to open the pickup — handy on a table card or a slide at the party.
-          </p>
-          <Button variant="outline" size="sm" @click="downloadQr">
-            <DownloadIcon />
-            Save QR code
-          </Button>
-        </div>
+      <div class="flex flex-col items-center gap-3 rounded-xl border bg-pane p-4 text-center">
+        <QrCard ref="qr" :value="url" :title="title" class="w-44" />
+        <p class="text-sm text-muted-foreground">
+          Scan to open the pickup. Save the card as picture for a table card, a poster or a slide at
+          the party.
+        </p>
+        <Button variant="outline" size="sm" @click="downloadQr">
+          <DownloadIcon />
+          Save QR card
+        </Button>
       </div>
       <Button v-if="canShare" class="w-full" @click="share">
         <Share2Icon />

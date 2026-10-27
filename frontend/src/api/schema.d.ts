@@ -504,6 +504,7 @@ export interface components {
        * @description When the pickup is deleted with all files (empty: never)
        */
       readonly expires_at: string | null
+      readonly storage: components['schemas']['Storage']
       readonly member_url: string
     }
     EmailRequest: {
@@ -725,6 +726,7 @@ export interface components {
        * @description When the pickup is deleted with all files (empty: never)
        */
       readonly expires_at: string | null
+      readonly storage: components['schemas']['Storage']
     }
     SessionRequest: {
       access_key: string
@@ -737,6 +739,16 @@ export interface components {
      * @enum {string}
      */
     StatusEnum: 'pending' | 'complete' | 'error' | 'cancelled'
+    Storage: {
+      /** @description Bytes of all files (and uploads in progress) */
+      used: number
+      /** @description Limit for the pickup; null: unlimited */
+      limit: number | null
+      /** @description Bytes in your folders (members) */
+      own_used: number | null
+      /** @description Your limit; null: unlimited */
+      own_limit: number | null
+    }
     /** @description Serializer for uploading a chunk. */
     UploadChunkRequest: {
       chunk_index: number
@@ -1401,6 +1413,14 @@ export interface operations {
           'application/json': components['schemas']['Error']
         }
       }
+      413: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
     }
   }
   pickups_folders_retrieve: {
@@ -1597,6 +1617,14 @@ export interface operations {
         }
       }
       403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+      413: {
         headers: {
           [name: string]: unknown
         }
@@ -1898,6 +1926,14 @@ export interface operations {
         }
       }
       403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+      413: {
         headers: {
           [name: string]: unknown
         }

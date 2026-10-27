@@ -2,10 +2,19 @@ from datetime import datetime
 from typing import Any
 
 from django.utils import timezone
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from ..models import Pickup
 from ..services.access import can_view
+from ..services.storage import member_usage, pickup_usage
+
+
+class StorageSerializer(serializers.Serializer[Any]):
+    used = serializers.IntegerField(help_text="Bytes of all files (and uploads in progress)")
+    limit = serializers.IntegerField(allow_null=True, help_text="Limit for the pickup; null: unlimited")
+    own_used = serializers.IntegerField(allow_null=True, help_text="Bytes in your folders (members)")
+    own_limit = serializers.IntegerField(allow_null=True, help_text="Your limit; null: unlimited")
 
 
 class PickupSerializer(serializers.ModelSerializer[Pickup]):
@@ -18,6 +27,7 @@ class PickupSerializer(serializers.ModelSerializer[Pickup]):
     has_folder = serializers.SerializerMethodField()
     member_name = serializers.SerializerMethodField()
     can_view = serializers.SerializerMethodField()
+    storage = serializers.SerializerMethodField()
 
     class Meta:
         model = Pickup
@@ -38,6 +48,7 @@ class PickupSerializer(serializers.ModelSerializer[Pickup]):
             "join_policy",
             "email_privacy",
             "expires_at",
+            "storage",
         ]
         read_only_fields = [
             "id",
@@ -79,6 +90,22 @@ class PickupSerializer(serializers.ModelSerializer[Pickup]):
 
     def get_media_count(self, obj: Pickup) -> int:
         return obj.get_media_count() if can_view(obj, self._member()) else 0
+
+    @extend_schema_field(StorageSerializer)
+    def get_storage(self, obj: Pickup) -> dict[str, int | None]:
+        """Bytes used and limits (null: unlimited); only for those who may see the pickup."""
+        member = self._member()
+        empty: dict[str, int | None] = {"used": 0, "limit": None, "own_used": None, "own_limit": None}
+        if not can_view(obj, member):
+            return empty
+        usage = pickup_usage(obj)
+        own = member_usage(member.folder) if member is not None and member.folder is not None else None
+        return {
+            "used": usage.used,
+            "limit": usage.limit or None,
+            "own_used": own.used if own else None,
+            "own_limit": (own.limit or None) if own else None,
+        }
 
     def get_is_creator(self, obj: Pickup) -> bool:
         """Check if the current authenticated member is the creator."""

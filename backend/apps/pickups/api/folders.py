@@ -20,6 +20,7 @@ from ..serializers import (
 from ..services.access import can_delete_folder, can_edit, can_view
 from ..services.folders import FolderError, create_subfolder, delete_subfolder, rename_folder
 from ..services.members import get_member_from_request
+from ..services.storage import StorageError, check_room
 
 
 class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
@@ -64,7 +65,7 @@ class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
         methods=["POST"],
         operation_id="folder_media_upload",
         request={"multipart/form-data": UploadMediaSerializer},
-        responses={201: MediaSerializer, 403: ErrorSerializer},
+        responses={201: MediaSerializer, 403: ErrorSerializer, 413: ErrorSerializer},
     )
     @action(detail=True, methods=["get", "post"])
     def media(self, request: Request, pickup_id: str | None = None, id: str | None = None) -> Response:
@@ -89,6 +90,10 @@ class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
         upload = UploadMediaSerializer(data=request.data)
         if not upload.is_valid():
             return Response(upload.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            check_room(folder, upload.validated_data["file"].size)
+        except StorageError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
         media = Media.objects.create(folder=folder, **upload.validated_data)
         return Response(
             MediaSerializer(media, context={"member": member}).data, status=status.HTTP_201_CREATED

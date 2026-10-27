@@ -8,6 +8,7 @@ backend/) is loaded first, without overriding variables that are already set.
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -65,6 +66,25 @@ def env_int(name: str, default: int) -> int:
         return int(value)
     except ValueError as exc:
         raise ImproperlyConfigured(f"{name} must be an integer, got {value!r}.") from exc
+
+
+_SIZE_UNITS = {"": 1, "B": 1, "KB": 1024, "MB": 1024**2, "GB": 1024**3, "TB": 1024**4}
+
+
+def parse_size(value: str) -> int:
+    """Bytes from 20GB, 20G, 500 MB or 1048576 (binary units, as file managers show them)."""
+    match = re.fullmatch(r"\s*(\d+(?:\.\d+)?)\s*([KMGT]?)B?\s*", value.upper())
+    if not match:
+        raise ValueError(f"not a size: {value!r} (examples: 20GB, 500MB, 0)")
+    return int(float(match.group(1)) * _SIZE_UNITS[match.group(2) + "B" if match.group(2) else ""])
+
+
+def env_size(name: str, default: str) -> int:
+    value = os.environ.get(name) or default
+    try:
+        return parse_size(value)
+    except ValueError as exc:
+        raise ImproperlyConfigured(f"{name}: {exc}") from exc
 
 
 def env_list(name: str, default: list[str] | None = None) -> list[str]:

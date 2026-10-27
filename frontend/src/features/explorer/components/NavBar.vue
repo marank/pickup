@@ -3,13 +3,11 @@ import {
   ArrowLeftIcon,
   ArrowRightIcon,
   ArrowUpIcon,
-  FolderTreeIcon,
   RefreshCwIcon,
   SearchIcon,
   XIcon,
 } from '@lucide/vue'
 import { useQueryClient } from '@tanstack/vue-query'
-import { useMediaQuery } from '@vueuse/core'
 import { ref } from 'vue'
 
 import { Button } from '@/components/ui/button'
@@ -18,19 +16,11 @@ import { pickupKeys } from '@/features/pickups/queryKeys'
 import { useExplorer } from '../composables/useExplorer'
 import AddressBar from './AddressBar.vue'
 
-const emit = defineEmits<{ openTree: [] }>()
 const explorer = useExplorer()
 const client = useQueryClient()
 const searchOpen = ref(false)
-// Tailwind's md breakpoint: from here on the tree is a pane, below it a slide-in panel.
-const wide = useMediaQuery('(min-width: 768px)')
 
 const refresh = () => client.invalidateQueries({ queryKey: pickupKeys.all(explorer.pickupId) })
-
-function toggleTree() {
-  if (wide.value) explorer.prefs.treePane = !explorer.prefs.treePane
-  else emit('openTree')
-}
 </script>
 
 <template>
@@ -39,19 +29,6 @@ function toggleTree() {
     <div class="flex flex-wrap items-center gap-1 max-md:gap-y-2">
       <AddressBar class="max-md:order-first max-md:basis-full" />
       <div class="flex items-center gap-1 md:order-first">
-        <Button
-          variant="ghost"
-          size="icon"
-          :aria-label="
-            wide ? (explorer.prefs.treePane ? 'Hide folders' : 'Show folders') : 'Show folders'
-          "
-          :aria-pressed="wide ? explorer.prefs.treePane : undefined"
-          :class="wide && explorer.prefs.treePane && 'bg-muted'"
-          title="Folders"
-          @click="toggleTree"
-        >
-          <FolderTreeIcon />
-        </Button>
         <Button
           variant="ghost"
           size="icon"

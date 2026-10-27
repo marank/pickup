@@ -11,11 +11,13 @@ from rest_framework.response import Response
 from ..models import Folder, Media, Pickup
 from ..serializers import (
     ErrorSerializer,
+    FolderNameSerializer,
     FolderSerializer,
     MediaSerializer,
     MessageSerializer,
     UploadMediaSerializer,
 )
+from ..services.folders import FolderError, create_subfolder, delete_subfolder, rename_folder
 from ..services.members import get_member_from_request
 
 
@@ -30,7 +32,9 @@ class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
         """Get folders for a specific pickup."""
         if getattr(self, "swagger_fake_view", False):  # schema generation has no URL kwargs
             return Folder.objects.none()
-        return Folder.objects.filter(pickup_id=self.kwargs["pickup_id"], pickup__is_active=True)
+        return Folder.objects.filter(
+            pickup_id=self.kwargs["pickup_id"], pickup__is_active=True
+        ).select_related("pickup")
 
     def get_serializer_context(self) -> dict[str, Any]:
         """Add member to serializer context."""
@@ -58,10 +62,11 @@ class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
         member = get_member_from_request(request, folder.pickup)
 
         if request.method == "GET":
-            serializer = MediaSerializer(folder.media.all(), many=True, context={"member": member})
+            items = folder.media.select_related("folder")
+            serializer = MediaSerializer(items, many=True, context={"member": member})
             return Response(serializer.data)
 
-        if not member or not member.owns(folder.id):
+        if not member or not member.owns(folder):
             return Response(
                 {"error": "You do not have permission to upload to this folder."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -81,7 +86,7 @@ class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
         """Clear all media from a folder."""
         folder = self.get_object()
         member = get_member_from_request(request, folder.pickup)
-        if not member or not member.owns(folder.id):
+        if not member or not member.owns(folder):
             return Response(
                 {"error": "You do not have permission to clear this folder."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -92,3 +97,59 @@ class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
             media.file.delete(save=False)
         folder.media.all().delete()
         return Response({"message": f"Deleted {media_count} media files."})
+
+    def _owned(self, request: Request) -> tuple[Folder, Response | None]:
+        folder = self.get_object()
+        member = get_member_from_request(request, folder.pickup)
+        if not member or not member.owns(folder):
+            return folder, Response(
+                {"error": "Only the owner can change this folder."}, status=status.HTTP_403_FORBIDDEN
+            )
+        return folder, None
+
+    @extend_schema(
+        request=FolderNameSerializer,
+        responses={201: FolderSerializer, 400: ErrorSerializer, 403: ErrorSerializer},
+    )
+    @action(detail=True, methods=["post"])
+    def subfolders(self, request: Request, pickup_id: str | None = None, id: str | None = None) -> Response:
+        """Create a subfolder (owner only)."""
+        parent, denied = self._owned(request)
+        if denied:
+            return denied
+        body = FolderNameSerializer(data=request.data)
+        body.is_valid(raise_exception=True)
+        try:
+            folder = create_subfolder(parent, body.validated_data["name"])
+        except FolderError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(self.get_serializer(folder).data, status=status.HTTP_201_CREATED)
+
+    @extend_schema(
+        request=FolderNameSerializer,
+        responses={200: FolderSerializer, 400: ErrorSerializer, 403: ErrorSerializer},
+    )
+    def partial_update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """Rename a folder (owner only)."""
+        folder, denied = self._owned(request)
+        if denied:
+            return denied
+        body = FolderNameSerializer(data=request.data)
+        body.is_valid(raise_exception=True)
+        try:
+            rename_folder(folder, body.validated_data["name"])
+        except FolderError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(self.get_serializer(folder).data)
+
+    @extend_schema(responses={204: None, 400: ErrorSerializer, 403: ErrorSerializer})
+    def destroy(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """Delete a subfolder and everything in it (owner only)."""
+        folder, denied = self._owned(request)
+        if denied:
+            return denied
+        try:
+            delete_subfolder(folder)
+        except FolderError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_204_NO_CONTENT)

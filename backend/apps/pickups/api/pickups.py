@@ -16,6 +16,7 @@ from ..serializers import (
     JoinResponseSerializer,
     MediaSerializer,
     PickupSerializer,
+    PickupUpdateSerializer,
     SessionSerializer,
 )
 from ..services.members import (
@@ -58,6 +59,23 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
         data = CreatedPickupSerializer(pickup, context={"member": creator}).data
         return Response(data, status=status.HTTP_201_CREATED)
 
+    @extend_schema(
+        request=PickupUpdateSerializer,
+        responses={200: PickupSerializer, 403: ErrorSerializer},
+    )
+    def partial_update(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """Rename the pickup (creator only)."""
+        pickup = self.get_object()
+        member = get_member_from_request(request, pickup)
+        if not member or not member.is_creator:
+            return Response(
+                {"error": "Only the creator can rename the pickup."}, status=status.HTTP_403_FORBIDDEN
+            )
+        body = PickupUpdateSerializer(pickup, data=request.data, partial=True)
+        body.is_valid(raise_exception=True)
+        body.save()
+        return Response(PickupSerializer(pickup, context={"member": member}).data)
+
     @extend_schema(operation_id="pickup_folders_list", responses=FolderSerializer(many=True))
     @action(detail=True, methods=["get"])
     def folders(self, request: Request, id: str | None = None) -> Response:
@@ -72,7 +90,7 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
         """Get all media in a pickup."""
         pickup = self.get_object()
         context = self.get_serializer_context()
-        media = Media.objects.filter(folder__pickup=pickup)
+        media = Media.objects.filter(folder__pickup=pickup).select_related("folder")
         return Response(MediaSerializer(media, many=True, context=context).data)
 
     @extend_schema(request=CreateFolderSerializer, responses={201: JoinResponseSerializer})

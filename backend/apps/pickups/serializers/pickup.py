@@ -41,3 +41,11 @@ class PickupSerializer(serializers.ModelSerializer[Pickup]):
         """Check if the current authenticated member is the creator."""
         member = self.context.get("member")
         return bool(member and member.is_creator)
+
+
+class PickupUpdateSerializer(serializers.ModelSerializer[Pickup]):
+    """What the creator may change."""
+
+    class Meta:
+        model = Pickup
+        fields = ["title"]

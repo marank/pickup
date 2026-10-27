@@ -28,10 +28,13 @@ export function folder(overrides: Partial<Folder> = {}): Folder {
   return {
     id: FOLDER_ID,
     pickup: PICKUP_ID,
+    parent: null,
+    root: null,
     name: 'Alice photos',
     user_name: 'Alice',
     created_at: new Date().toISOString(),
     media_count: 1,
+    subfolder_count: 0,
     can_edit: false,
     ...overrides,
   }
@@ -49,6 +52,7 @@ export function media(overrides: Partial<Media> = {}): Media {
     uploaded_at: '2026-10-27T10:00:00Z',
     caption: 'Sunset',
     can_edit: false,
+    owner_name: 'Alice',
     is_image: true,
     is_video: false,
     ...overrides,

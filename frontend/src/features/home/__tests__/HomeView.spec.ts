@@ -16,7 +16,7 @@ describe('HomeView', () => {
     Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
     const { wrapper } = await renderAt(HomeView, '/')
 
-    findButton(/Create new pickup/).click()
+    findButton(/Start a pickup/).click()
     await flushPromises()
 
     const values = wrapper
@@ -33,11 +33,19 @@ describe('HomeView', () => {
     expect(pageText()).toContain('Open the pickup')
   })
 
+  it('explains how it works and answers questions', async () => {
+    await renderAt(HomeView, '/')
+    expect(pageText()).toContain('Three steps, then everyone’s in')
+    expect(pageText()).toContain('Your folder, your rules')
+    expect(pageText()).toContain('Who can change or delete things?')
+    expect(pageText()).toContain('Beach day') // the drawn explorer preview
+  })
+
   it('reports a failed creation', async () => {
     on('POST', '/api/pickups/', { status: 400, body: { error: 'Slow down' } })
     const error = vi.spyOn(toast, 'error')
     await renderAt(HomeView, '/')
-    findButton(/Create new pickup/).click()
+    findButton(/Start a pickup/).click()
     await flushPromises()
     expect(error).toHaveBeenCalledWith('Slow down')
   })
@@ -50,7 +58,7 @@ describe('HomeView', () => {
     Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
     const error = vi.spyOn(toast, 'error')
     await renderAt(HomeView, '/')
-    findButton(/Create new pickup/).click()
+    findButton(/Start a pickup/).click()
     await flushPromises()
     findButton('Copy share link').click()
     await flushPromises()

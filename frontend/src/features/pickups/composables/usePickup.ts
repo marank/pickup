@@ -26,14 +26,6 @@ export function usePickupFolders(pickupId: MaybeRefOrGetter<string>) {
   })
 }
 
-export function usePickupMedia(pickupId: MaybeRefOrGetter<string>) {
-  return useQuery({
-    queryKey: computed(() => pickupKeys.media(toValue(pickupId))),
-    queryFn: () =>
-      unwrap(api.GET('/api/pickups/{id}/media/', { params: { path: { id: toValue(pickupId) } } })),
-  })
-}
-
 export function useCreatePickup() {
   return useMutation({
     mutationFn: () => unwrap(api.POST('/api/pickups/')),

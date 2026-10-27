@@ -18,7 +18,8 @@ Members have no accounts. Keep these properties; tests in `apps/pickups/tests/` 
 - A member's personal link carries `Member.access_key`; `POST /api/pickups/{id}/session/` trades it for a Django session (`services/members.py`). Member ids are never credentials and never appear in API responses or URLs. `access_key` is returned only to that member (when creating or joining) and in the email.
 - The pickup id is the share link, so `Pickup` keeps a random UUIDv4 (not the time-ordered UUIDv7 of `UUIDModel`).
 - Every unsafe request is CSRF-checked, also for anonymous members (`apps.core.api.authentication.CsrfSessionAuthentication`).
-- Viewsets expose only the actions the SPA uses; changes to a folder or its media require `member.owns(folder.id)`.
+- Viewsets expose only the actions the SPA uses; changes to a folder or its media require `member.owns(folder)`, which checks the folder's top-level folder (`Folder.root`), so subfolders belong to the member who owns the top-level folder.
+- Folders nest: `Folder.parent` is the containing folder, `Folder.root` the member's top-level folder (both empty for top-level folders). A member's top-level folder can be renamed but not deleted. Names are unique per parent (case-insensitive) and may not contain `/` (the address bar's separator). Subfolder logic lives in `services/folders.py`.
 - Uploads: images and videos only, no SVG; stored under random names below `DATA_DIR`. Files above 20 MB go through the chunked upload API (5 MB chunks), because nginx limits request bodies to 25 MB.
 
 ## Backend rules
@@ -34,7 +35,10 @@ Members have no accounts. Keep these properties; tests in `apps/pickups/tests/` 
 
 ## Frontend rules
 
-- Feature folders: `src/features/<feature>/{components,composables,views}` (`home`, `pickups`, `media`), routes in `src/router/routes/<feature>.ts`.
+- Feature folders: `src/features/<feature>/{components,composables,views}` (`home`, `pickups`, `explorer`), routes in `src/router/routes/<feature>.ts`.
+- The pickup page is a file explorer (`features/explorer`). `provideExplorer()` in `ExplorerView` creates one shared state (tree, current folder, items, selection, view preferences, uploads, dialogs); components read it with `useExplorer()` instead of passing props down. Pure logic lives in `explorer/lib` (`tree.ts`, `items.ts`, `actions.ts`) and is unit-tested; item actions are defined once in `lib/actions.ts` for the context menu and the "⋮" menu.
+- Interaction rules: mouse click selects (Ctrl/Shift for more), double-click opens; touch tap opens. Keyboard: Enter, F2, Delete, Backspace, Ctrl+A, Escape, Ctrl+L. Everything must stay usable on a 375 px wide screen.
+- Design tokens are CSS variables in `src/assets/main.css` (paper, ink, tomato, butter, sage, owner colours); use the Tailwind names (`bg-pane`, `bg-selection`, `text-tomato`, …) instead of raw colours. Dark mode follows the system (`lib/theme.ts`).
 - Server state via TanStack Query composables around the typed `api` client (`src/api/client.ts`); wrap calls in `unwrap()` so errors become `ApiError`. Query keys of a pickup start with `['pickup', id]` (`features/pickups/queryKeys.ts`); invalidate that prefix after changes. There is no Pinia: the app has no client-only state. Add it only if that changes.
 - Files go as multipart via `formBody()`; uploads run through `useUploadQueue`.
 - UI components from shadcn-vue (`pnpm dlx shadcn-vue@latest add <component>`) in `src/components/ui/` — vendored, edit freely. The CLI is not a dependency; `src/assets/shadcn.css` holds the CSS it would import. `add` re-inserts a Google Fonts `@import` into `main.css`; remove it (a test fails otherwise).

@@ -29,9 +29,12 @@ watch(
 async function submit() {
   fieldErrors.value = {}
   try {
-    await join.mutateAsync({ ...form })
+    const joined = await join.mutateAsync({ ...form })
     toast.success('Welcome! Your folder is ready.')
-    await router.push({ name: 'pickup', params: { pickupId: props.pickupId } })
+    await router.push({
+      name: 'explorer-folder',
+      params: { pickupId: props.pickupId, folderId: joined.folder.id },
+    })
   } catch (err) {
     if (err instanceof ApiError && err.body && typeof err.body === 'object') {
       for (const [field, messages] of Object.entries(err.body)) {

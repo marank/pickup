@@ -1,7 +1,8 @@
 import { VueQueryPlugin } from '@tanstack/vue-query'
 import { DOMWrapper, flushPromises, mount } from '@vue/test-utils'
 import { createMemoryHistory, createRouter } from 'vue-router'
-import type { Component } from 'vue'
+import { defineComponent, h, type Component } from 'vue'
+import { RouterView } from 'vue-router'
 
 import { queryClient } from '@/lib/queryClient'
 import { homeRoutes } from '@/router/routes/home'
@@ -48,4 +49,33 @@ export async function typeCaption(text: string) {
   const textarea = document.body.querySelector<HTMLTextAreaElement>('[role="dialog"] textarea')
   if (!textarea) throw new Error('No caption field in an open dialog')
   await new DOMWrapper(textarea).setValue(text)
+}
+
+/** Mount the router view at `path`, so navigation re-renders like in the app. */
+export async function renderRoute(path: string) {
+  const Root = defineComponent({ render: () => h(RouterView) })
+  return renderAt(Root, path)
+}
+
+/** Open a reka-ui dropdown menu (it opens on keyboard or pointerdown, not on click). */
+export async function openMenu(label: string) {
+  const trigger = findButton(label)
+  trigger.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+  await flushPromises()
+}
+
+/** Click a menu item of the open menu by its text. */
+export async function chooseMenuItem(text: string | RegExp) {
+  const items = Array.from(document.body.querySelectorAll<HTMLElement>('[role^="menuitem"]'))
+  const item = items.find((el) =>
+    typeof text === 'string'
+      ? el.textContent?.trim().startsWith(text)
+      : text.test(el.textContent ?? ''),
+  )
+  if (!item)
+    throw new Error(
+      `No menu item "${text}" in: ${items.map((el) => el.textContent?.trim()).join(' | ')}`,
+    )
+  item.click()
+  await flushPromises()
 }

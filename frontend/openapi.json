@@ -110,6 +110,72 @@
                         "description": ""
                     }
                 }
+            },
+            "patch": {
+                "operationId": "pickups_partial_update",
+                "description": "Rename the pickup (creator only).",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this pickup.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedPickupUpdateRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedPickupUpdateRequest"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedPickupUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Pickup"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
             }
         },
         "/api/pickups/{id}/folders/": {
@@ -692,6 +758,152 @@
                         "description": ""
                     }
                 }
+            },
+            "patch": {
+                "operationId": "pickups_folders_partial_update",
+                "description": "Rename a folder (owner only).",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this folder.",
+                        "required": true
+                    },
+                    {
+                        "in": "path",
+                        "name": "pickup_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "The pickup this folder belongs to"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedFolderNameRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedFolderNameRequest"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedFolderNameRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Folder"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "pickups_folders_destroy",
+                "description": "Delete a subfolder and everything in it (owner only).",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this folder.",
+                        "required": true
+                    },
+                    {
+                        "in": "path",
+                        "name": "pickup_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "The pickup this folder belongs to"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
             }
         },
         "/api/pickups/{pickup_id}/folders/{id}/clear/": {
@@ -854,6 +1066,95 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/Media"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/pickups/{pickup_id}/folders/{id}/subfolders/": {
+            "post": {
+                "operationId": "pickups_folders_subfolders_create",
+                "description": "Create a subfolder (owner only).",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this folder.",
+                        "required": true
+                    },
+                    {
+                        "in": "path",
+                        "name": "pickup_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "The pickup this folder belongs to"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/FolderNameRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/FolderNameRequest"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/FolderNameRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "201": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Folder"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
                                 }
                             }
                         },
@@ -1057,17 +1358,16 @@
                         "type": "string",
                         "minLength": 1,
                         "description": "Name of the folder",
-                        "pattern": "^[a-zA-Z0-9\\s\\-_]+$",
                         "maxLength": 100
                     },
                     "user_name": {
                         "type": "string",
                         "minLength": 1,
-                        "description": "Name of the user who created this folder",
+                        "description": "Name of the member who owns this folder",
                         "maxLength": 100
                     },
                     "user_email": {
-                        "description": "Optional email of the user who created this folder",
+                        "description": "Optional email of the member (top-level folders)",
                         "oneOf": [
                             {
                                 "type": "string",
@@ -1199,6 +1499,20 @@
                         "readOnly": true,
                         "description": "The pickup this folder belongs to"
                     },
+                    "parent": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "Containing folder; empty for a member's top-level folder"
+                    },
+                    "root": {
+                        "type": "string",
+                        "format": "uuid",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "The member's top-level folder this subfolder lives in; empty for top-level folders"
+                    },
                     "name": {
                         "type": "string",
                         "readOnly": true,
@@ -1207,7 +1521,7 @@
                     "user_name": {
                         "type": "string",
                         "readOnly": true,
-                        "description": "Name of the user who created this folder"
+                        "description": "Name of the member who owns this folder"
                     },
                     "created_at": {
                         "type": "string",
@@ -1215,6 +1529,10 @@
                         "readOnly": true
                     },
                     "media_count": {
+                        "type": "integer",
+                        "readOnly": true
+                    },
+                    "subfolder_count": {
                         "type": "integer",
                         "readOnly": true
                     },
@@ -1230,8 +1548,25 @@
                     "id",
                     "media_count",
                     "name",
+                    "parent",
                     "pickup",
+                    "root",
+                    "subfolder_count",
                     "user_name"
+                ]
+            },
+            "FolderNameRequest": {
+                "type": "object",
+                "description": "Name for a new or renamed folder.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                    }
+                },
+                "required": [
+                    "name"
                 ]
             },
             "Health": {
@@ -1317,6 +1652,10 @@
                         "description": "Check if the current authenticated member owns this media's folder.",
                         "readOnly": true
                     },
+                    "owner_name": {
+                        "type": "string",
+                        "readOnly": true
+                    },
                     "is_image": {
                         "type": "boolean",
                         "readOnly": true
@@ -1337,6 +1676,7 @@
                     "is_video",
                     "media_type",
                     "original_filename",
+                    "owner_name",
                     "uploaded_at"
                 ]
             },
@@ -1364,6 +1704,28 @@
                 "properties": {
                     "caption": {
                         "type": "string"
+                    }
+                }
+            },
+            "PatchedFolderNameRequest": {
+                "type": "object",
+                "description": "Name for a new or renamed folder.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                    }
+                }
+            },
+            "PatchedPickupUpdateRequest": {
+                "type": "object",
+                "description": "What the creator may change.",
+                "properties": {
+                    "title": {
+                        "type": "string",
+                        "description": "Optional title for the pickup",
+                        "maxLength": 200
                     }
                 }
             },

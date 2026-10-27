@@ -69,7 +69,8 @@ export interface paths {
     delete?: never
     options?: never
     head?: never
-    patch?: never
+    /** @description Rename the pickup (creator only). */
+    patch: operations['pickups_partial_update']
     trace?: never
   }
   '/api/pickups/{id}/folders/': {
@@ -204,10 +205,12 @@ export interface paths {
     get: operations['pickups_folders_retrieve']
     put?: never
     post?: never
-    delete?: never
+    /** @description Delete a subfolder and everything in it (owner only). */
+    delete: operations['pickups_folders_destroy']
     options?: never
     head?: never
-    patch?: never
+    /** @description Rename a folder (owner only). */
+    patch: operations['pickups_folders_partial_update']
     trace?: never
   }
   '/api/pickups/{pickup_id}/folders/{id}/clear/': {
@@ -239,6 +242,23 @@ export interface paths {
     put?: never
     /** @description Get or upload media for a folder. */
     post: operations['folder_media_upload']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/pickups/{pickup_id}/folders/{id}/subfolders/': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** @description Create a subfolder (owner only). */
+    post: operations['pickups_folders_subfolders_create']
     delete?: never
     options?: never
     head?: never
@@ -304,9 +324,9 @@ export interface components {
     CreateFolderRequest: {
       /** @description Name of the folder */
       name: string
-      /** @description Name of the user who created this folder */
+      /** @description Name of the member who owns this folder */
       user_name: string
-      /** @description Optional email of the user who created this folder */
+      /** @description Optional email of the member (top-level folders) */
       user_email?: string
     }
     /** @description Serializer for creating an upload session. */
@@ -348,15 +368,30 @@ export interface components {
        * @description The pickup this folder belongs to
        */
       readonly pickup: string
+      /**
+       * Format: uuid
+       * @description Containing folder; empty for a member's top-level folder
+       */
+      readonly parent: string | null
+      /**
+       * Format: uuid
+       * @description The member's top-level folder this subfolder lives in; empty for top-level folders
+       */
+      readonly root: string | null
       /** @description Name of the folder */
       readonly name: string
-      /** @description Name of the user who created this folder */
+      /** @description Name of the member who owns this folder */
       readonly user_name: string
       /** Format: date-time */
       readonly created_at: string
       readonly media_count: number
+      readonly subfolder_count: number
       /** @description Check if the current authenticated member owns this folder. */
       readonly can_edit: boolean
+    }
+    /** @description Name for a new or renamed folder. */
+    FolderNameRequest: {
+      name: string
     }
     Health: {
       status: string
@@ -398,6 +433,7 @@ export interface components {
       caption?: string
       /** @description Check if the current authenticated member owns this media's folder. */
       readonly can_edit: boolean
+      readonly owner_name: string
       readonly is_image: boolean
       readonly is_video: boolean
     }
@@ -412,6 +448,15 @@ export interface components {
     }
     PatchedCaptionRequest: {
       caption?: string
+    }
+    /** @description Name for a new or renamed folder. */
+    PatchedFolderNameRequest: {
+      name?: string
+    }
+    /** @description What the creator may change. */
+    PatchedPickupUpdateRequest: {
+      /** @description Optional title for the pickup */
+      title?: string
     }
     /** @description Serializer for Pickup model. */
     Pickup: {
@@ -584,6 +629,42 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['Pickup']
+        }
+      }
+    }
+  }
+  pickups_partial_update: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        /** @description A UUID string identifying this pickup. */
+        id: string
+      }
+      cookie?: never
+    }
+    requestBody?: {
+      content: {
+        'multipart/form-data': components['schemas']['PatchedPickupUpdateRequest']
+        'application/x-www-form-urlencoded': components['schemas']['PatchedPickupUpdateRequest']
+        'application/json': components['schemas']['PatchedPickupUpdateRequest']
+      }
+    }
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Pickup']
+        }
+      }
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
         }
       }
     }
@@ -877,6 +958,89 @@ export interface operations {
       }
     }
   }
+  pickups_folders_destroy: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        /** @description A UUID string identifying this folder. */
+        id: string
+        pickup_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description No response body */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      400: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+    }
+  }
+  pickups_folders_partial_update: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        /** @description A UUID string identifying this folder. */
+        id: string
+        pickup_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: {
+      content: {
+        'multipart/form-data': components['schemas']['PatchedFolderNameRequest']
+        'application/x-www-form-urlencoded': components['schemas']['PatchedFolderNameRequest']
+        'application/json': components['schemas']['PatchedFolderNameRequest']
+      }
+    }
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Folder']
+        }
+      }
+      400: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+    }
+  }
   pickups_folders_clear_destroy: {
     parameters: {
       query?: never
@@ -954,6 +1118,51 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['Media']
+        }
+      }
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+    }
+  }
+  pickups_folders_subfolders_create: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        /** @description A UUID string identifying this folder. */
+        id: string
+        pickup_id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'multipart/form-data': components['schemas']['FolderNameRequest']
+        'application/x-www-form-urlencoded': components['schemas']['FolderNameRequest']
+        'application/json': components['schemas']['FolderNameRequest']
+      }
+    }
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Folder']
+        }
+      }
+      400: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
         }
       }
       403: {

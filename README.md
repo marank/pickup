@@ -5,7 +5,8 @@ A web application for sharing images and videos without user accounts. Users cre
 ## Features
 
 - 🚀 **No Account Required** - Start sharing immediately
-- 📁 **Personal Folders** - Each participant gets their own folder; only they can change it
+- 📁 **Personal Folders** - Each participant gets their own folder with any number of subfolders; only they can change it
+- 🗂️ **File explorer** - Folder tree, address bar you can type into, details/content/small/large views, sorting, search, keyboard shortcuts, right-click menus; works on the phone too
 - 🔗 **Easy Sharing** - One share link per pickup, one personal link per participant
 - 📧 **Email Reminders** - Optional email with the personal link
 - 📦 **Large Files** - Files above 20 MB are uploaded in resumable 5 MB chunks
@@ -33,7 +34,7 @@ pickup/
 ├── frontend/                 Vue 3 + Vite (pnpm)
 │   ├── src/
 │   │   ├── api/              typed client (openapi-fetch + CSRF), generated schema.d.ts
-│   │   ├── features/         home/, pickups/, media/ — each with components/, composables/, views/
+│   │   ├── features/         home/, pickups/ (join), explorer/ (the pickup page) — components/, composables/, views/
 │   │   ├── components/       shared components; ui/ = shadcn-vue (vendored)
 │   │   ├── router/           routes per feature
 │   │   └── test/             fake API and helpers for the Vitest component tests
@@ -152,10 +153,11 @@ docker compose start app
 2. Enter your name and a folder name; optionally an email address for your personal link.
 3. Upload media. Your browser stays logged in; the personal link logs you in from another browser.
 
-### Uploading Media
-1. Open your folder.
-2. Drag and drop images or videos, or click to browse (JPG, PNG, GIF, WebP, BMP, MP4, MOV, AVI, WMV, FLV, WebM, MKV; no SVG).
-3. Optionally add captions; edit or delete your media later.
+### Uploading and organising
+1. Open your folder (tree on the left, or the folder button on the phone).
+2. Drag and drop photos and videos onto the folder, or use **Upload** (JPG, PNG, GIF, WebP, BMP, MP4, MOV, AVI, WMV, FLV, WebM, MKV; no SVG). Uploads keep running while you browse.
+3. **New folder** creates subfolders; rename with F2, delete with Del, add captions in the details pane or the viewer.
+4. Switch views (Details, Content, Small/Large icons) and sorting in the toolbar; the choice is remembered.
 
 ## API Endpoints
 
@@ -171,9 +173,12 @@ Membership is a session: the personal link's access key is exchanged once (`POST
 | GET | `/api/pickups/{id}/` | Pickup details |
 | POST / DELETE | `/api/pickups/{id}/session/` | Log in with `{access_key}` / leave |
 | POST | `/api/pickups/{id}/join/` | Join: create folder and member, log in |
-| GET | `/api/pickups/{id}/folders/` | Folders |
+| GET | `/api/pickups/{id}/folders/` | All folders (flat; `parent` builds the tree) |
 | GET | `/api/pickups/{id}/media/` | All media |
+| PATCH | `/api/pickups/{id}/` | Rename the pickup (creator) |
 | GET | `/api/pickups/{id}/folders/{folder_id}/` | Folder details |
+| PATCH / DELETE | `/api/pickups/{id}/folders/{folder_id}/` | Rename a folder / delete a subfolder with its contents (owner) |
+| POST | `/api/pickups/{id}/folders/{folder_id}/subfolders/` | Create a subfolder (owner) |
 | GET / POST | `/api/pickups/{id}/folders/{folder_id}/media/` | Folder media / upload (owner) |
 | DELETE | `/api/pickups/{id}/folders/{folder_id}/clear/` | Delete all media of a folder (owner) |
 | GET / DELETE | `/api/pickups/{id}/folders/{folder_id}/media/{media_id}/` | Media / delete (owner) |

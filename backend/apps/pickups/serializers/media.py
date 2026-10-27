@@ -10,6 +10,7 @@ class MediaSerializer(serializers.ModelSerializer[Media]):
 
     file_size_display = serializers.SerializerMethodField()
     can_edit = serializers.SerializerMethodField()
+    owner_name = serializers.CharField(source="folder.user_name", read_only=True)
     is_image = serializers.SerializerMethodField()
     is_video = serializers.SerializerMethodField()
 
@@ -26,6 +27,7 @@ class MediaSerializer(serializers.ModelSerializer[Media]):
             "uploaded_at",
             "caption",
             "can_edit",
+            "owner_name",
             "is_image",
             "is_video",
         ]
@@ -45,7 +47,7 @@ class MediaSerializer(serializers.ModelSerializer[Media]):
     def get_can_edit(self, obj: Media) -> bool:
         """Check if the current authenticated member owns this media's folder."""
         member = self.context.get("member")
-        return bool(member and member.owns(obj.folder_id))
+        return bool(member and member.owns(obj.folder))
 
     def get_is_image(self, obj: Media) -> bool:
         return obj.is_image

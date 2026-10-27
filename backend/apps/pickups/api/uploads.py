@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 def _owner(request: Request, folder: Folder) -> Member | None:
     member = get_member_from_request(request, folder.pickup)
-    return member if member and member.owns(folder.id) else None
+    return member if member and member.owns(folder) else None
 
 
 def _forbidden() -> Response:

@@ -1,6 +1,6 @@
-from .folder import CreateFolderSerializer, FolderSerializer
+from .folder import CreateFolderSerializer, FolderNameSerializer, FolderSerializer
 from .media import MediaSerializer, UploadMediaSerializer
-from .pickup import PickupSerializer
+from .pickup import PickupSerializer, PickupUpdateSerializer
 from .responses import (
     CaptionSerializer,
     CreatedPickupSerializer,
@@ -24,9 +24,11 @@ __all__ = [
     "SessionSerializer",
     "CreateFolderSerializer",
     "CreateUploadSessionSerializer",
+    "FolderNameSerializer",
     "FolderSerializer",
     "MediaSerializer",
     "PickupSerializer",
+    "PickupUpdateSerializer",
     "UploadChunkSerializer",
     "UploadMediaSerializer",
     "UploadSessionSerializer",

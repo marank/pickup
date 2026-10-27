@@ -32,7 +32,7 @@ describe('JoinView', () => {
       name: 'Bob uploads',
       user_email: 'bob@example.com',
     })
-    await vi.waitFor(() => expect(router.currentRoute.value.name).toBe('pickup'))
+    await vi.waitFor(() => expect(router.currentRoute.value.name).toBe('explorer-folder'))
   })
 
   it('shows validation errors next to the fields', async () => {

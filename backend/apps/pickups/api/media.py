@@ -28,7 +28,7 @@ class MediaViewSet(mixins.RetrieveModelMixin, mixins.DestroyModelMixin, viewsets
         """Get media for a specific folder."""
         if getattr(self, "swagger_fake_view", False):  # schema generation has no URL kwargs
             return Media.objects.none()
-        return Media.objects.filter(
+        return Media.objects.select_related("folder").filter(
             folder_id=self.kwargs["folder_id"],
             folder__pickup_id=self.kwargs["pickup_id"],
             folder__pickup__is_active=True,
@@ -49,7 +49,7 @@ class MediaViewSet(mixins.RetrieveModelMixin, mixins.DestroyModelMixin, viewsets
     def _member_can_edit(self, request: Request, media: Media) -> bool:
         """Check if the authenticated member can edit this media's folder."""
         member = get_member_from_request(request, media.folder.pickup)
-        return member is not None and member.owns(media.folder_id)
+        return member is not None and member.owns(media.folder)
 
     @extend_schema(parameters=[_PICKUP_ID], responses={204: None, 403: ErrorSerializer})
     def destroy(self, request: Request, *args: Any, **kwargs: Any) -> Response:

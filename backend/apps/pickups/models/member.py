@@ -1,9 +1,13 @@
 import secrets
+from typing import TYPE_CHECKING
 
 from django.db import models
 from django.utils import timezone
 
 from apps.core.models import UUIDModel
+
+if TYPE_CHECKING:
+    from .folder import Folder
 
 
 def generate_access_key() -> str:
@@ -61,6 +65,6 @@ class Member(UUIDModel):
         """SPA path of the member's personal link; contains the secret access key."""
         return f"/pickup/{self.pickup_id}/member/{self.access_key}"
 
-    def owns(self, folder_id: object) -> bool:
-        """Whether this member may change the folder with the given id."""
-        return self.folder_id is not None and self.folder_id == folder_id
+    def owns(self, folder: Folder) -> bool:
+        """Whether this member may change the folder: their own folder or a subfolder of it."""
+        return self.folder_id is not None and self.folder_id == folder.top_level_id

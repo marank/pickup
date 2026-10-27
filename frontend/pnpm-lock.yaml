@@ -207,6 +207,9 @@ settings:
 importers:
   .:
     dependencies:
+      '@fontsource-variable/bricolage-grotesque':
+        specifier: ^5.3.0
+        version: 5.3.0
       '@fontsource-variable/geist':
         specifier: ^5.3.0
         version: 5.3.0
@@ -830,6 +833,12 @@ packages:
       }
     peerDependencies:
       vue: '>=3.3.0'
+
+  '@fontsource-variable/bricolage-grotesque@5.3.0':
+    resolution:
+      {
+        integrity: sha512-TLi9Q4hJjS2UvoTMRSS2nHu6c4R56lAw60NR9QYtVRCHn0XtsFpiEhNffZ8Glsoxu6wEEwLKBP8lb94J52PNBA==,
+      }
 
   '@fontsource-variable/geist@5.3.0':
     resolution:
@@ -6593,6 +6602,8 @@ snapshots:
       '@floating-ui/dom': 1.8.0
       '@floating-ui/utils': 0.2.12
       vue: 3.5.44(typescript@6.0.3)
+
+  '@fontsource-variable/bricolage-grotesque@5.3.0': {}
 
   '@fontsource-variable/geist@5.3.0': {}
 

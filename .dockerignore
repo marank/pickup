@@ -1,5 +1,7 @@
 .git
-.env
+# Secrets never go into the image, at any depth (backend/.env too).
+**/.env
+**/.env.*
 **/__pycache__
 **/*.pyc
 backend/.venv

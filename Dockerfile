@@ -38,10 +38,11 @@ WORKDIR /app
 COPY backend/pyproject.toml backend/uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 COPY backend/ ./
-# collectstatic needs settings to import; a throwaway key is enough at build time.
+# collectstatic needs settings to import; throwaway keys are enough at build time.
 # DATA_DIR elsewhere: settings create directories in it, which would otherwise land
 # root-owned in the image's /data and from there in the volume.
 RUN SECRET_KEY="build-only-$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')" \
+    EMAIL_HASH_KEY="build-only-$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')" \
     DATA_DIR=/tmp/build-data python manage.py collectstatic --noinput
 
 COPY --from=frontend /frontend/dist /srv/spa

@@ -1,8 +1,9 @@
 import pytest
 from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import Client
 
-from apps.pickups.models import Folder, Media, Member, UploadSession
+from apps.pickups.models import Folder, Media, Member, Pickup, UploadSession
 
 pytestmark = pytest.mark.django_db
 
@@ -23,43 +24,60 @@ def join(client, pickup_id, name="Alice", email=""):
 
 @pytest.fixture
 def joined(client):
-    pickup = create_pickup(client)
+    """Alice joined a pickup; `client` is logged in as her."""
+    pickup = create_pickup(Client())
     data = join(client, pickup["id"]).json()
-    return pickup["id"], data["folder"]["id"], data["member_id"]
+    return pickup["id"], data["folder"]["id"]
 
 
-def test_create_pickup_returns_creator(client):
+def test_create_pickup_logs_in_creator(client):
     pickup = create_pickup(client)
     creator = Member.objects.get(pickup_id=pickup["id"])
     assert creator.is_creator
-    assert pickup["is_creator"] is True
-    assert pickup["creator_member_id"] == str(creator.id)
+    assert pickup["member_url"] == f"/pickup/{pickup['id']}/member/{creator.access_key}"
+    assert client.get(f"/api/pickups/{pickup['id']}/").json()["is_creator"] is True
 
 
-def test_join_creates_folder_and_mails_link(client):
-    pickup = create_pickup(client)
+def test_pickup_never_exposes_member_ids_or_keys(client, joined):
+    pickup_id, _ = joined
+    stranger = Client()
+    secrets = [str(m.id) for m in Member.objects.all()] + [m.access_key for m in Member.objects.all()]
+    for url in [f"/api/pickups/{pickup_id}/", f"/api/pickups/{pickup_id}/folders/"]:
+        body = stranger.get(url).content.decode()
+        assert not any(secret in body for secret in secrets), url
+    assert "user_email" not in stranger.get(f"/api/pickups/{pickup_id}/folders/").json()[0]
+    assert stranger.get(f"/api/pickups/{pickup_id}/").json()["is_creator"] is False
+
+
+def test_pickup_ids_are_random_uuid4(client):
+    assert Pickup.objects.get(id=create_pickup(client)["id"]).id.version == 4
+
+
+def test_join_creates_folder_logs_in_and_mails_link(client):
+    pickup = create_pickup(Client())
     response = join(client, pickup["id"], email="alice@example.com")
     assert response.status_code == 201
-    member = Member.objects.get(id=response.json()["member_id"])
-    assert member.folder.name == "Alice folder"
-    assert len(mail.outbox) == 1
-    assert str(member.id) in mail.outbox[0].body
+    member = Member.objects.get(user_name="Alice")
+    assert response.json()["member_url"] == member.personal_path
+    assert member.access_key in mail.outbox[0].body
+    folders = client.get(f"/api/pickups/{pickup['id']}/folders/").json()
+    assert [f["can_edit"] for f in folders] == [True]
 
 
-def test_join_again_returns_existing_member(client, joined):
-    pickup_id, _, member_id = joined
-    response = client.post(
+def test_join_with_taken_name_does_not_hand_out_membership(client, joined):
+    pickup_id, _ = joined
+    response = Client().post(
         f"/api/pickups/{pickup_id}/join/",
-        {"name": "Other name", "user_name": "Alice"},
+        {"name": "Other folder", "user_name": "Alice"},
         content_type="application/json",
     )
-    assert response.status_code == 200
-    assert response.json()["member_id"] == member_id
+    assert response.status_code == 400
+    assert "user_name" in response.json()
 
 
 def test_join_rejects_duplicate_folder_name(client, joined):
-    pickup_id, _, _ = joined
-    response = client.post(
+    pickup_id, _ = joined
+    response = Client().post(
         f"/api/pickups/{pickup_id}/join/",
         {"name": "Alice folder", "user_name": "Bob"},
         content_type="application/json",
@@ -67,101 +85,193 @@ def test_join_rejects_duplicate_folder_name(client, joined):
     assert response.status_code == 400
 
 
-def test_pickup_detail_folders_and_media(client, joined):
-    pickup_id, folder_id, member_id = joined
-    detail = client.get(f"/api/pickups/{pickup_id}/?member_id={member_id}").json()
-    assert detail["folder_count"] == 1
-    assert detail["is_creator"] is False
-    folders = client.get(f"/api/pickups/{pickup_id}/folders/?member_id={member_id}").json()
-    assert [f["can_edit"] for f in folders] == [True]
-    assert client.get(f"/api/pickups/{pickup_id}/media/").json() == []
+def test_personal_link_logs_in_another_browser(joined):
+    pickup_id, folder_id = joined
+    member = Member.objects.get(user_name="Alice")
+    other_browser = Client()
+    url = f"/api/pickups/{pickup_id}/session/"
+    bad = other_browser.post(url, {"access_key": "wrong"}, content_type="application/json")
+    assert bad.status_code == 403
+    assert (
+        other_browser.post(url, {"access_key": str(member.id)}, content_type="application/json").status_code
+        == 403
+    )
+
+    response = other_browser.post(url, {"access_key": member.access_key}, content_type="application/json")
+    assert response.status_code == 200
+    folder = other_browser.get(f"/api/pickups/{pickup_id}/folders/{folder_id}/").json()
+    assert folder["can_edit"] is True
+
+    assert other_browser.delete(url).status_code == 204
+    folder = other_browser.get(f"/api/pickups/{pickup_id}/folders/{folder_id}/").json()
+    assert folder["can_edit"] is False
 
 
-def upload(client, pickup_id, folder_id, member_id, name="photo.jpg"):
+def test_member_id_parameter_is_no_longer_a_credential(joined):
+    pickup_id, folder_id = joined
+    member = Member.objects.get(user_name="Alice")
+    response = Client().post(
+        f"/api/pickups/{pickup_id}/folders/{folder_id}/media/?member_id={member.id}",
+        {"file": SimpleUploadedFile("a.jpg", b"x"), "member_id": str(member.id)},
+    )
+    assert response.status_code == 403
+
+
+@pytest.mark.parametrize(
+    ("method", "path"),
+    [
+        ("get", "/api/pickups/"),
+        ("post", "/api/pickups/"),
+        ("put", "/api/pickups/{pickup}/"),
+        ("patch", "/api/pickups/{pickup}/"),
+        ("delete", "/api/pickups/{pickup}/"),
+        ("post", "/api/pickups/{pickup}/folders/"),
+        ("put", "/api/pickups/{pickup}/folders/{folder}/"),
+        ("patch", "/api/pickups/{pickup}/folders/{folder}/"),
+        ("delete", "/api/pickups/{pickup}/folders/{folder}/"),
+        ("post", "/api/pickups/{pickup}/folders/{folder}/media/{media}/"),
+        ("put", "/api/pickups/{pickup}/folders/{folder}/media/{media}/"),
+        ("patch", "/api/pickups/{pickup}/folders/{folder}/media/{media}/"),
+    ],
+)
+def test_removed_crud_actions(client, joined, method, path):
+    pickup_id, folder_id = joined
+    media = upload(client, pickup_id, folder_id).json()
+    url = path.format(pickup=pickup_id, folder=folder_id, media=media["id"])
+    # The folder owner is logged in and still can't use them.
+    response = getattr(client, method)(url, {}, content_type="application/json")
+    assert response.status_code in (404, 405)
+    assert Pickup.objects.exists() and Folder.objects.exists() and Media.objects.exists()
+
+
+def test_unsafe_requests_need_csrf_token(joined):
+    pickup_id, _ = joined
+    browser = Client(enforce_csrf_checks=True)
+    assert browser.post("/create-pickup/", {}, content_type="application/json").status_code == 403
+
+    browser.get("/api/csrf")
+    token = browser.cookies["csrftoken"].value
+    response = browser.post(
+        "/create-pickup/", {}, content_type="application/json", headers={"X-CSRFToken": token}
+    )
+    assert response.status_code == 201
+
+
+def test_inactive_pickup_is_gone(client, joined):
+    pickup_id, folder_id = joined
+    Pickup.objects.update(is_active=False)
+    assert client.get(f"/api/pickups/{pickup_id}/").status_code == 404
+    assert client.get(f"/api/pickups/{pickup_id}/folders/{folder_id}/").status_code == 404
+    assert client.get(f"/api/pickups/{pickup_id}/folders/{folder_id}/media/").status_code == 404
+
+
+def upload(client, pickup_id, folder_id, name="photo.jpg"):
     return client.post(
         f"/api/pickups/{pickup_id}/folders/{folder_id}/media/",
-        {"file": SimpleUploadedFile(name, b"jpegdata"), "caption": "hi", "member_id": member_id},
+        {"file": SimpleUploadedFile(name, b"jpegdata"), "caption": "hi"},
     )
 
 
-def test_upload_requires_folder_owner(client, joined):
-    pickup_id, folder_id, _ = joined
-    other = join(client, pickup_id, name="Bob").json()["member_id"]
-    assert upload(client, pickup_id, folder_id, other).status_code == 403
+def test_upload_requires_folder_owner(joined):
+    pickup_id, folder_id = joined
+    bob = Client()
+    join(bob, pickup_id, name="Bob")
+    assert upload(bob, pickup_id, folder_id).status_code == 403
+    assert upload(Client(), pickup_id, folder_id).status_code == 403
 
 
-def test_upload_rejects_unknown_extension(client, joined):
-    assert upload(client, *joined, name="evil.exe").status_code == 400
+@pytest.mark.parametrize("name", ["evil.exe", "drawing.svg", "page.html"])
+def test_upload_rejects_unsupported_types(client, joined, name):
+    assert upload(client, *joined, name=name).status_code == 400
+
+
+def test_uploaded_files_get_random_names(client, joined):
+    media = upload(client, *joined).json()
+    stored = Media.objects.get(id=media["id"])
+    assert media["original_filename"] == "photo.jpg"
+    assert "photo" not in stored.file.name
+    assert stored.file.name.endswith(".jpg")
 
 
 def test_upload_caption_delete_and_clear(client, joined):
-    pickup_id, folder_id, member_id = joined
-    response = upload(client, pickup_id, folder_id, member_id)
+    pickup_id, folder_id = joined
+    response = upload(client, pickup_id, folder_id)
     assert response.status_code == 201
     media = response.json()
     assert media["media_type"] == "image"
     assert media["file_size_display"] == "8.0 B"
 
+    stranger = Client()
     base = f"/api/pickups/{pickup_id}/folders/{folder_id}/media/{media['id']}"
-    response = client.patch(
-        f"{base}/caption/?member_id={member_id}", {"caption": "new"}, content_type="application/json"
-    )
+    assert stranger.get(f"{base}/").status_code == 200
+    response = client.patch(f"{base}/caption/", {"caption": "new"}, content_type="application/json")
     assert response.json()["caption"] == "new"
     assert (
-        client.patch(f"{base}/caption/", {"caption": "x"}, content_type="application/json").status_code == 403
+        stranger.patch(f"{base}/caption/", {"caption": "x"}, content_type="application/json").status_code
+        == 403
     )
-    assert client.delete(f"{base}/").status_code == 403
-    assert client.delete(f"{base}/?member_id={member_id}").status_code == 204
+    assert stranger.delete(f"{base}/").status_code == 403
+    assert client.delete(f"{base}/").status_code == 204
 
-    upload(client, pickup_id, folder_id, member_id)
+    upload(client, pickup_id, folder_id)
     clear = f"/api/pickups/{pickup_id}/folders/{folder_id}/clear/"
-    assert client.delete(clear).status_code == 403
-    assert client.delete(f"{clear}?member_id={member_id}").status_code == 200
+    assert stranger.delete(clear).status_code == 403
+    assert client.delete(clear).status_code == 200
     assert not Media.objects.exists()
 
 
-def test_chunked_upload(client, joined, settings):
-    pickup_id, folder_id, member_id = joined
+def test_chunked_upload(client, joined):
+    pickup_id, folder_id = joined
     content = b"0123456789" * 3
     response = client.post(
-        f"/api/pickups/{pickup_id}/folders/{folder_id}/upload-sessions/?member_id={member_id}",
-        {"file_name": "../clip.mp4", "file_size": len(content), "media_type": "video", "chunk_size": 16},
+        f"/api/pickups/{pickup_id}/folders/{folder_id}/upload-sessions/",
+        {"file_name": "../clip.mp4", "file_size": len(content), "media_type": "image", "chunk_size": 16},
         content_type="application/json",
     )
     assert response.status_code == 201
     session = response.json()
     assert session["total_chunks"] == 2
+    assert session["media_type"] == "video"  # derived from the extension, not the client
     base = f"/api/upload-sessions/{session['id']}"
 
-    response = client.post(f"{base}/finalize/?member_id={member_id}")
+    assert Client().get(f"{base}/").status_code == 403
+    response = client.post(f"{base}/finalize/")
     assert response.json() == {"error": "Missing 2 chunks"}
 
     for index, part in enumerate([content[:16], content[16:]]):
         response = client.post(
-            f"{base}/chunks/",
-            {"chunk_index": index, "chunk": SimpleUploadedFile("c", part), "member_id": member_id},
+            f"{base}/chunks/", {"chunk_index": index, "chunk": SimpleUploadedFile("c", part)}
         )
         assert response.status_code == 200
     assert client.get(f"{base}/").json()["missing_chunks"] == []
 
-    response = client.post(f"{base}/finalize/?member_id={member_id}")
+    response = client.post(f"{base}/finalize/")
     assert response.status_code == 201
     media = Media.objects.get()
     assert media.file.read() == content
-    assert not media.file.name.startswith("/")
-    assert "/" not in media.file.name.split("_", 1)[1]  # client path stripped
+    assert media.original_filename == "../clip.mp4"
+    assert ".." not in media.file.name and media.file.name.endswith(".mp4")
     assert UploadSession.objects.get().status == "complete"
-    assert client.post(f"{base}/finalize/?member_id={member_id}").status_code == 400
+    assert client.post(f"{base}/finalize/").status_code == 400
+
+
+def test_chunked_upload_rejects_unsupported_types(client, joined):
+    pickup_id, folder_id = joined
+    response = client.post(
+        f"/api/pickups/{pickup_id}/folders/{folder_id}/upload-sessions/",
+        {"file_name": "x.svg", "file_size": 10},
+        content_type="application/json",
+    )
+    assert response.status_code == 400
 
 
 def test_chunk_upload_checks_owner_and_range(client, joined):
-    pickup_id, folder_id, member_id = joined
+    _, folder_id = joined
     folder = Folder.objects.get(id=folder_id)
     session = UploadSession.objects.create(
         folder=folder, file_name="a.mp4", file_size=1, chunk_size=1, total_chunks=1, media_type="video"
     )
     url = f"/api/upload-sessions/{session.id}/chunks/"
-    assert client.post(url, {"chunk_index": 0, "chunk": SimpleUploadedFile("c", b"x")}).status_code == 403
-    chunk = {"chunk_index": 5, "chunk": SimpleUploadedFile("c", b"x"), "member_id": member_id}
-    response = client.post(url, chunk)
+    assert Client().post(url, {"chunk_index": 0, "chunk": SimpleUploadedFile("c", b"x")}).status_code == 403
+    response = client.post(url, {"chunk_index": 5, "chunk": SimpleUploadedFile("c", b"x")})
     assert response.json() == {"error": "Chunk index out of range"}

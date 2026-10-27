@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from ..models import Media
-from ..models.media import ALLOWED_EXTENSIONS
+from ..models.media import ALLOWED_EXTENSIONS, file_extension
 
 
 class MediaSerializer(serializers.ModelSerializer):
@@ -65,8 +65,7 @@ class UploadMediaSerializer(serializers.ModelSerializer):
 
     def validate_file(self, value):
         """Validate file size and type."""
-        extension = value.name.lower().rsplit(".", 1)[-1]
-        if extension not in ALLOWED_EXTENSIONS:
+        if file_extension(value.name) not in ALLOWED_EXTENSIONS:
             raise serializers.ValidationError(
                 "File type not supported. Please upload an image or video file."
             )

@@ -65,7 +65,6 @@ import type { Folder } from '@/types'
 interface Props {
   id?: string
   pickupId?: string
-  memberId?: string
 }
 
 const props = defineProps<Props>()
@@ -83,7 +82,7 @@ const isAuthenticated = computed(() => pickupStore.isAuthenticated)
 const isCreator = computed(() => pickupStore.isCreator)
 const currentFolderId = computed(() => pickupStore.currentFolder?.id)
 
-// Get the pickup ID from props (works for both /pickup/:id and /pickup/:pickupId/member/:memberId)
+// Get the pickup ID from props (/pickup/:id; personal links redirect there)
 const pickupId = computed(() => props.id || props.pickupId || '')
 
 const handleFolderSelected = (folder: Folder) => {
@@ -124,8 +123,8 @@ onMounted(async () => {
       pickupStore.loadAllMedia(pickupId.value)
     ])
 
-    // If authenticated via member URL, set current folder to the member's folder
-    if (pickupStore.currentMemberId && !pickupStore.currentFolder) {
+    // If this browser is logged in as a member, set current folder to the member's folder
+    if (!pickupStore.currentFolder) {
       const memberFolder = pickupStore.folders.find(f => f.can_edit)
       if (memberFolder) {
         pickupStore.currentFolder = memberFolder

@@ -83,8 +83,7 @@ const loadFolder = async () => {
     loading.value = true
     const response = await folderApi.getFolder(
       props.pickupId,
-      props.folderId,
-      pickupStore.currentMemberId || undefined
+      props.folderId
     )
     folder.value = response.data
     pickupStore.currentFolder = response.data

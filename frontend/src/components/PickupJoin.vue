@@ -102,14 +102,10 @@ const handleSubmit = async () => {
     const response = await pickupStore.joinPickup(props.pickupId, formData.value)
     
     toast.success('Successfully joined pickup!')
-    // Redirect to the member URL which authenticates the user
-    if (response.member_url) {
-      router.push(response.member_url)
-    } else {
-      router.push(`/pickup/${props.pickupId}`)
-    }
+    // Joining already logged this browser in
+    router.push(`/pickup/${props.pickupId}`)
   } catch (err: any) {
-    error.value = err.response?.data?.error || 'Failed to join pickup'
+    error.value = pickupStore.error || 'Failed to join pickup'
     toast.error(error.value)
   } finally {
     loading.value = false

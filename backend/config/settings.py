@@ -236,9 +236,9 @@ DEFAULT_FROM_EMAIL = env_str("DEFAULT_FROM_EMAIL", "pickup@localhost")
 # API
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework.authentication.SessionAuthentication"],
-    # Pickup members are anonymous (identified by their member id), so endpoints
-    # check access themselves instead of requiring a logged-in user.
+    "DEFAULT_AUTHENTICATION_CLASSES": ["apps.core.api.authentication.CsrfSessionAuthentication"],
+    # Pickup members are anonymous users whose membership lives in the session, so
+    # endpoints check access themselves instead of requiring a logged-in user.
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"]

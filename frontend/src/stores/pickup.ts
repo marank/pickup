@@ -7,7 +7,6 @@ export const usePickupStore = defineStore('pickup', () => {
   // State
   const currentPickup = ref<Pickup | null>(null)
   const currentFolder = ref<Folder | null>(null)
-  const currentMemberId = ref<string | null>(null)
   const folders = ref<Folder[]>([])
   const allMedia = ref<Media[]>([])
   const folderMedia = ref<Media[]>([])
@@ -35,16 +34,20 @@ export const usePickupStore = defineStore('pickup', () => {
     error.value = null
   }
 
-  const setMemberId = (memberId: string | null) => {
-    currentMemberId.value = memberId
+  // Exchange a personal link's access key for a session in this browser
+  const enterWithKey = async (pickupId: string, accessKey: string) => {
+    const response = await pickupApi.enterSession(pickupId, accessKey)
+    currentPickup.value = response.data
+    currentFolder.value = null
+    return response.data
   }
 
   // Pickup actions
-  const loadPickup = async (pickupId: string, memberId?: string) => {
+  const loadPickup = async (pickupId: string) => {
     try {
       setLoading(true)
       clearError()
-      const response = await pickupApi.getPickup(pickupId, memberId)
+      const response = await pickupApi.getPickup(pickupId)
       currentPickup.value = response.data
       return response.data
     } catch (err: any) {
@@ -61,12 +64,15 @@ export const usePickupStore = defineStore('pickup', () => {
       setLoading(true)
       clearError()
       const response = await pickupApi.joinPickup(pickupId, data)
-      const { folder, member_id } = response.data
-      currentFolder.value = folder
-      currentMemberId.value = member_id
+      currentFolder.value = response.data.folder
+      // The session now belongs to the new member (e.g. no longer the creator)
+      currentPickup.value = (await pickupApi.getPickup(pickupId)).data
       return response.data
     } catch (err: any) {
-      const message = err.response?.data?.error || 'Failed to join pickup'
+      const data = err.response?.data
+      // Validation errors come per field: { user_name: ['...'] }
+      const fieldError = data && !data.error ? Object.values(data).flat()[0] : undefined
+      const message = data?.error || (fieldError as string | undefined) || 'Failed to join pickup'
       setError(message)
       throw err
     } finally {
@@ -78,7 +84,7 @@ export const usePickupStore = defineStore('pickup', () => {
     try {
       setLoading(true)
       clearError()
-      const response = await pickupApi.getFolders(pickupId, currentMemberId.value || undefined)
+      const response = await pickupApi.getFolders(pickupId)
       folders.value = response.data
       return response.data
     } catch (err: any) {
@@ -94,7 +100,7 @@ export const usePickupStore = defineStore('pickup', () => {
     try {
       setLoading(true)
       clearError()
-      const response = await pickupApi.getAllMedia(pickupId, currentMemberId.value || undefined)
+      const response = await pickupApi.getAllMedia(pickupId)
       allMedia.value = response.data
       return response.data
     } catch (err: any) {
@@ -111,7 +117,7 @@ export const usePickupStore = defineStore('pickup', () => {
     try {
       setLoading(true)
       clearError()
-      const response = await folderApi.getMedia(pickupId, folderId, currentMemberId.value || undefined)
+      const response = await folderApi.getMedia(pickupId, folderId)
       folderMedia.value = response.data
       return response.data
     } catch (err: any) {
@@ -127,7 +133,7 @@ export const usePickupStore = defineStore('pickup', () => {
     try {
       setLoading(true)
       clearError()
-      await folderApi.clearFolder(pickupId, folderId, currentMemberId.value || undefined)
+      await folderApi.clearFolder(pickupId, folderId)
       // Clear local media for this folder
       folderMedia.value = folderMedia.value.filter(media => media.folder !== folderId)
       // Update folder media count
@@ -194,7 +200,6 @@ export const usePickupStore = defineStore('pickup', () => {
     // State
     currentPickup,
     currentFolder,
-    currentMemberId,
     folders,
     allMedia,
     folderMedia,
@@ -211,7 +216,7 @@ export const usePickupStore = defineStore('pickup', () => {
     setLoading,
     setError,
     clearError,
-    setMemberId,
+    enterWithKey,
     loadPickup,
     joinPickup,
     loadFolders,

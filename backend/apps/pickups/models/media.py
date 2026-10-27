@@ -1,12 +1,33 @@
+import uuid
+from pathlib import PurePath
+
 from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.utils import timezone
 
 from apps.core.models import UUIDModel
 
-IMAGE_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "webp", "bmp", "svg"}
+# No SVG: it can carry script and would run on our origin when opened directly.
+IMAGE_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "webp", "bmp"}
 VIDEO_EXTENSIONS = {"mp4", "avi", "mov", "wmv", "flv", "webm", "mkv"}
 ALLOWED_EXTENSIONS = IMAGE_EXTENSIONS | VIDEO_EXTENSIONS
+
+
+def file_extension(filename: str) -> str:
+    return PurePath(filename).suffix.lower().removeprefix(".")
+
+
+def media_type_for(filename: str) -> str:
+    return "video" if file_extension(filename) in VIDEO_EXTENSIONS else "image"
+
+
+def stored_name(filename: str) -> str:
+    """Random file name with the original extension; media URLs must not be guessable."""
+    return f"{uuid.uuid4().hex}.{file_extension(filename)}"
+
+
+def media_upload_to(instance: object, filename: str) -> str:
+    return timezone.now().strftime("%Y/%m/%d/") + stored_name(filename)
 
 
 class Media(UUIDModel):
@@ -26,7 +47,7 @@ class Media(UUIDModel):
         help_text="The folder this media belongs to",
     )
     file = models.FileField(
-        upload_to="%Y/%m/%d/",
+        upload_to=media_upload_to,
         max_length=255,
         validators=[FileExtensionValidator(allowed_extensions=sorted(ALLOWED_EXTENSIONS))],
         help_text="The uploaded media file",
@@ -55,17 +76,12 @@ class Media(UUIDModel):
     def save(self, *args, **kwargs) -> None:  # type: ignore[no-untyped-def]
         """Automatically determine media type and file size before saving."""
         if self.file and not self.media_type:
-            self.media_type = self._determine_media_type()
+            self.media_type = media_type_for(self.file.name)
         if self.file and not self.file_size:
             self.file_size = self.file.size
         if not self.original_filename:
             self.original_filename = self.file.name
         super().save(*args, **kwargs)
-
-    def _determine_media_type(self) -> str:
-        """Determine if the file is an image or video based on extension."""
-        extension = self.file.name.lower().rsplit(".", 1)[-1]
-        return "video" if extension in VIDEO_EXTENSIONS else "image"
 
     @property
     def is_image(self) -> bool:

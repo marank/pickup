@@ -109,8 +109,8 @@ const createNewPickup = async () => {
     
     newPickupId.value = pickup.id
     newPickupUrl.value = `${window.location.origin}${pickup.share_url}`
-    newCreatorMemberUrl.value = pickup.creator_member_url
-      ? `${window.location.origin}${pickup.creator_member_url}`
+    newCreatorMemberUrl.value = pickup.member_url
+      ? `${window.location.origin}${pickup.member_url}`
       : `${window.location.origin}${pickup.share_url}`
     toast.success('Pickup created successfully!')
   } catch (err: any) {

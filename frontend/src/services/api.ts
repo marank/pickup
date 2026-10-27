@@ -13,7 +13,7 @@ import type {
 
 // Same origin as the SPA: Vite proxies the API in development, nginx in production.
 const api = axios.create({
-  // Django's CSRF cookie/header names; DRF checks them for logged-in (admin) sessions.
+  // Django's CSRF cookie/header names.
   xsrfCookieName: 'csrftoken',
   xsrfHeaderName: 'X-CSRFToken',
   headers: {
@@ -21,15 +21,17 @@ const api = axios.create({
   },
 })
 
-// Request interceptor to handle cookies
-api.interceptors.request.use(
-  (config) => {
-    return config
-  },
-  (error) => {
-    return Promise.reject(error)
+const SAFE_METHODS = ['get', 'head', 'options']
+const hasCsrfCookie = () => document.cookie.split('; ').some((c) => c.startsWith('csrftoken='))
+
+// Every unsafe request needs Django's CSRF token; fetch the cookie once before the first one.
+// Axios then copies it into the X-CSRFToken header (same origin).
+api.interceptors.request.use(async (config) => {
+  if (!SAFE_METHODS.includes((config.method ?? 'get').toLowerCase()) && !hasCsrfCookie()) {
+    await axios.get('/api/csrf')
   }
-)
+  return config
+})
 
 // Response interceptor to handle errors
 api.interceptors.response.use(
@@ -43,38 +45,40 @@ api.interceptors.response.use(
   }
 )
 
-const memberParams = (memberId?: string) => memberId ? { member_id: memberId } : {}
-
 export const pickupApi = {
   // Create a new pickup
   createPickup: async (data: CreatePickupRequest): Promise<AxiosResponse<Pickup>> => {
     return api.post('/create-pickup/', data)
   },
 
-  // Get pickup details (with optional member authentication)
-  getPickup: async (id: string, memberId?: string): Promise<AxiosResponse<Pickup>> => {
-    return api.get(`/api/pickups/${id}/`, {
-      params: memberParams(memberId)
-    })
+  // Get pickup details 
+  getPickup: async (id: string): Promise<AxiosResponse<Pickup>> => {
+    return api.get(`/api/pickups/${id}/`)
   },
 
-  // Join a pickup (create/access folder and member)
+  // Log this browser in as a member, using the access key from a personal link
+  enterSession: async (id: string, accessKey: string): Promise<AxiosResponse<Pickup>> => {
+    return api.post(`/api/pickups/${id}/session/`, { access_key: accessKey })
+  },
+
+  // Leave the pickup in this browser
+  leaveSession: async (id: string): Promise<AxiosResponse<void>> => {
+    return api.delete(`/api/pickups/${id}/session/`)
+  },
+
+  // Join a pickup (creates folder and member, logs this browser in)
   joinPickup: async (id: string, data: CreateFolderRequest): Promise<AxiosResponse<JoinPickupResponse>> => {
     return api.post(`/api/pickups/${id}/join/`, data)
   },
 
-  // Get all folders in a pickup (with optional member authentication)
-  getFolders: async (id: string, memberId?: string): Promise<AxiosResponse<Folder[]>> => {
-    return api.get(`/api/pickups/${id}/folders/`, {
-      params: memberParams(memberId)
-    })
+  // Get all folders in a pickup 
+  getFolders: async (id: string): Promise<AxiosResponse<Folder[]>> => {
+    return api.get(`/api/pickups/${id}/folders/`)
   },
 
-  // Get all media in a pickup (with optional member authentication)
-  getAllMedia: async (id: string, memberId?: string): Promise<AxiosResponse<Media[]>> => {
-    return api.get(`/api/pickups/${id}/media/`, {
-      params: memberParams(memberId)
-    })
+  // Get all media in a pickup 
+  getAllMedia: async (id: string): Promise<AxiosResponse<Media[]>> => {
+    return api.get(`/api/pickups/${id}/media/`)
   },
 }
 
@@ -82,23 +86,17 @@ export const folderApi = {
   // Get folder details
   getFolder: async (
     pickupId: string,
-    folderId: string,
-    memberId?: string
+    folderId: string
   ): Promise<AxiosResponse<Folder>> => {
-    return api.get(`/api/pickups/${pickupId}/folders/${folderId}/`, {
-      params: memberParams(memberId)
-    })
+    return api.get(`/api/pickups/${pickupId}/folders/${folderId}/`)
   },
 
   // Get media in a folder
   getMedia: async (
     pickupId: string,
-    folderId: string,
-    memberId?: string
+    folderId: string
   ): Promise<AxiosResponse<Media[]>> => {
-    return api.get(`/api/pickups/${pickupId}/folders/${folderId}/media/`, {
-      params: memberParams(memberId)
-    })
+    return api.get(`/api/pickups/${pickupId}/folders/${folderId}/media/`)
   },
 
   // Upload media to a folder
@@ -106,16 +104,12 @@ export const folderApi = {
     pickupId: string,
     folderId: string,
     data: UploadMediaRequest,
-    memberId?: string,
     signal?: AbortSignal
   ): Promise<AxiosResponse<Media>> => {
     const formData = new FormData()
     formData.append('file', data.file)
     if (data.caption) {
       formData.append('caption', data.caption)
-    }
-    if (memberId) {
-      formData.append('member_id', memberId)
     }
 
     return api.post(`/api/pickups/${pickupId}/folders/${folderId}/media/`, formData, {
@@ -129,12 +123,9 @@ export const folderApi = {
   // Clear all media in a folder
   clearFolder: async (
     pickupId: string,
-    folderId: string,
-    memberId?: string
+    folderId: string
   ): Promise<AxiosResponse<{ message: string }>> => {
-    return api.delete(`/api/pickups/${pickupId}/folders/${folderId}/clear/`, {
-      params: memberParams(memberId)
-    })
+    return api.delete(`/api/pickups/${pickupId}/folders/${folderId}/clear/`)
   },
 }
 
@@ -144,13 +135,10 @@ export const mediaApi = {
     pickupId: string,
     folderId: string,
     mediaId: string,
-    caption: string,
-    memberId?: string
+    caption: string
   ): Promise<AxiosResponse<Media>> => {
     return api.patch(`/api/pickups/${pickupId}/folders/${folderId}/media/${mediaId}/caption/`, {
       caption,
-    }, {
-      params: memberParams(memberId)
     })
   },
 
@@ -158,12 +146,9 @@ export const mediaApi = {
   deleteMedia: async (
     pickupId: string,
     folderId: string,
-    mediaId: string,
-    memberId?: string
+    mediaId: string
   ): Promise<AxiosResponse<void>> => {
-    return api.delete(`/api/pickups/${pickupId}/folders/${folderId}/media/${mediaId}/`, {
-      params: memberParams(memberId)
-    })
+    return api.delete(`/api/pickups/${pickupId}/folders/${folderId}/media/${mediaId}/`)
   },
 }
 
@@ -197,12 +182,9 @@ export const uploadApi = {
   createSession: async (
     pickupId: string,
     folderId: string,
-    data: CreateUploadSessionRequest,
-    memberId?: string
+    data: CreateUploadSessionRequest
   ): Promise<AxiosResponse<UploadSession>> => {
-    return api.post(`/api/pickups/${pickupId}/folders/${folderId}/upload-sessions/`, data, {
-      params: memberParams(memberId)
-    })
+    return api.post(`/api/pickups/${pickupId}/folders/${folderId}/upload-sessions/`, data)
   },
 
   // Get upload session details (with missing chunks for resumability)
@@ -216,15 +198,11 @@ export const uploadApi = {
     chunkIndex: number,
     chunk: Blob,
     onProgress?: (progress: number) => void,
-    signal?: AbortSignal,
-    memberId?: string
+    signal?: AbortSignal
   ): Promise<AxiosResponse<UploadSession>> => {
     const formData = new FormData()
     formData.append('chunk_index', chunkIndex.toString())
     formData.append('chunk', new File([chunk], 'chunk'))
-    if (memberId) {
-      formData.append('member_id', memberId)
-    }
 
     return api.post(`/api/upload-sessions/${sessionId}/chunks/`, formData, {
       headers: {
@@ -241,18 +219,15 @@ export const uploadApi = {
 
   // Finalize upload session and create Media
   finalizeSession: async (
-    sessionId: string,
-    memberId?: string
+    sessionId: string
   ): Promise<AxiosResponse<Media>> => {
-    return api.post(`/api/upload-sessions/${sessionId}/finalize/`, null, {
-      params: memberParams(memberId)
-    })
+    return api.post(`/api/upload-sessions/${sessionId}/finalize/`, null)
   },
 }
 
 export const healthApi = {
   // Health check
-  check: async (): Promise<AxiosResponse<{ status: string; message: string }>> => {
+  check: async (): Promise<AxiosResponse<{ status: string }>> => {
     return api.get('/api/health')
   },
 }

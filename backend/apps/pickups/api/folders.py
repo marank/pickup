@@ -2,7 +2,7 @@ from typing import Any
 
 from django.db.models import QuerySet
 from django.shortcuts import get_object_or_404
-from rest_framework import status, viewsets
+from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -12,20 +12,21 @@ from ..serializers import FolderSerializer, MediaSerializer, UploadMediaSerializ
 from ..services.members import get_member_from_request
 
 
-class FolderViewSet(viewsets.ModelViewSet):
-    """ViewSet for Folder operations."""
+class FolderViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+    """Folders are read by anyone with the pickup link and changed only by their owner."""
 
     serializer_class = FolderSerializer
     lookup_field = "id"
+    lookup_value_converter = "uuid"
 
     def get_queryset(self) -> QuerySet[Folder]:
         """Get folders for a specific pickup."""
-        return Folder.objects.filter(pickup_id=self.kwargs["pickup_id"])
+        return Folder.objects.filter(pickup_id=self.kwargs["pickup_id"], pickup__is_active=True)
 
     def get_serializer_context(self) -> dict[str, Any]:
         """Add member to serializer context."""
         context = super().get_serializer_context()
-        pickup = get_object_or_404(Pickup, id=self.kwargs["pickup_id"])
+        pickup = get_object_or_404(Pickup, id=self.kwargs["pickup_id"], is_active=True)
         member = get_member_from_request(self.request, pickup)
         if member:
             member.touch()
@@ -35,7 +36,7 @@ class FolderViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["get", "post"])
     def media(self, request: Request, pickup_id: str | None = None, id: str | None = None) -> Response:
         """Get or upload media for a folder."""
-        folder = get_object_or_404(Folder, id=id, pickup_id=pickup_id)
+        folder = self.get_object()
         member = get_member_from_request(request, folder.pickup)
 
         if request.method == "GET":
@@ -59,7 +60,7 @@ class FolderViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["delete"])
     def clear(self, request: Request, pickup_id: str | None = None, id: str | None = None) -> Response:
         """Clear all media from a folder."""
-        folder = get_object_or_404(Folder, id=id, pickup_id=pickup_id)
+        folder = self.get_object()
         member = get_member_from_request(request, folder.pickup)
         if not member or not member.owns(folder.id):
             return Response(

@@ -2,7 +2,7 @@ from typing import Any
 
 from django.db.models import QuerySet
 from django.shortcuts import get_object_or_404
-from rest_framework import status, viewsets
+from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -12,22 +12,27 @@ from ..serializers import MediaSerializer
 from ..services.members import get_member_from_request
 
 
-class MediaViewSet(viewsets.ModelViewSet):
-    """ViewSet for Media operations."""
+class MediaViewSet(
+    mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet
+):
+    """Media is read by anyone with the pickup link; deleting and captions need the folder owner."""
 
     serializer_class = MediaSerializer
     lookup_field = "id"
+    lookup_value_converter = "uuid"
 
     def get_queryset(self) -> QuerySet[Media]:
         """Get media for a specific folder."""
         return Media.objects.filter(
-            folder_id=self.kwargs["folder_id"], folder__pickup_id=self.kwargs["pickup_id"]
+            folder_id=self.kwargs["folder_id"],
+            folder__pickup_id=self.kwargs["pickup_id"],
+            folder__pickup__is_active=True,
         )
 
     def get_serializer_context(self) -> dict[str, Any]:
         """Add member to serializer context."""
         context = super().get_serializer_context()
-        pickup = get_object_or_404(Pickup, id=self.kwargs["pickup_id"])
+        pickup = get_object_or_404(Pickup, id=self.kwargs["pickup_id"], is_active=True)
         member = get_member_from_request(self.request, pickup)
         if member:
             member.touch()

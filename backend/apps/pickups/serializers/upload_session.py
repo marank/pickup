@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from ..models import MediaChunk, UploadSession
+from ..models.media import ALLOWED_EXTENSIONS, file_extension
 
 
 class UploadSessionSerializer(serializers.ModelSerializer):
@@ -50,9 +51,17 @@ class CreateUploadSessionSerializer(serializers.Serializer):
 
     file_name = serializers.CharField(max_length=255)
     file_size = serializers.IntegerField(min_value=1)
-    media_type = serializers.CharField(max_length=10)
+    media_type = serializers.CharField(max_length=10, required=False)  # ignored, derived from file_name
     chunk_size = serializers.IntegerField(required=False, default=5 * 1024 * 1024)
     caption = serializers.CharField(required=False, allow_blank=True)
+
+    def validate_file_name(self, value):
+        """Same file types as direct uploads; the extension ends up in the stored file name."""
+        if file_extension(value) not in ALLOWED_EXTENSIONS:
+            raise serializers.ValidationError(
+                "File type not supported. Please upload an image or video file."
+            )
+        return value
 
 
 class UploadChunkSerializer(serializers.Serializer):

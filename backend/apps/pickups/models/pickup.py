@@ -1,3 +1,5 @@
+import uuid
+
 from django.db import models
 from django.utils import timezone
 
@@ -10,6 +12,9 @@ class Pickup(UUIDModel):
     Each pickup has a unique share link for access.
     """
 
+    # The id is the share link, i.e. a secret: fully random UUIDv4 instead of the
+    # time-ordered UUIDv7 of UUIDModel.
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=200, blank=True, help_text="Optional title for the pickup")
     created_at = models.DateTimeField(default=timezone.now)
     is_active = models.BooleanField(default=True, help_text="Whether this pickup is active")

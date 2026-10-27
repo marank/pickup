@@ -179,8 +179,7 @@ const saveCaption = async () => {
       props.pickupId,
       props.folderId,
       editingMedia.value.id,
-      editingCaption.value,
-      pickupStore.currentMemberId || undefined
+      editingCaption.value
     )
     
     pickupStore.updateMediaCaption(editingMedia.value.id, editingCaption.value)
@@ -206,8 +205,7 @@ const deleteMedia = async (media: Media) => {
     await mediaApi.deleteMedia(
       props.pickupId,
       props.folderId,
-      media.id,
-      pickupStore.currentMemberId || undefined
+      media.id
     )
     pickupStore.removeMedia(media.id)
     emit('mediaDeleted', media.id)
@@ -228,8 +226,7 @@ const clearAllMedia = async () => {
   try {
     await folderApi.clearFolder(
       props.pickupId,
-      props.folderId,
-      pickupStore.currentMemberId || undefined
+      props.folderId
     )
     
     // Clear local state

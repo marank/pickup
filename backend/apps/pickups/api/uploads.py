@@ -39,7 +39,7 @@ class UploadSessionCreateView(APIView):
 
     def post(self, request: Request, pickup_id: str, folder_id: str) -> Response:
         """Create an upload session for a large file."""
-        folder = get_object_or_404(Folder, id=folder_id, pickup_id=pickup_id)
+        folder = get_object_or_404(Folder, id=folder_id, pickup_id=pickup_id, pickup__is_active=True)
         if not _owner(request, folder):
             return _forbidden()
 
@@ -55,7 +55,9 @@ class UploadSessionDetailView(APIView):
 
     def get(self, request: Request, session_id: str) -> Response:
         """Return upload session with missing chunks."""
-        session = get_object_or_404(UploadSession, id=session_id)
+        session = get_object_or_404(UploadSession.objects.select_related("folder__pickup"), id=session_id)
+        if not _owner(request, session.folder):
+            return _forbidden()
         return Response(UploadSessionSerializer(session).data)
 
 

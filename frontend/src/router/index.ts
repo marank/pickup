@@ -5,8 +5,6 @@ import PickupView from '../views/PickupView.vue'
 import PickupJoinView from '../views/PickupJoinView.vue'
 import FolderView from '../views/FolderView.vue'
 
-const MEMBER_STORAGE_KEY = (pickupId: string) => `pickup_member_${pickupId}`
-
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -22,7 +20,9 @@ const router = createRouter({
       props: true,
     },
     {
-      path: '/pickup/:pickupId/member/:memberId',
+      // Personal link: the access key is exchanged for a session in the guard below,
+      // then the address bar switches to the plain pickup URL.
+      path: '/pickup/:pickupId/member/:accessKey',
       name: 'pickup-member',
       component: PickupView,
       props: true,
@@ -52,37 +52,27 @@ router.beforeEach(async (to, from) => {
     return
   }
 
-  // Handle member route - set member ID, persist it, and load pickup
+  // Personal link: log this browser in, then drop the secret key from the URL
   if (to.name === 'pickup-member') {
     const pickupId = to.params.pickupId as string
-    const memberId = to.params.memberId as string
-    pickupStore.setMemberId(memberId)
-    localStorage.setItem(MEMBER_STORAGE_KEY(pickupId), memberId)
-
-    if (!pickupStore.currentPickup || pickupStore.currentPickup.id !== pickupId) {
-      try {
-        await pickupStore.loadPickup(pickupId, memberId)
-      } catch (error) {
-        return { name: 'pickup-join', params: { pickupId } }
-      }
+    try {
+      await pickupStore.enterWithKey(pickupId, to.params.accessKey as string)
+      return { name: 'pickup', params: { id: pickupId }, replace: true }
+    } catch {
+      return { name: 'pickup-join', params: { pickupId } }
     }
-    return
   }
 
   // Check if accessing pickup or folder routes
   if (to.name === 'pickup' || to.name === 'folder') {
     const pickupId = (to.params.id || to.params.pickupId) as string
-    const storedMemberId = localStorage.getItem(MEMBER_STORAGE_KEY(pickupId))
-
-    // Restore member ID from localStorage if available
-    if (storedMemberId && !pickupStore.currentMemberId) {
-      pickupStore.setMemberId(storedMemberId)
-    }
+    // Earlier versions kept member ids here; they are no longer credentials.
+    localStorage.removeItem(`pickup_member_${pickupId}`)
 
     // Load pickup data if not already loaded
     if (!pickupStore.currentPickup || pickupStore.currentPickup.id !== pickupId) {
       try {
-        await pickupStore.loadPickup(pickupId, storedMemberId || undefined)
+        await pickupStore.loadPickup(pickupId)
       } catch (error) {
         // If pickup not found or error, redirect to join
         return { name: 'pickup-join', params: { pickupId } }

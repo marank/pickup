@@ -303,8 +303,7 @@ const uploadDirectFile = async (item: UploadItem) => {
     props.pickupId,
     props.folderId,
     uploadData,
-    pickupStore.currentMemberId || undefined,
-    item.abortController?.signal
+        item.abortController?.signal
   )
 
   item.status = 'completed'
@@ -332,8 +331,7 @@ const uploadChunkedFile = async (item: UploadItem) => {
       media_type: mediaType,
       chunk_size: CHUNK_SIZE,
       caption: item.caption,
-    },
-    pickupStore.currentMemberId || undefined
+    }
   )
 
   item.sessionId = sessionResponse.data.id
@@ -365,8 +363,7 @@ const uploadChunkedFile = async (item: UploadItem) => {
             item.uploadedChunks = i + chunkProgress
             item.progress = Math.round((i + chunkProgress) / totalChunks * 100)
           },
-          item.abortController?.signal,
-          pickupStore.currentMemberId || undefined
+          item.abortController?.signal
         )
         success = true
         item.uploadedChunks = i + 1
@@ -382,7 +379,7 @@ const uploadChunkedFile = async (item: UploadItem) => {
   }
 
   // Finalize
-  const response = await uploadApi.finalizeSession(sessionId, pickupStore.currentMemberId || undefined)
+  const response = await uploadApi.finalizeSession(sessionId)
   item.status = 'completed'
   item.progress = 100
   pickupStore.addMedia(response.data)

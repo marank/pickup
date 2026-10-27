@@ -11,15 +11,36 @@ from ..models import Folder, Member, Pickup
 logger = logging.getLogger(__name__)
 
 
+SESSION_KEY = "pickup_members"  # {pickup_id: member_id} of the pickups this browser belongs to
+
+
 def get_member_from_request(request: HttpRequest, pickup: Pickup) -> Member | None:
-    """The member identified by the `member_id` query/form parameter, if it belongs to the pickup."""
-    member_id = request.GET.get("member_id") or request.POST.get("member_id")
+    """The member this browser session is logged in as for the pickup, if any."""
+    member_id = request.session.get(SESSION_KEY, {}).get(str(pickup.id))
     if not member_id:
         return None
-    try:
-        return Member.objects.select_related("folder").get(id=member_id, pickup=pickup)
-    except Member.DoesNotExist, ValueError:
+    return Member.objects.select_related("folder").filter(id=member_id, pickup=pickup).first()
+
+
+def login_member(request: HttpRequest, member: Member) -> None:
+    """Remember the member in the session (other pickups' memberships are kept)."""
+    memberships = dict(request.session.get(SESSION_KEY, {}))
+    if not memberships:
+        request.session.cycle_key()  # new session id on "login", against session fixation
+    memberships[str(member.pickup_id)] = str(member.id)
+    request.session[SESSION_KEY] = memberships
+
+
+def logout_member(request: HttpRequest, pickup: Pickup) -> None:
+    memberships = dict(request.session.get(SESSION_KEY, {}))
+    memberships.pop(str(pickup.id), None)
+    request.session[SESSION_KEY] = memberships
+
+
+def member_for_key(pickup: Pickup, access_key: str) -> Member | None:
+    if not access_key:
         return None
+    return Member.objects.filter(pickup=pickup, access_key=access_key).first()
 
 
 def create_pickup(title: str) -> tuple[Pickup, Member]:
@@ -29,36 +50,17 @@ def create_pickup(title: str) -> tuple[Pickup, Member]:
     return pickup, creator
 
 
-def join_pickup(pickup: Pickup, *, name: str, user_name: str, user_email: str) -> tuple[Member, bool]:
-    """Return the member for user_name in this pickup, creating folder and member if new."""
-    existing_folder = Folder.objects.filter(pickup=pickup, user_name=user_name).first()
-    if existing_folder:
-        member, _ = Member.objects.get_or_create(
-            folder=existing_folder,
-            defaults={
-                "pickup": pickup,
-                "user_name": user_name,
-                "user_email": user_email,
-                "is_creator": False,
-            },
-        )
-        member.touch()
-        return member, False
-
+def join_pickup(pickup: Pickup, *, name: str, user_name: str, user_email: str) -> Member:
+    """Create a folder and a member for a new participant."""
     folder = Folder.objects.create(pickup=pickup, name=name, user_name=user_name, user_email=user_email)
-    member = Member.objects.create(
+    return Member.objects.create(
         pickup=pickup, folder=folder, user_name=user_name, user_email=user_email, is_creator=False
     )
-    return member, True
-
-
-def member_path(member: Member) -> str:
-    return f"/pickup/{member.pickup_id}/member/{member.id}"
 
 
 def send_share_email(member: Member, request: HttpRequest) -> None:
     """Send the member their personal link. Failures are logged, never raised."""
-    member_url = request.build_absolute_uri(member_path(member) + "/")
+    member_url = request.build_absolute_uri(member.personal_path)
     subject = f"Your Pickup Share Link - {member.pickup.title or 'Untitled'}"
     message = f"""
 Hello {member.user_name},

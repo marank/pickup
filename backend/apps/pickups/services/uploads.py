@@ -2,7 +2,6 @@
 
 import math
 import os
-import uuid
 from typing import Any
 
 from django.conf import settings
@@ -10,6 +9,7 @@ from django.core.files.uploadedfile import UploadedFile
 from django.utils import timezone
 
 from ..models import Folder, Media, MediaChunk, UploadSession
+from ..models.media import media_type_for, stored_name
 
 
 def create_upload_session(folder: Folder, data: dict[str, Any]) -> UploadSession:
@@ -20,7 +20,8 @@ def create_upload_session(folder: Folder, data: dict[str, Any]) -> UploadSession
         file_size=data["file_size"],
         chunk_size=chunk_size,
         total_chunks=math.ceil(data["file_size"] / chunk_size),
-        media_type=data["media_type"],
+        # Derived from the validated extension, not taken from the client.
+        media_type=media_type_for(data["file_name"]),
         caption=data.get("caption", ""),
     )
     os.makedirs(session.chunks_dir, exist_ok=True)
@@ -46,7 +47,7 @@ def finalize_upload(session: UploadSession) -> Media:
     relative_dir = timezone.now().strftime("%Y/%m/%d")
     upload_dir = os.path.join(settings.MEDIA_ROOT, relative_dir)
     os.makedirs(upload_dir, exist_ok=True)
-    final_name = f"{uuid.uuid4()}_{os.path.basename(session.file_name)}"
+    final_name = stored_name(session.file_name)
     final_path = os.path.join(upload_dir, final_name)
 
     with open(final_path, "wb") as destination:

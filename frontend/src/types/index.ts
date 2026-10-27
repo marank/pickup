@@ -4,8 +4,8 @@ export interface Pickup {
   created_at: string
   is_active: boolean
   share_url: string
-  creator_member_id?: string
-  creator_member_url?: string
+  // Creator's personal link; only in the response that created the pickup
+  member_url?: string
   folder_count: number
   media_count: number
   is_creator: boolean
@@ -13,7 +13,7 @@ export interface Pickup {
 
 export interface JoinPickupResponse {
   folder: Folder
-  member_id: string
+  // Personal link with the secret access key, for coming back from another browser
   member_url: string
 }
 
@@ -22,11 +22,9 @@ export interface Folder {
   pickup: string
   name: string
   user_name: string
-  user_email: string
   created_at: string
   media_count: number
   can_edit: boolean
-  member_id?: string
 }
 
 export interface Media {

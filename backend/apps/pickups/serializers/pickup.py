@@ -9,8 +9,6 @@ class PickupSerializer(serializers.ModelSerializer):
     folder_count = serializers.SerializerMethodField()
     media_count = serializers.SerializerMethodField()
     is_creator = serializers.SerializerMethodField()
-    creator_member_id = serializers.SerializerMethodField()
-    creator_member_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Pickup
@@ -23,8 +21,6 @@ class PickupSerializer(serializers.ModelSerializer):
             "folder_count",
             "media_count",
             "is_creator",
-            "creator_member_id",
-            "creator_member_url",
         ]
         read_only_fields = [
             "id",
@@ -33,8 +29,6 @@ class PickupSerializer(serializers.ModelSerializer):
             "folder_count",
             "media_count",
             "is_creator",
-            "creator_member_id",
-            "creator_member_url",
         ]
 
     def get_folder_count(self, obj):
@@ -49,20 +43,3 @@ class PickupSerializer(serializers.ModelSerializer):
         if member:
             return member.is_creator
         return False
-
-    def get_creator_member_id(self, obj):
-        """Return the creator member ID for this pickup."""
-        member = self.context.get("member")
-        if member:
-            return str(member.id)
-        creator = obj.members.filter(is_creator=True).first()
-        if creator:
-            return str(creator.id)
-        return None
-
-    def get_creator_member_url(self, obj):
-        """Return the creator member URL for this pickup."""
-        creator_member_id = self.get_creator_member_id(obj)
-        if creator_member_id:
-            return f"/pickup/{obj.id}/member/{creator_member_id}"
-        return None

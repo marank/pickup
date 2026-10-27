@@ -8,7 +8,6 @@ class FolderSerializer(serializers.ModelSerializer):
 
     media_count = serializers.SerializerMethodField()
     can_edit = serializers.SerializerMethodField()
-    member_id = serializers.SerializerMethodField()
 
     class Meta:
         model = Folder
@@ -17,14 +16,11 @@ class FolderSerializer(serializers.ModelSerializer):
             "pickup",
             "name",
             "user_name",
-            "user_email",
             "created_at",
             "media_count",
             "can_edit",
-            "member_id",
         ]
-        read_only_fields = ["id", "created_at", "media_count", "can_edit", "member_id"]
-        extra_kwargs = {"user_email": {"required": False, "allow_blank": True}}
+        read_only_fields = ["id", "pickup", "name", "user_name", "created_at", "media_count", "can_edit"]
 
     def get_media_count(self, obj):
         return obj.get_media_count()
@@ -35,12 +31,6 @@ class FolderSerializer(serializers.ModelSerializer):
         if member and member.folder:
             return member.folder_id == obj.id
         return False
-
-    def get_member_id(self, obj):
-        """Return the member ID for this folder if it exists."""
-        if hasattr(obj, "member") and obj.member:
-            return str(obj.member.id)
-        return None
 
 
 class CreateFolderSerializer(serializers.ModelSerializer):
@@ -56,4 +46,13 @@ class CreateFolderSerializer(serializers.ModelSerializer):
         pickup_id = self.context.get("pickup_id")
         if pickup_id and Folder.objects.filter(pickup_id=pickup_id, name=value).exists():
             raise serializers.ValidationError("A folder with this name already exists in this pickup.")
+        return value
+
+    def validate_user_name(self, value):
+        """Names identify people in a pickup; a taken name must not hand out its folder."""
+        pickup_id = self.context.get("pickup_id")
+        if pickup_id and Folder.objects.filter(pickup_id=pickup_id, user_name=value).exists():
+            raise serializers.ValidationError(
+                "This name is already taken in this pickup. If it is yours, open your personal link."
+            )
         return value

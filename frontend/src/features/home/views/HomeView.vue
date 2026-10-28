@@ -10,6 +10,7 @@ import {
 } from '@lucide/vue'
 
 import ExplorerMock from '../components/ExplorerMock.vue'
+import LogoIntro from '../components/LogoIntro.vue'
 import StartPanel from '../components/StartPanel.vue'
 
 const steps = [
@@ -80,6 +81,8 @@ const faqs = [
 
 <template>
   <div>
+    <LogoIntro class="px-4 pt-8 md:pt-12" />
+
     <!-- Hero -->
     <section class="overflow-x-clip">
       <div

@@ -68,7 +68,7 @@ async function submit() {
       <Label for="email">Email (optional)</Label>
       <Input id="email" v-model="form.email" type="email" autocomplete="email" />
       <p class="text-sm text-muted-foreground">
-        We'll send you your personal link, so you can come back from any device.
+        We send you your personal link, so you can log in on other devices.
       </p>
       <p v-if="fieldErrors.email" class="text-sm text-destructive">
         {{ fieldErrors.email }}

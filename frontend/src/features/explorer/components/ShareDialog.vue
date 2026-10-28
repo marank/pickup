@@ -70,8 +70,7 @@ async function share() {
       <div class="flex flex-col items-center gap-3 rounded-xl border bg-pane p-4 text-center">
         <QrCard ref="qr" :value="url" :title="title" class="w-44" />
         <p class="text-sm text-muted-foreground">
-          Scan to open the pickup. Save the card as picture for a table card, a poster or a slide at
-          the party.
+          Scan to open the pickup. Save the card as an image to print or share it.
         </p>
         <Button variant="outline" size="sm" @click="qr?.save()">
           <DownloadIcon />

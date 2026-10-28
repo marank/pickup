@@ -64,8 +64,8 @@ const color = computed(() => (ownFolder.value ? ownerColor(name.value) : 'var(--
 
 const leaveDescription = computed(() =>
   isCreator.value
-    ? 'This device stops being the creator. To come back as the creator you need your creator link. The pickup itself stays as it is.'
-    : 'This device stops being you. To come back you need your personal link (from when you joined, or your email). Your folder and files stay.',
+    ? 'You will be logged out on this device. To log in again as the creator, open your creator link. The pickup is not changed.'
+    : 'You will be logged out on this device. To log in again, open your personal link (from when you joined, or from your email). Your folder and files are kept.',
 )
 
 function openOwnFolder() {
@@ -92,10 +92,10 @@ async function copyPersonalLink() {
 async function confirmLeave() {
   try {
     await leave.mutateAsync()
-    toast.success('You left the pickup on this device')
+    toast.success('You are logged out')
     await router.push({ name: 'explorer', params: { pickupId: props.pickupId } })
   } catch (err) {
-    toast.error(apiErrorMessage(err, 'Could not leave the pickup'))
+    toast.error(apiErrorMessage(err, 'Could not log out'))
   }
 }
 </script>
@@ -165,7 +165,7 @@ async function confirmLeave() {
         <DropdownMenuSeparator />
         <DropdownMenuItem variant="destructive" @select="confirmOpen = true">
           <LogOutIcon />
-          Leave on this device
+          Log out
         </DropdownMenuItem>
       </template>
     </DropdownMenuContent>
@@ -175,9 +175,9 @@ async function confirmLeave() {
 
   <ConfirmDialog
     v-model:open="confirmOpen"
-    title="Leave this pickup on this device?"
+    title="Log out on this device?"
     :description="leaveDescription"
-    confirm-label="Leave"
+    confirm-label="Log out"
     @confirm="confirmLeave"
   />
 </template>

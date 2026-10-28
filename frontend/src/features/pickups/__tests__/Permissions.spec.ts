@@ -347,7 +347,7 @@ describe('personal link by email', () => {
     )
     await flushPromises()
     await chooseMenuItem('Email me my personal link')
-    expect(pageText()).toContain('stored only as an unreadable fingerprint')
+    expect(pageText()).toContain('stored only as a hash')
     await type('#own-email', 'alice@example.com')
     await submit('#own-email')
     expect(lastRequest('POST', '/session/email/')?.body).toEqual({ email: 'alice@example.com' })

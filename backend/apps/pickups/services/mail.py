@@ -23,18 +23,18 @@ Reason = Literal["created", "joined", "requested", "invited"]
 _TEXT: dict[Reason, tuple[str, str]] = {
     "created": (
         "Your new pickup “{title}”",
-        "Hello {name},\n\nyour pickup is ready. This is your creator link — it signs you in as the creator "
-        "on any device, so keep it safe:\n\n{link}\n\nShare the pickup with others using its share link "
+        "Hello {name},\n\nyour pickup is ready. With this creator link you can log in as the creator "
+        "on any device. Keep it safe:\n\n{link}\n\nShare the pickup with others using its share link "
         "inside the pickup.",
     ),
     "joined": (
         "Your link to “{title}”",
-        "Hello {name},\n\nthanks for joining! This personal link signs you in as yourself on any device:"
+        "Hello {name},\n\nthanks for joining! With this personal link you can log in on any device:"
         "\n\n{link}\n\nUse it to add, rename or delete your photos later.",
     ),
     "requested": (
         "Your link to “{title}”",
-        "Hello {name},\n\nhere is your personal link again. It signs you in as yourself on any device:"
+        "Hello {name},\n\nhere is your personal link again. With it you can log in on any device:"
         "\n\n{link}\n\nIf you didn't ask for this mail, you can ignore it.",
     ),
     "invited": (

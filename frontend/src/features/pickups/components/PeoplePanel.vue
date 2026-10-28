@@ -107,10 +107,10 @@ async function remove() {
         </Button>
       </div>
       <p class="text-xs text-muted-foreground">
-        They get a personal link from “{{
+        They get an email with a personal link from “{{
           pickup.member_name === 'Creator' ? 'Someone' : pickup.member_name
         }}
-        via Pickup”. Inviting an address that is already here sends its link again.
+        via Pickup”. If the address is already in the pickup, the link is sent again.
       </p>
     </form>
 

@@ -90,12 +90,12 @@ describe('create page', () => {
     await type('#create-title', 'Party')
     $('form').dispatchEvent(new Event('submit'))
     await flushPromises()
-    expect(pageText()).toContain('Packing your pickup…')
+    expect(pageText()).toContain('Creating your pickup…')
     expect(document.body.querySelector('section[aria-label="Your pickup is ready"]')).toBeNull()
     await vi.waitFor(() => expect($('section[aria-label="Your pickup is ready"]')).not.toBeNull(), {
       timeout: 3000,
     })
-    expect(pageText()).not.toContain('Packing your pickup…')
+    expect(pageText()).not.toContain('Creating your pickup…')
   })
 
   it('opens the pickup from the second step', async () => {

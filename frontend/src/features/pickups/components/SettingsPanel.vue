@@ -79,7 +79,7 @@ const joinOptions = [
   {
     value: 'closed',
     label: 'Nobody new',
-    hint: 'Everyone who is in stays in, nobody new can join.',
+    hint: 'Current participants stay, nobody new can join.',
   },
 ] as const
 const turningPrivacyOn = computed(() => form.email_privacy && !props.pickup.email_privacy)
@@ -216,9 +216,9 @@ async function removePickup() {
       <span>
         <span class="block text-sm font-medium">Privacy mode for email addresses</span>
         <span class="block text-sm text-muted-foreground">
-          Addresses are stored only as an unreadable fingerprint — enough to send someone their own
-          link when they type their address. You won't see addresses, and resending an invitation
-          needs the address again. Off: addresses are stored and you see them in the list of people.
+          Email addresses are stored only as a hash. You can't see them, and to send an invitation
+          again you have to enter the address again. Off: addresses are stored and shown in the list
+          of people.
         </span>
         <span v-if="turningPrivacyOn" class="mt-1 block text-sm text-destructive">
           Saving deletes all stored addresses of this pickup now.
@@ -253,7 +253,7 @@ async function removePickup() {
     </div>
     <p class="text-sm">{{ storage.text }}</p>
     <p class="text-sm text-muted-foreground">
-      The limits are set by whoever runs this server; ask them if you need more space.
+      The server operator sets these limits. Ask them if you need more space.
     </p>
   </section>
 

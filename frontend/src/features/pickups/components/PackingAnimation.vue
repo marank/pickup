@@ -5,7 +5,7 @@ import { onBeforeUnmount, ref } from 'vue'
  * Shown while a pickup is created: three photos drop onto the truck (the "truck with a
  * stack of photos" design), then it drives off to the right. Plays once, about 2 s.
  */
-const messages = ['Loading the photos', 'Closing up', 'On its way']
+const messages = ['Creating folders', 'Creating links', 'Almost done']
 const message = ref(0)
 const timer = window.setInterval(
   () => (message.value = Math.min(message.value + 1, messages.length - 1)),
@@ -80,7 +80,7 @@ const photos = [
       <div class="mx-auto -mt-3 h-px w-3/4 bg-border" />
     </div>
     <div class="space-y-1">
-      <p class="font-heading text-xl font-semibold">Packing your pickup…</p>
+      <p class="font-heading text-xl font-semibold">Creating your pickup…</p>
       <Transition name="message" mode="out-in">
         <p :key="message" class="text-sm text-muted-foreground">{{ messages[message] }}</p>
       </Transition>

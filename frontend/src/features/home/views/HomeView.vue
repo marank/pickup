@@ -15,7 +15,7 @@ import StartPanel from '../components/StartPanel.vue'
 
 const steps = [
   { title: 'Start a pickup', text: 'Give it a name. No sign-up, no app to install.' },
-  { title: 'Send the link', text: 'Into the group chat, by email — anywhere a link fits.' },
+  { title: 'Send the link', text: 'In the group chat, by email or anywhere else.' },
   {
     title: 'Everyone adds theirs',
     text: 'Each person gets their own folder and uploads straight from their phone.',
@@ -31,7 +31,7 @@ const features = [
   {
     icon: VideoIcon,
     title: 'Big videos welcome',
-    text: 'Large files go up in small pieces; a piece that fails is retried, so one shaky connection doesn’t ruin the upload.',
+    text: 'Large files are uploaded in small parts. A part that fails is sent again, so a bad connection doesn’t break the upload.',
   },
   {
     icon: FolderTreeIcon,
@@ -51,7 +51,7 @@ const features = [
   {
     icon: KeyRoundIcon,
     title: 'Come back any time',
-    text: 'Your personal link signs you back in on any device. Leave an email address and we send it to you.',
+    text: 'With your personal link you can log in on any device. Leave an email address and we send it to you.',
   },
 ]
 
@@ -66,7 +66,7 @@ const faqs = [
   },
   {
     q: 'I opened the pickup on a different phone. Where is my folder?',
-    a: 'Open your personal link (you got it when you joined, or by email). It signs that device in as you.',
+    a: 'Open your personal link (you got it when you joined, or by email). It logs you in on that device.',
   },
   {
     q: 'Which files work?',
@@ -74,7 +74,7 @@ const faqs = [
   },
   {
     q: 'Do I need an account?',
-    a: 'No. You pick a name when you join; that’s it.',
+    a: 'No. You only pick a name when you join.',
   },
 ]
 </script>
@@ -138,8 +138,7 @@ const faqs = [
     <section class="mx-auto max-w-6xl px-4 py-16">
       <h2 class="mb-2 text-3xl font-bold">Simple enough for everyone</h2>
       <p class="mb-8 max-w-2xl text-muted-foreground">
-        …and capable enough that nobody has to ask how. Pickup feels like the file browser you
-        already know.
+        Pickup works like the file browser you already know.
       </p>
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <article

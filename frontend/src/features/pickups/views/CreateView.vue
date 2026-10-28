@@ -44,7 +44,7 @@ const policies = [
     value: 'open',
     icon: LinkIcon,
     label: 'Anyone with the link',
-    hint: 'Send the link around; everyone picks a name and gets a folder.',
+    hint: 'Everyone with the link picks a name and gets a folder.',
   },
   {
     value: 'invite',
@@ -142,7 +142,7 @@ async function submit() {
               <h1 class="font-heading text-2xl font-bold">
                 “{{ created.title || 'Untitled pickup' }}” is ready
               </h1>
-              <p class="text-muted-foreground">Two links, two jobs.</p>
+              <p class="text-muted-foreground">You get two links.</p>
             </div>
 
             <div class="grid items-start gap-6 sm:grid-cols-[13rem_1fr]">
@@ -164,12 +164,11 @@ async function submit() {
                 <div class="space-y-2">
                   <p class="font-medium">
                     Share link
-                    <span class="font-normal text-muted-foreground">— for everyone else</span>
+                    <span class="font-normal text-muted-foreground">— for your guests</span>
                   </p>
                   <CopyField :value="shareUrl" label="Share link" />
                   <p class="text-sm text-muted-foreground">
-                    Send it around, or print the QR card for a table card, a poster or a slide at
-                    the party.
+                    Send it to your guests, or print the QR card.
                   </p>
                 </div>
 
@@ -180,9 +179,9 @@ async function submit() {
                   </p>
                   <CopyField :value="absolute(created.member_url)" label="Creator link" />
                   <p class="text-sm text-muted-foreground">
-                    <template v-if="emailed">We also emailed it to you. </template>It brings you
-                    back as the creator on any device. You can copy it again anytime from the
-                    account menu.
+                    <template v-if="emailed">We also emailed it to you. </template>With this link
+                    you log in as the creator on any device. You can copy it again from the account
+                    menu.
                   </p>
                 </div>
               </div>
@@ -204,8 +203,7 @@ async function submit() {
             <div class="space-y-1">
               <h1 class="font-heading text-2xl font-bold">Start a pickup</h1>
               <p class="text-muted-foreground">
-                A shared place for everyone's photos and videos. No accounts needed — not for you,
-                not for your guests.
+                A shared place for everyone's photos and videos. Nobody needs an account.
               </p>
             </div>
 

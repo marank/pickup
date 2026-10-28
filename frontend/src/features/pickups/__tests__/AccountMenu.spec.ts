@@ -45,11 +45,11 @@ describe('account menu', () => {
     const success = vi.spyOn(toast, 'success')
     await renderApp(explorerPath(ALICE))
     await openAccount()
-    await chooseMenuItem('Leave on this device')
-    expect(pageText()).toContain('you need your personal link')
+    await chooseMenuItem('Log out')
+    expect(pageText()).toContain('open your personal link')
     const leave = Array.from(
       document.body.querySelectorAll<HTMLButtonElement>('[role="alertdialog"] button'),
-    ).find((button) => button.textContent?.trim() === 'Leave')!
+    ).find((button) => button.textContent?.trim() === 'Log out')!
     leave.click()
     for (let i = 0; i < 5; i++) await flushPromises()
     expect(
@@ -57,7 +57,7 @@ describe('account menu', () => {
         (r) => r.method === 'DELETE' && r.path === `/api/pickups/${PICKUP_ID}/session/`,
       ),
     ).toBe(true)
-    expect(success).toHaveBeenCalledWith('You left the pickup on this device')
+    expect(success).toHaveBeenCalledWith('You are logged out')
   })
 
   it('reports a failed leave', async () => {
@@ -65,12 +65,12 @@ describe('account menu', () => {
     const error = vi.spyOn(toast, 'error')
     await renderApp(explorerPath())
     await openAccount()
-    await chooseMenuItem('Leave on this device')
+    await chooseMenuItem('Log out')
     Array.from(document.body.querySelectorAll<HTMLButtonElement>('[role="alertdialog"] button'))
-      .find((button) => button.textContent?.trim() === 'Leave')!
+      .find((button) => button.textContent?.trim() === 'Log out')!
       .click()
     for (let i = 0; i < 5; i++) await flushPromises()
-    expect(error).toHaveBeenCalledWith('Could not leave the pickup')
+    expect(error).toHaveBeenCalledWith('Could not log out')
   })
 
   it('warns the creator about the creator link', async () => {
@@ -80,8 +80,8 @@ describe('account menu', () => {
     expect(findButton('Account').textContent).toContain('Creator')
     await openAccount()
     expect(pageText()).toContain('Creator of this pickup')
-    await chooseMenuItem('Leave on this device')
-    expect(pageText()).toContain('you need your creator link')
+    await chooseMenuItem('Log out')
+    expect(pageText()).toContain('open your creator link')
   })
 
   it('offers guests to join, without a leave option', async () => {
@@ -89,7 +89,7 @@ describe('account menu', () => {
     expect(findButton('Account').textContent).toContain('Guest')
     await openAccount()
     expect(pageText()).toContain('Viewing as a guest')
-    expect(pageText()).not.toContain('Leave on this device')
+    expect(pageText()).not.toContain('Log out')
     await chooseMenuItem('Join this pickup')
     await vi.waitFor(() => expect(router.currentRoute.value.name).toBe('pickup-join'))
   })

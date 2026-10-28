@@ -42,11 +42,9 @@ async function submit() {
         <DialogHeader>
           <DialogTitle>Email me my personal link</DialogTitle>
           <DialogDescription>
-            Your personal link signs you in as yourself on any device. We also remember the address,
-            so you can ask for the link again later.
-            <template v-if="pickup.email_privacy"
-              >It's stored only as an unreadable fingerprint.</template
-            >
+            With your personal link you can log in on any device. We also save the address, so you
+            can request the link again later.
+            <template v-if="pickup.email_privacy">It is stored only as a hash.</template>
           </DialogDescription>
         </DialogHeader>
         <div class="space-y-1.5">

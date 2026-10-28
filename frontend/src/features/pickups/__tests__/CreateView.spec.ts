@@ -23,28 +23,65 @@ const clipboard = (writeText = vi.fn<(text: string) => Promise<void>>().mockReso
 afterEach(() => vi.restoreAllMocks())
 
 describe('create page', () => {
-  it('creates nothing until the form is sent, then opens the new pickup', async () => {
+  async function create(email = '', beforeSubmit = () => {}) {
     on('POST', '/api/pickups/', { status: 201, body: createdPickup() })
-    const { router } = await renderAt(CreateView, '/create')
-    expect(pageText()).toContain('Start a pickup')
-    expect(requests.some((r) => r.method === 'POST')).toBe(false)
-
+    const result = await renderAt(CreateView, '/create')
+    beforeSubmit()
     await type('#create-title', ' Anna & Mark ')
     await type('#create-name', 'Anna ')
-    await type('#create-email', 'anna@example.com')
+    if (email) await type('#create-email', email)
     $<HTMLInputElement>('input[name="join_policy"][value="invite"]').click()
     $('form').dispatchEvent(new Event('submit'))
     await settle()
+    return result
+  }
 
+  it('creates nothing until the form is sent, then shows the links as second step', async () => {
+    const writeText = clipboard()
+    await create('anna@example.com', () => {
+      expect($('[aria-current="step"]').textContent).toContain('Details')
+      expect(requests.some((r) => r.method === 'POST')).toBe(false)
+    })
     expect(requests.find((r) => r.method === 'POST')?.body).toEqual({
       title: 'Anna & Mark',
       creator_name: 'Anna',
       creator_email: 'anna@example.com',
       join_policy: 'invite',
     })
-    await vi.waitFor(() =>
-      expect(router.currentRoute.value.fullPath).toBe(`/pickup/${PICKUP_ID}?welcome=1`),
+    expect($('[aria-current="step"]').textContent).toContain('Links')
+    const step = $('section[aria-label="Your pickup is ready"]')
+    const values = Array.from(step.querySelectorAll<HTMLInputElement>('input[readonly]')).map(
+      (input) => input.value,
     )
+    expect(values).toEqual([
+      `${window.location.origin}/pickup/${PICKUP_ID}`,
+      `${window.location.origin}/pickup/${PICKUP_ID}/member/secret-key`,
+    ])
+    expect(step.textContent).toContain('We also emailed it to you.')
+    expect(step.querySelector('canvas[role="img"]')).not.toBeNull()
+    expect(document.body.querySelector('a[href="/"]')).toBeNull() // no way back to step 1
+
+    findButton('Copy creator link').click()
+    await flushPromises()
+    expect(writeText).toHaveBeenCalledWith(values[1])
+  })
+
+  it('opens the pickup from the second step', async () => {
+    const { router } = await create()
+    expect($('section[aria-label="Your pickup is ready"]').textContent).not.toContain('emailed')
+    const open = $<HTMLAnchorElement>(`a[href="/pickup/${PICKUP_ID}"]`)
+    expect(open.textContent).toContain('Open the pickup')
+    await router.push(open.getAttribute('href')!)
+    expect(router.currentRoute.value.name).toBe('explorer')
+  })
+
+  it('reports when the QR card cannot be drawn', async () => {
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null)
+    const error = vi.spyOn(toast, 'error')
+    await create()
+    findButton('Save QR card').click()
+    await settle()
+    expect(error).toHaveBeenCalledWith('Could not create the image')
   })
 
   it('shows what went wrong next to the field', async () => {
@@ -56,63 +93,6 @@ describe('create page', () => {
     await settle()
     expect(pageText()).toContain('Enter a valid email.')
     expect(error).toHaveBeenCalled()
-  })
-})
-
-describe('welcome after creating', () => {
-  async function renderWelcome(hasEmail = false) {
-    serveExplorer({ member: false, creator: true })
-    on('GET', '/api/pickups/:id/session/link/', {
-      body: { member_url: `/pickup/${PICKUP_ID}/member/secret`, has_email: hasEmail },
-    })
-    const result = await renderAt(App, `${explorerPath()}?welcome=1`)
-    await settle()
-    return result
-  }
-
-  it('shows the share and creator links once, until dismissed', async () => {
-    const writeText = clipboard()
-    const { router } = await renderWelcome(true)
-    const card = $('section[aria-label="Your pickup is ready"]')
-    const values = Array.from(card.querySelectorAll<HTMLInputElement>('input[readonly]')).map(
-      (input) => input.value,
-    )
-    expect(values).toEqual([
-      `${window.location.origin}/pickup/${PICKUP_ID}`,
-      `${window.location.origin}/pickup/${PICKUP_ID}/member/secret`,
-    ])
-    expect(card.textContent).toContain('We also emailed it to you.')
-    findButton('Copy creator link').click()
-    await flushPromises()
-    expect(writeText).toHaveBeenCalledWith(values[1])
-
-    findButton(/QR card/).click()
-    await settle()
-    expect($('[role="dialog"]').textContent).toContain('Invite people')
-    findButton('Close').click()
-    await settle()
-
-    findButton('Dismiss').click()
-    await settle()
-    expect(router.currentRoute.value.query).toEqual({})
-    expect(document.body.querySelector('section[aria-label="Your pickup is ready"]')).toBeNull()
-  })
-
-  it('reports a failed copy', async () => {
-    clipboard(vi.fn<(text: string) => Promise<void>>().mockRejectedValue(new Error('denied')))
-    const error = vi.spyOn(toast, 'error')
-    await renderWelcome()
-    expect($('section[aria-label="Your pickup is ready"]').textContent).not.toContain('emailed')
-    findButton('Copy share link').click()
-    await flushPromises()
-    expect(error).toHaveBeenCalledWith('Could not copy the share link')
-  })
-
-  it('is only for the creator', async () => {
-    serveExplorer()
-    await renderAt(App, `${explorerPath()}?welcome=1`)
-    await settle()
-    expect(document.body.querySelector('section[aria-label="Your pickup is ready"]')).toBeNull()
   })
 })
 

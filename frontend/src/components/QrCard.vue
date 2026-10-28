@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue'
+import { toast } from 'vue-sonner'
 
 import { CARD, cardFonts, drawQrCard } from '@/lib/qrCard'
 
@@ -36,7 +37,21 @@ async function toPng(): Promise<Blob | null> {
   return new Promise((resolve) => target.toBlob(resolve, 'image/png'))
 }
 
-defineExpose({ toPng })
+/** Save the card as PNG; tells the user if the browser can't draw it. */
+async function save() {
+  const blob = await toPng()
+  if (!blob) {
+    toast.error('Could not create the image')
+    return
+  }
+  const link = document.createElement('a')
+  link.href = URL.createObjectURL(blob)
+  link.download = `${props.title} – QR code.png`
+  link.click()
+  URL.revokeObjectURL(link.href)
+}
+
+defineExpose({ save })
 </script>
 
 <template>

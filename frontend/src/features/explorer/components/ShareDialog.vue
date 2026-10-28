@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { DownloadIcon, Share2Icon } from '@lucide/vue'
 import { computed, ref } from 'vue'
-import { toast } from 'vue-sonner'
 
 import CopyField from '@/components/CopyField.vue'
 import QrCard from '@/components/QrCard.vue'
@@ -26,19 +25,6 @@ const url = computed(() => `${window.location.origin}/pickup/${props.pickupId}`)
 const canShare = typeof navigator.share === 'function'
 
 const qr = ref<InstanceType<typeof QrCard> | null>(null)
-
-async function downloadQr() {
-  const blob = await qr.value?.toPng()
-  if (!blob) {
-    toast.error('Could not create the image')
-    return
-  }
-  const link = document.createElement('a')
-  link.href = URL.createObjectURL(blob)
-  link.download = `${props.title} – QR code.png`
-  link.click()
-  URL.revokeObjectURL(link.href)
-}
 
 async function share() {
   try {
@@ -87,7 +73,7 @@ async function share() {
           Scan to open the pickup. Save the card as picture for a table card, a poster or a slide at
           the party.
         </p>
-        <Button variant="outline" size="sm" @click="downloadQr">
+        <Button variant="outline" size="sm" @click="qr?.save()">
           <DownloadIcon />
           Save QR card
         </Button>

@@ -45,17 +45,6 @@ export function personalLinkQuery(pickupId: string) {
   }
 }
 
-export function usePersonalLink(
-  pickupId: MaybeRefOrGetter<string>,
-  enabled: MaybeRefOrGetter<boolean> = true,
-) {
-  return useQuery({
-    queryKey: computed(() => pickupKeys.link(toValue(pickupId))),
-    queryFn: () => personalLinkQuery(toValue(pickupId)).queryFn(),
-    enabled: computed(() => toValue(enabled)),
-  })
-}
-
 export function useJoinPickup(pickupId: MaybeRefOrGetter<string>) {
   const client = useQueryClient()
   return useMutation({

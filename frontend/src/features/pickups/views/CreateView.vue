@@ -1,18 +1,26 @@
 <script setup lang="ts">
-import { ArrowLeftIcon, ArrowRightIcon, LinkIcon, MailIcon } from '@lucide/vue'
-import { reactive, ref } from 'vue'
-import { RouterLink, useRouter } from 'vue-router'
+import { ArrowLeftIcon, ArrowRightIcon, DownloadIcon, LinkIcon, MailIcon } from '@lucide/vue'
+import { computed, reactive, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 import { toast } from 'vue-sonner'
 
 import { ApiError, apiErrorMessage } from '@/api/errors'
+import type { CreatedPickup } from '@/api/types'
+import CopyField from '@/components/CopyField.vue'
+import QrCard from '@/components/QrCard.vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
 import { useCreatePickup } from '../composables/usePickup'
 
-const router = useRouter()
 const createPickup = useCreatePickup()
+/** Step 2: the new pickup and whether its creator link went out by mail. */
+const created = ref<CreatedPickup | null>(null)
+const emailed = ref(false)
+const qr = ref<InstanceType<typeof QrCard> | null>(null)
+const absolute = (path: string) => `${window.location.origin}${path}`
+const shareUrl = computed(() => (created.value ? absolute(`/pickup/${created.value.id}`) : ''))
 const form = reactive({ title: '', creator_name: '', creator_email: '', join_policy: 'open' })
 const fieldErrors = ref<Record<string, string>>({})
 
@@ -34,17 +42,14 @@ const policies = [
 async function submit() {
   fieldErrors.value = {}
   try {
-    const created = await createPickup.mutateAsync({
+    created.value = await createPickup.mutateAsync({
       title: form.title.trim(),
       creator_name: form.creator_name.trim(),
       creator_email: form.creator_email.trim(),
       join_policy: form.join_policy as 'open' | 'invite',
     })
-    await router.push({
-      name: 'explorer',
-      params: { pickupId: created.id },
-      query: { welcome: '1' },
-    })
+    emailed.value = Boolean(form.creator_email.trim())
+    window.scrollTo({ top: 0 })
   } catch (err) {
     if (err instanceof ApiError && err.body && typeof err.body === 'object') {
       for (const [field, messages] of Object.entries(err.body)) {
@@ -58,14 +63,91 @@ async function submit() {
 
 <template>
   <div class="mx-auto max-w-xl py-4 sm:py-8">
-    <RouterLink
-      :to="{ name: 'home' }"
-      class="mb-4 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+    <div class="mb-4 flex items-center gap-3 text-sm">
+      <RouterLink
+        v-if="!created"
+        :to="{ name: 'home' }"
+        class="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeftIcon class="size-4" />
+        Back
+      </RouterLink>
+      <ol class="ml-auto flex items-center gap-2 text-muted-foreground" aria-label="Steps">
+        <li
+          v-for="(step, index) in ['Details', 'Links']"
+          :key="step"
+          class="flex items-center gap-1.5"
+          :aria-current="(index === 0) === !created ? 'step' : undefined"
+        >
+          <span
+            class="flex size-5 items-center justify-center rounded-full text-xs font-semibold"
+            :class="(index === 0) === !created ? 'bg-tomato text-paper' : 'bg-muted'"
+            >{{ index + 1 }}</span
+          >
+          <span :class="(index === 0) === !created && 'font-medium text-foreground'">{{
+            step
+          }}</span>
+        </li>
+      </ol>
+    </div>
+
+    <section
+      v-if="created"
+      class="tag-hole space-y-6 rounded-2xl rounded-l-[2rem] border bg-card p-6 pl-10 shadow-sm"
+      aria-label="Your pickup is ready"
     >
-      <ArrowLeftIcon class="size-4" />
-      Back
-    </RouterLink>
+      <div class="space-y-1">
+        <h1 class="font-heading text-2xl font-bold">
+          “{{ created.title || 'Untitled pickup' }}” is ready
+        </h1>
+        <p class="text-muted-foreground">Two links, two jobs.</p>
+      </div>
+
+      <div class="space-y-2">
+        <p class="font-medium">
+          Share link <span class="font-normal text-muted-foreground">— for everyone else</span>
+        </p>
+        <CopyField :value="shareUrl" label="Share link" />
+        <div class="flex items-center gap-4 rounded-xl border bg-pane p-3">
+          <QrCard
+            ref="qr"
+            :value="shareUrl"
+            :title="created.title || 'Untitled pickup'"
+            class="w-24 shrink-0"
+          />
+          <div class="space-y-2 text-sm">
+            <p class="text-muted-foreground">
+              The same link as QR card, for a table card, a poster or a slide at the party.
+            </p>
+            <Button variant="outline" size="sm" @click="qr?.save()">
+              <DownloadIcon />
+              Save QR card
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <p class="font-medium">
+          Your creator link <span class="font-normal text-muted-foreground">— only for you</span>
+        </p>
+        <CopyField :value="absolute(created.member_url)" label="Creator link" />
+        <p class="text-sm text-muted-foreground">
+          <template v-if="emailed">We also emailed it to you. </template>It brings you back as the
+          creator on any device. You can copy it again anytime from the account menu.
+        </p>
+      </div>
+
+      <Button as-child size="lg" class="w-full">
+        <RouterLink :to="{ name: 'explorer', params: { pickupId: created.id } }">
+          Open the pickup
+          <ArrowRightIcon />
+        </RouterLink>
+      </Button>
+    </section>
+
     <form
+      v-else
       class="tag-hole space-y-6 rounded-2xl rounded-l-[2rem] border bg-card p-6 pl-10 shadow-sm"
       aria-label="New pickup"
       @submit.prevent="submit"

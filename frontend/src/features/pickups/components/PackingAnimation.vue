@@ -77,7 +77,7 @@ const photos = [
         </g>
       </svg>
       <!-- The road. -->
-      <div class="mx-auto -mt-4 h-px w-3/4 bg-border" />
+      <div class="mx-auto -mt-3 h-px w-3/4 bg-border" />
     </div>
     <div class="space-y-1">
       <p class="font-heading text-xl font-semibold">Packing your pickup…</p>

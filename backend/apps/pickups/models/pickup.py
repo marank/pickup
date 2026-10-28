@@ -70,6 +70,15 @@ class Pickup(UUIDModel):
         default=JoinPolicy.OPEN,
         help_text="Who can become a participant",
     )
+    password = models.CharField(
+        max_length=128,
+        blank=True,
+        help_text="Hash of the pickup's password (make_password); empty: none",
+    )
+    access_version = models.PositiveIntegerField(
+        default=0,
+        help_text="Goes up when the password is set or changed; older logins stop counting",
+    )
 
     class Meta:
         db_table = "pickups"

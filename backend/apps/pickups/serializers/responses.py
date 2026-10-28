@@ -32,6 +32,7 @@ class LinkPreviewSerializer(serializers.Serializer[Any]):
     title = serializers.CharField()
     user_name = serializers.CharField()
     is_creator = serializers.BooleanField()
+    password_required = serializers.BooleanField(help_text="Logging in needs the pickup's password")
 
 
 class PersonalLinkSerializer(serializers.Serializer[Any]):
@@ -43,6 +44,9 @@ class PersonalLinkSerializer(serializers.Serializer[Any]):
 
 class SessionSerializer(serializers.Serializer[Any]):
     access_key = serializers.CharField()
+    password = serializers.CharField(
+        required=False, allow_blank=True, help_text="The pickup's password, if it has one"
+    )
 
 
 class CaptionSerializer(serializers.Serializer[Any]):

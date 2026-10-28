@@ -224,6 +224,16 @@ uv run python manage.py storage_limits <pickup id> --pickup 50GB --member unlimi
 docker compose exec app python manage.py storage_limits <pickup id> --member 10GB
 ```
 
+## Pickup passwords
+
+The creator can protect a pickup with a password (Settings → Password). Without a login, people then need it to join or to log in with their personal link; setting or changing it logs everyone else out. If the creator forgets it, an admin removes it, and the creator sets a new one after logging in with the creator link:
+
+```bash
+uv run python manage.py pickup_password <pickup id>            # has it one?
+uv run python manage.py pickup_password <pickup id> --remove
+docker compose exec app python manage.py pickup_password <pickup id> --remove
+```
+
 ## Security
 
 - Personal links carry a secret access key that is exchanged for a session; member ids are never credentials. Pickup ids (the share link) are random UUIDv4.

@@ -6,7 +6,7 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from ..models import JoinPolicy, Pickup
-from ..services.access import can_view
+from ..services.access import can_view, password_required
 from ..services.storage import member_usage, pickup_usage
 
 
@@ -28,6 +28,10 @@ class PickupSerializer(serializers.ModelSerializer[Pickup]):
     member_name = serializers.SerializerMethodField()
     can_view = serializers.SerializerMethodField()
     storage = serializers.SerializerMethodField()
+    password_required = serializers.SerializerMethodField(
+        help_text="The pickup has a password and this browser isn't logged in: nothing else is shown"
+    )
+    has_password = serializers.SerializerMethodField(help_text="A password is set (only for the creator)")
 
     class Meta:
         model = Pickup
@@ -49,6 +53,8 @@ class PickupSerializer(serializers.ModelSerializer[Pickup]):
             "email_privacy",
             "expires_at",
             "storage",
+            "password_required",
+            "has_password",
         ]
         read_only_fields = [
             "id",
@@ -69,6 +75,19 @@ class PickupSerializer(serializers.ModelSerializer[Pickup]):
 
     def _member(self) -> Any:
         return self.context.get("member")
+
+    def to_representation(self, instance: Pickup) -> dict[str, Any]:
+        data: dict[str, Any] = super().to_representation(instance)
+        if data["password_required"]:
+            data["title"] = ""  # the share link alone tells nothing about a protected pickup
+        return data
+
+    def get_password_required(self, obj: Pickup) -> bool:
+        return password_required(obj, self._member())
+
+    def get_has_password(self, obj: Pickup) -> bool:
+        member = self._member()
+        return bool(member and member.is_creator and obj.password)
 
     def get_can_view(self, obj: Pickup) -> bool:
         return can_view(obj, self._member())
@@ -118,7 +137,20 @@ class PickupUpdateSerializer(serializers.ModelSerializer[Pickup]):
 
     class Meta:
         model = Pickup
-        fields = ["title", "visibility", "join_policy", "email_privacy", "expires_at"]
+        fields = ["title", "visibility", "join_policy", "email_privacy", "expires_at", "password"]
+        extra_kwargs = {
+            "password": {
+                "write_only": True,
+                "required": False,
+                "allow_blank": True,
+                "help_text": "New password; empty removes it",
+            }
+        }
+
+    def validate_password(self, value: str) -> str:
+        if value and len(value) < 4:
+            raise serializers.ValidationError("Use at least 4 characters.")
+        return value
 
     def validate_expires_at(self, value: datetime | None) -> datetime | None:
         if value is not None and value <= timezone.now():

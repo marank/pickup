@@ -4,12 +4,20 @@ from ..models import Folder, Media, Member, Pickup, Visibility
 
 
 def can_view(pickup: Pickup, member: Member | None) -> bool:
-    """Private pickups (the default) are only visible to participants; closed ones only to the creator."""
+    """
+    Private pickups (the default) are only visible to participants; closed ones only to the
+    creator. With a password, "anyone with the link" also means participants only.
+    """
     if pickup.is_expired:
         return False
     if pickup.visibility == Visibility.CREATOR:
         return member is not None and member.is_creator
-    return member is not None or pickup.visibility == Visibility.LINK
+    return member is not None or (pickup.visibility == Visibility.LINK and not pickup.password)
+
+
+def password_required(pickup: Pickup, member: Member | None) -> bool:
+    """This browser needs the pickup's password: it has one and the browser isn't logged in."""
+    return bool(pickup.password) and member is None
 
 
 def is_closed_for(pickup: Pickup, member: Member | None) -> bool:

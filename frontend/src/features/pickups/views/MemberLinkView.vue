@@ -7,6 +7,8 @@ import { toast } from 'vue-sonner'
 import { api } from '@/api/client'
 import { apiErrorMessage, unwrap } from '@/api/errors'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import LogoIntro from '@/features/home/components/LogoIntro.vue'
 
 import { enterPickup } from '../composables/usePickup'
@@ -23,7 +25,13 @@ const INTRO_MS = 1650
 const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
 const pause = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms))
 
-const preview = ref<{ title: string; user_name: string; is_creator: boolean } | null>(null)
+const preview = ref<{
+  title: string
+  user_name: string
+  is_creator: boolean
+  password_required: boolean
+} | null>(null)
+const password = ref('')
 const entering = ref(false)
 const title = computed(() => preview.value?.title || 'Untitled pickup')
 /** A creator who gave no name is called "Creator". */
@@ -57,7 +65,11 @@ onMounted(async () => {
 async function enter() {
   entering.value = true
   try {
-    await enterPickup(props.pickupId, props.accessKey)
+    await enterPickup(
+      props.pickupId,
+      props.accessKey,
+      preview.value?.password_required ? password.value : undefined,
+    )
     // The plain pickup URL replaces this one, so the key doesn't linger in the history.
     await router.replace({ name: 'explorer', params: { pickupId: props.pickupId } })
   } catch (err) {
@@ -88,13 +100,25 @@ async function enter() {
             ><template v-if="preview?.is_creator && name !== 'the creator'">, the creator</template
             >.
           </p>
-          <Button size="lg" class="mt-6 w-full" :disabled="entering || !preview" @click="enter">
-            <Loader2Icon v-if="entering" class="animate-spin" />
-            <template v-else>
-              Log in
-              <ArrowRightIcon />
-            </template>
-          </Button>
+          <form class="mt-6 space-y-3 text-left" @submit.prevent="enter">
+            <div v-if="preview?.password_required" class="space-y-1.5">
+              <Label for="link-password">Password of the pickup</Label>
+              <Input
+                id="link-password"
+                v-model="password"
+                type="password"
+                required
+                autocomplete="current-password"
+              />
+            </div>
+            <Button type="submit" size="lg" class="w-full" :disabled="entering || !preview">
+              <Loader2Icon v-if="entering" class="animate-spin" />
+              <template v-else>
+                Log in
+                <ArrowRightIcon />
+              </template>
+            </Button>
+          </form>
           <p class="mt-3 text-xs text-muted-foreground">This logs you in on this device.</p>
         </section>
       </div>

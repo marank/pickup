@@ -588,6 +588,10 @@ export interface components {
        */
       readonly expires_at: string | null
       readonly storage: components['schemas']['Storage']
+      /** @description The pickup has a password and this browser isn't logged in: nothing else is shown */
+      readonly password_required: boolean
+      /** @description A password is set (only for the creator) */
+      readonly has_password: boolean
       readonly member_url: string
     }
     EmailConfirmRequest: {
@@ -656,6 +660,8 @@ export interface components {
       user_name: string
       name: string
       email?: string
+      /** @description The pickup's password, if it has one */
+      password?: string
     }
     JoinResponse: {
       folder: components['schemas']['Folder']
@@ -667,6 +673,8 @@ export interface components {
       title: string
       user_name: string
       is_creator: boolean
+      /** @description Logging in needs the pickup's password */
+      password_required: boolean
     }
     /** @description Serializer for Media model. */
     Media: {
@@ -778,6 +786,8 @@ export interface components {
        * @description When the pickup is deleted with all files (empty: never)
        */
       expires_at?: string | null
+      /** @description New password; empty removes it */
+      password?: string
     }
     /** @description The signed-in member's own personal link (only ever returned to them). */
     PersonalLink: {
@@ -830,9 +840,15 @@ export interface components {
        */
       readonly expires_at: string | null
       readonly storage: components['schemas']['Storage']
+      /** @description The pickup has a password and this browser isn't logged in: nothing else is shown */
+      readonly password_required: boolean
+      /** @description A password is set (only for the creator) */
+      readonly has_password: boolean
     }
     SessionRequest: {
       access_key: string
+      /** @description The pickup's password, if it has one */
+      password?: string
     }
     /**
      * @description * `pending` - Pending

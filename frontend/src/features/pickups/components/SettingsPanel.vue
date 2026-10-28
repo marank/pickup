@@ -99,6 +99,22 @@ const joinOptions = [
 ] as const
 const turningPrivacyOn = computed(() => form.email_privacy && !props.pickup.email_privacy)
 
+/** The password is never shown again: a new one replaces it, or it is removed. */
+const newPassword = ref('')
+const passwordSaving = ref(false)
+async function savePassword(password: string) {
+  passwordSaving.value = true
+  try {
+    await updateSettings.mutateAsync({ password })
+    toast.success(password ? 'Password saved' : 'Password removed')
+    newPassword.value = ''
+  } catch (err) {
+    toast.error(apiErrorMessage(err, 'Could not save the password'))
+  } finally {
+    passwordSaving.value = false
+  }
+}
+
 const saving = ref<Card | null>(null)
 async function save(card: Card) {
   const values: Record<string, unknown> = {}
@@ -232,11 +248,61 @@ async function removePickup() {
             />
             <span>
               <span class="block text-sm font-medium">{{ option.label }}</span>
-              <span class="block text-xs text-muted-foreground">{{ option.hint }}</span>
+              <span class="block text-xs text-muted-foreground">
+                {{ option.hint }}
+                <template v-if="option.value === 'link' && pickup.has_password">
+                  With a password, only participants see the photos.
+                </template>
+              </span>
             </span>
           </label>
         </div>
       </fieldset>
+    </SettingsCard>
+
+    <SettingsCard
+      title="Password"
+      description="People without a login need it to join or to log in with their personal link."
+      saveable
+      :dirty="newPassword !== ''"
+      :pending="passwordSaving"
+      @save="savePassword(newPassword)"
+      @discard="newPassword = ''"
+    >
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <p class="text-sm">
+          {{
+            pickup.has_password ? 'This pickup is protected with a password.' : 'No password set.'
+          }}
+        </p>
+        <Button
+          v-if="pickup.has_password"
+          type="button"
+          variant="ghost"
+          size="sm"
+          class="text-destructive hover:text-destructive"
+          :disabled="passwordSaving"
+          @click="savePassword('')"
+        >
+          Remove password
+        </Button>
+      </div>
+      <div class="space-y-1.5">
+        <Label for="settings-password">{{
+          pickup.has_password ? 'New password' : 'Password'
+        }}</Label>
+        <Input
+          id="settings-password"
+          v-model="newPassword"
+          type="password"
+          minlength="4"
+          autocomplete="new-password"
+        />
+        <p v-if="newPassword" class="text-sm text-destructive">
+          Saving logs everyone else out of this pickup. They need their personal link and the
+          password to come back. If you forget it, the server operator can remove it.
+        </p>
+      </div>
     </SettingsCard>
 
     <SettingsCard

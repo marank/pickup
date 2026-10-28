@@ -170,7 +170,12 @@ def test_a_personal_link_shows_whose_it_is_without_logging_in() -> None:
     browser = Client()
     url = f"/api/pickups/{pickup_id}/session/preview/"
     response = post(browser, url, {"access_key": key})
-    assert response.json() == {"title": "Wedding", "user_name": "Anna", "is_creator": True}
+    assert response.json() == {
+        "title": "Wedding",
+        "user_name": "Anna",
+        "is_creator": True,
+        "password_required": False,
+    }
     assert response["Cache-Control"] == "private, no-store"
     assert browser.get(f"/api/pickups/{pickup_id}/").json()["is_member"] is False  # not logged in
     assert post(browser, url, {"access_key": "wrong"}).status_code == 403

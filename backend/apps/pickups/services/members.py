@@ -2,9 +2,10 @@
 
 from datetime import timedelta
 
+from django.contrib.auth.hashers import check_password, make_password
 from django.core import signing
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import F, Q
 from django.http import HttpRequest
 from django.utils import timezone
 
@@ -14,7 +15,7 @@ from .folders import FolderError, rename_folder, subtree_ids
 from .identity import email_hash, normalize_email, normalize_name, remember_email
 from .mail import send_personal_link, send_pickup_list
 
-SESSION_KEY = "pickup_members"  # {pickup_id: member_id} of the pickups this browser belongs to
+SESSION_KEY = "pickup_members"  # {pickup_id: [member_id, access_version]} of this browser
 LINK_MAIL_COOLDOWN = timedelta(minutes=2)
 SESSION_RENEWED_KEY = "pickup_session_renewed"  # the day the session was last renewed
 EMAIL_CHANGE_SALT = "pickups.email-change"
@@ -31,9 +32,13 @@ class MembershipError(Exception):
 
 def get_member_from_request(request: HttpRequest, pickup: Pickup) -> Member | None:
     """The member this browser session is logged in as for the pickup, if any."""
-    member_id = request.session.get(SESSION_KEY, {}).get(str(pickup.id))
-    if not member_id:
+    entry = request.session.get(SESSION_KEY, {}).get(str(pickup.id))
+    if not entry:
         return None
+    # Logins from before versions were stored count as version 0.
+    member_id, version = (entry, 0) if isinstance(entry, str) else entry
+    if version != pickup.access_version:
+        return None  # the password was set or changed since: log in again
     member = Member.objects.select_related("folder", "pickup").filter(id=member_id, pickup=pickup).first()
     if member is not None:
         keep_session_alive(request)
@@ -56,7 +61,7 @@ def login_member(request: HttpRequest, member: Member) -> None:
     memberships = dict(request.session.get(SESSION_KEY, {}))
     if not memberships:
         request.session.cycle_key()  # new session id on "login", against session fixation
-    memberships[str(member.pickup_id)] = str(member.id)
+    memberships[str(member.pickup_id)] = [str(member.id), member.pickup.access_version]
     request.session[SESSION_KEY] = memberships
 
 
@@ -70,6 +75,27 @@ def member_for_key(pickup: Pickup, access_key: str) -> Member | None:
     if not access_key:
         return None
     return Member.objects.filter(pickup=pickup, access_key=access_key).first()
+
+
+def check_pickup_password(pickup: Pickup, password: str) -> bool:
+    """No password set, or the right one."""
+    return not pickup.password or check_password(password, pickup.password)
+
+
+def set_pickup_password(request: HttpRequest, pickup: Pickup, creator: Member, password: str) -> None:
+    """
+    Set, change or (empty) remove the password. Setting or changing it logs everyone else out
+    of the pickup (access_version); the creator who does it stays logged in.
+    """
+    if not password:
+        Pickup.objects.filter(id=pickup.id).update(password="")
+    else:
+        Pickup.objects.filter(id=pickup.id).update(
+            password=make_password(password), access_version=F("access_version") + 1
+        )
+    pickup.refresh_from_db(fields=["password", "access_version"])
+    creator.pickup = pickup
+    login_member(request, creator)
 
 
 def name_taken(pickup: Pickup, user_name: str, exclude: Member | None = None) -> bool:

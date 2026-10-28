@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 
 import { useJoinPickup } from '../composables/usePickup'
 
-const props = defineProps<{ pickupId: string; initialName?: string }>()
+const props = defineProps<{ pickupId: string; initialName?: string; passwordRequired?: boolean }>()
 
 const router = useRouter()
 const join = useJoinPickup(() => props.pickupId)
@@ -18,6 +18,7 @@ const form = reactive({
   user_name: props.initialName ?? '',
   name: props.initialName ?? '',
   email: '',
+  password: '',
 })
 const fieldErrors = ref<Record<string, string>>({})
 
@@ -33,7 +34,10 @@ watch(
 async function submit() {
   fieldErrors.value = {}
   try {
-    const joined = await join.mutateAsync({ ...form })
+    const { password, ...details } = form
+    const joined = await join.mutateAsync(
+      props.passwordRequired ? { ...details, password } : details,
+    )
     toast.success('Welcome! Your folder is ready.')
     await router.push({
       name: 'explorer-folder',
@@ -52,6 +56,17 @@ async function submit() {
 
 <template>
   <form class="space-y-4" @submit.prevent="submit">
+    <div v-if="passwordRequired" class="space-y-1.5">
+      <Label for="join_password">Password of the pickup</Label>
+      <Input
+        id="join_password"
+        v-model="form.password"
+        type="password"
+        required
+        autocomplete="current-password"
+      />
+      <p class="text-sm text-muted-foreground">Ask the person who shared the link.</p>
+    </div>
     <div class="space-y-1.5">
       <Label for="user_name">Your name</Label>
       <Input id="user_name" v-model="form.user_name" required autocomplete="name" />

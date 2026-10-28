@@ -31,7 +31,13 @@ const title = computed(() => props.pickup.title || 'this pickup')
         class="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs text-muted-foreground"
       >
         <LockIcon class="size-3.5" />
-        {{ closed ? 'Closed' : 'Private pickup' }}
+        {{
+          closed
+            ? 'Closed'
+            : pickup.password_required
+              ? 'Protected with a password'
+              : 'Private pickup'
+        }}
       </p>
       <h1 class="text-2xl font-bold">
         {{ !canJoin ? title : claiming ? 'Choose your name' : `Join ${title}` }}
@@ -55,7 +61,12 @@ const title = computed(() => props.pickup.title || 'this pickup')
         <template v-else>This pickup doesn't take new participants anymore.</template>
       </p>
     </div>
-    <JoinForm v-if="canJoin" :pickup-id="pickup.id" :initial-name="initialName" />
+    <JoinForm
+      v-if="canJoin"
+      :pickup-id="pickup.id"
+      :initial-name="initialName"
+      :password-required="pickup.password_required"
+    />
     <template v-if="!pickup.is_member && !closed">
       <Separator />
       <LinkRequestForm :pickup-id="pickup.id" />

@@ -2482,6 +2482,16 @@
                         ],
                         "readOnly": true
                     },
+                    "password_required": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "description": "The pickup has a password and this browser isn't logged in: nothing else is shown"
+                    },
+                    "has_password": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "description": "A password is set (only for the creator)"
+                    },
                     "member_url": {
                         "type": "string",
                         "readOnly": true
@@ -2494,6 +2504,7 @@
                     "expires_at",
                     "folder_count",
                     "has_folder",
+                    "has_password",
                     "id",
                     "is_creator",
                     "is_member",
@@ -2501,6 +2512,7 @@
                     "media_count",
                     "member_name",
                     "member_url",
+                    "password_required",
                     "share_url",
                     "storage",
                     "visibility"
@@ -2695,6 +2707,10 @@
                                 "maxLength": 0
                             }
                         ]
+                    },
+                    "password": {
+                        "type": "string",
+                        "description": "The pickup's password, if it has one"
                     }
                 },
                 "required": [
@@ -2730,10 +2746,15 @@
                     },
                     "is_creator": {
                         "type": "boolean"
+                    },
+                    "password_required": {
+                        "type": "boolean",
+                        "description": "Logging in needs the pickup's password"
                     }
                 },
                 "required": [
                     "is_creator",
+                    "password_required",
                     "title",
                     "user_name"
                 ]
@@ -2988,6 +3009,12 @@
                         "format": "date-time",
                         "nullable": true,
                         "description": "When the pickup is deleted with all files (empty: never)"
+                    },
+                    "password": {
+                        "type": "string",
+                        "writeOnly": true,
+                        "description": "New password; empty removes it",
+                        "maxLength": 128
                     }
                 }
             },
@@ -3103,6 +3130,16 @@
                             }
                         ],
                         "readOnly": true
+                    },
+                    "password_required": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "description": "The pickup has a password and this browser isn't logged in: nothing else is shown"
+                    },
+                    "has_password": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "description": "A password is set (only for the creator)"
                     }
                 },
                 "required": [
@@ -3112,12 +3149,14 @@
                     "expires_at",
                     "folder_count",
                     "has_folder",
+                    "has_password",
                     "id",
                     "is_creator",
                     "is_member",
                     "join_policy",
                     "media_count",
                     "member_name",
+                    "password_required",
                     "share_url",
                     "storage",
                     "visibility"
@@ -3129,6 +3168,10 @@
                     "access_key": {
                         "type": "string",
                         "minLength": 1
+                    },
+                    "password": {
+                        "type": "string",
+                        "description": "The pickup's password, if it has one"
                     }
                 },
                 "required": [

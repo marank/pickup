@@ -56,6 +56,9 @@ class JoinSerializer(serializers.Serializer[Any]):
     user_name = serializers.CharField(max_length=100)
     name = serializers.CharField(max_length=100, validators=[validate_folder_name])
     email = serializers.EmailField(required=False, allow_blank=True)
+    password = serializers.CharField(
+        required=False, allow_blank=True, help_text="The pickup's password, if it has one"
+    )
 
     def validate_user_name(self, value: str) -> str:
         """Names identify people in a pickup; a taken name must not hand out its folder."""

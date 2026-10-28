@@ -92,11 +92,16 @@ export function useUpdateMember(pickupId: MaybeRefOrGetter<string>) {
 }
 
 /** Personal link: trade the access key for a session (used by the router guard). */
-export async function enterPickup(pickupId: string, accessKey: string): Promise<void> {
+export async function enterPickup(
+  pickupId: string,
+  accessKey: string,
+  password?: string,
+): Promise<void> {
   const pickup = await unwrap(
     api.POST('/api/pickups/{id}/session/', {
       params: { path: { id: pickupId } },
-      body: { access_key: accessKey },
+      body:
+        password === undefined ? { access_key: accessKey } : { access_key: accessKey, password },
     }),
   )
   await queryClient.invalidateQueries({ queryKey: pickupKeys.all(pickupId) })

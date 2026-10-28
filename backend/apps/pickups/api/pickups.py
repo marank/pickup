@@ -35,6 +35,7 @@ from ..services.archive import collect, safe_name, stream
 from ..services.identity import forget_plain_emails
 from ..services.members import (
     MembershipError,
+    check_pickup_password,
     confirm_email,
     create_pickup,
     delete_pickup,
@@ -46,6 +47,7 @@ from ..services.members import (
     request_link,
     request_pickup_list,
     set_email,
+    set_pickup_password,
     update_member,
 )
 
@@ -108,7 +110,10 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
             )
         body = PickupUpdateSerializer(pickup, data=request.data, partial=True)
         body.is_valid(raise_exception=True)
+        password = body.validated_data.pop("password", None)
         body.save()
+        if password is not None:
+            set_pickup_password(request, pickup, member, password)
         if pickup.email_privacy:
             forget_plain_emails(pickup)
         return Response(PickupSerializer(pickup, context={"member": member}).data)
@@ -193,6 +198,10 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
         """Get a folder: as a new participant, or as the signed-in creator/invited person."""
         pickup = self.get_object()
         member = self._member()
+        # Before anything else, so a wrong password learns nothing (not even taken names).
+        password = str(request.data.get("password", "")) if isinstance(request.data, dict) else ""
+        if member is None and not check_pickup_password(pickup, password):
+            return Response({"error": "Wrong password."}, status=status.HTTP_403_FORBIDDEN)
         body = JoinSerializer(data=request.data, context={"pickup": pickup, "member": member})
         if not body.is_valid():
             return Response(body.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -243,6 +252,10 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
         member = member_for_key(pickup, key.validated_data["access_key"]) if key.is_valid() else None
         if member is None:
             return Response({"error": "This personal link is not valid."}, status=status.HTTP_403_FORBIDDEN)
+        current = self._member()
+        already = current is not None and current.id == member.id
+        if not already and not check_pickup_password(pickup, key.validated_data.get("password", "")):
+            return Response({"error": "Wrong password."}, status=status.HTTP_403_FORBIDDEN)
         login_member(request, member)
         member.touch()
         return Response(PickupSerializer(pickup, context={"member": member}).data)
@@ -273,7 +286,13 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
         member = member_for_key(pickup, key.validated_data["access_key"]) if key.is_valid() else None
         if member is None:
             return Response({"error": "This personal link is not valid."}, status=status.HTTP_403_FORBIDDEN)
-        data = {"title": pickup.title, "user_name": member.user_name, "is_creator": member.is_creator}
+        current = self._member()
+        data = {
+            "title": pickup.title,
+            "user_name": member.user_name,
+            "is_creator": member.is_creator,
+            "password_required": bool(pickup.password) and not (current and current.id == member.id),
+        }
         response = Response(LinkPreviewSerializer(data).data)
         response["Cache-Control"] = "private, no-store"
         return response

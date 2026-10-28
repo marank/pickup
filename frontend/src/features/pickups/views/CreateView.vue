@@ -128,10 +128,10 @@ async function submit() {
 
     <!-- One card for all steps: only its content changes, the card follows its height. -->
     <div
-      class="tag-hole box-content overflow-hidden rounded-2xl rounded-l-[2rem] border bg-card shadow-sm transition-[height] duration-300 ease-out motion-reduce:transition-none"
+      class="box-content overflow-hidden rounded-2xl border bg-card shadow-sm transition-[height] duration-300 ease-out motion-reduce:transition-none"
       :style="{ height: contentHeight === null ? undefined : `${contentHeight}px` }"
     >
-      <div ref="content" class="p-5 pl-8 sm:p-6 sm:pl-10">
+      <div ref="content" class="p-5 sm:p-6">
         <Transition name="step" mode="out-in">
           <section
             v-if="phase === 'ready' && created"

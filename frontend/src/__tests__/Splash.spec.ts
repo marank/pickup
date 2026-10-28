@@ -20,6 +20,12 @@ describe('splash screen', () => {
     expect(splash()).toBeNull()
   })
 
+  it('leaves personal links to their own page', async () => {
+    window.history.replaceState(null, '', '/pickup/p1/member/key')
+    await renderAt(App, '/')
+    expect(splash()).toBeNull()
+  })
+
   it('is not shown on other pages', async () => {
     await renderAt(App, '/')
     expect(splash()).toBeNull()

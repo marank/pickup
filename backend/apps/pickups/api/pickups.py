@@ -21,6 +21,7 @@ from ..serializers import (
     FolderSerializer,
     JoinResponseSerializer,
     JoinSerializer,
+    LinkPreviewSerializer,
     MediaSerializer,
     MemberDetailsSerializer,
     MessageSerializer,
@@ -262,6 +263,20 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
         except MembershipError as exc:
             return Response({"error": str(exc)}, status=exc.status)
         return Response(PickupSerializer(pickup, context={"member": member}).data)
+
+    @extend_schema(request=SessionSerializer, responses={200: LinkPreviewSerializer, 403: ErrorSerializer})
+    @action(detail=True, methods=["post"], url_path="session/preview")
+    def session_preview(self, request: Request, id: str | None = None) -> Response:
+        """Whose personal link this is, without logging in (the SPA asks before it does)."""
+        pickup = self.get_object()
+        key = SessionSerializer(data=request.data)
+        member = member_for_key(pickup, key.validated_data["access_key"]) if key.is_valid() else None
+        if member is None:
+            return Response({"error": "This personal link is not valid."}, status=status.HTTP_403_FORBIDDEN)
+        data = {"title": pickup.title, "user_name": member.user_name, "is_creator": member.is_creator}
+        response = Response(LinkPreviewSerializer(data).data)
+        response["Cache-Control"] = "private, no-store"
+        return response
 
     @extend_schema(responses={200: PersonalLinkSerializer, 403: ErrorSerializer})
     @action(detail=True, methods=["get"], url_path="session/link")

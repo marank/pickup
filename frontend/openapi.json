@@ -969,6 +969,75 @@
                 }
             }
         },
+        "/api/pickups/{id}/session/preview/": {
+            "post": {
+                "operationId": "pickups_session_preview_create",
+                "description": "Whose personal link this is, without logging in (the SPA asks before it does).",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this pickup.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SessionRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SessionRequest"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SessionRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LinkPreview"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/pickups/{pickup_id}/folders/{folder_id}/media/{id}/": {
             "get": {
                 "operationId": "pickups_folders_media_retrieve",
@@ -2647,6 +2716,26 @@
                 "required": [
                     "folder",
                     "member_url"
+                ]
+            },
+            "LinkPreview": {
+                "type": "object",
+                "description": "Whose personal link this is, shown before the browser is logged in with it.",
+                "properties": {
+                    "title": {
+                        "type": "string"
+                    },
+                    "user_name": {
+                        "type": "string"
+                    },
+                    "is_creator": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "is_creator",
+                    "title",
+                    "user_name"
                 ]
             },
             "Media": {

@@ -262,6 +262,23 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/pickups/{id}/session/preview/': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** @description Whose personal link this is, without logging in (the SPA asks before it does). */
+    post: operations['pickups_session_preview_create']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/pickups/{pickup_id}/folders/{folder_id}/media/{id}/': {
     parameters: {
       query?: never
@@ -644,6 +661,12 @@ export interface components {
       folder: components['schemas']['Folder']
       /** @description Personal link with the secret access key */
       member_url: string
+    }
+    /** @description Whose personal link this is, shown before the browser is logged in with it. */
+    LinkPreview: {
+      title: string
+      user_name: string
+      is_creator: boolean
     }
     /** @description Serializer for Media model. */
     Media: {
@@ -1456,6 +1479,42 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['PersonalLink']
+        }
+      }
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+    }
+  }
+  pickups_session_preview_create: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        /** @description A UUID string identifying this pickup. */
+        id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'multipart/form-data': components['schemas']['SessionRequest']
+        'application/x-www-form-urlencoded': components['schemas']['SessionRequest']
+        'application/json': components['schemas']['SessionRequest']
+      }
+    }
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['LinkPreview']
         }
       }
       403: {

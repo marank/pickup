@@ -155,3 +155,20 @@ def test_address_changes_respect_the_mail_cooldown() -> None:
     pickup_id = new_pickup(creator, creator_name="Anna", creator_email="anna@example.com")
     response = change_email(creator, pickup_id, "anna@new.example")
     assert response.status_code == 429
+
+
+# --- personal link preview ------------------------------------------------------
+
+
+def test_a_personal_link_shows_whose_it_is_without_logging_in() -> None:
+    creator = Client()
+    pickup_id = new_pickup(creator, title="Wedding", creator_name="Anna")
+    key = Member.objects.get(is_creator=True).access_key
+    browser = Client()
+    url = f"/api/pickups/{pickup_id}/session/preview/"
+    response = post(browser, url, {"access_key": key})
+    assert response.json() == {"title": "Wedding", "user_name": "Anna", "is_creator": True}
+    assert response["Cache-Control"] == "private, no-store"
+    assert browser.get(f"/api/pickups/{pickup_id}/").json()["is_member"] is False  # not logged in
+    assert post(browser, url, {"access_key": "wrong"}).status_code == 403
+    assert post(browser, url, {}).status_code == 403

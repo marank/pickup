@@ -1,12 +1,11 @@
 import type { RouteRecordRaw } from 'vue-router'
 
-import { enterPickup } from '@/features/pickups/composables/usePickup'
-
 // Loaded on demand: the start page doesn't need them.
 const ExplorerView = () => import('@/features/explorer/views/ExplorerView.vue')
 const JoinView = () => import('@/features/pickups/views/JoinView.vue')
 const CreateView = () => import('@/features/pickups/views/CreateView.vue')
 const ConfirmEmailView = () => import('@/features/pickups/views/ConfirmEmailView.vue')
+const MemberLinkView = () => import('@/features/pickups/views/MemberLinkView.vue')
 
 export const pickupRoutes: RouteRecordRaw[] = [
   { path: '/create', name: 'create', component: CreateView },
@@ -33,20 +32,12 @@ export const pickupRoutes: RouteRecordRaw[] = [
     meta: { wide: true },
   },
   {
-    // Personal link: the access key is exchanged for a session, then the address bar
-    // switches to the plain pickup URL so the key doesn't linger in history.
+    // Personal link: says whose link it is; its button trades the key for a session.
     path: '/pickup/:pickupId/member/:accessKey',
     name: 'pickup-member',
-    component: ExplorerView,
-    beforeEnter: async (to) => {
-      const pickupId = to.params.pickupId as string
-      try {
-        await enterPickup(pickupId, to.params.accessKey as string)
-        return { name: 'explorer', params: { pickupId }, replace: true }
-      } catch {
-        return { name: 'pickup-join', params: { pickupId }, query: { invalidLink: '1' } }
-      }
-    },
+    component: MemberLinkView,
+    props: true,
+    meta: { wide: true, bare: true },
   },
   { path: '/pickup/:pickupId/join', name: 'pickup-join', component: JoinView, props: true },
   {

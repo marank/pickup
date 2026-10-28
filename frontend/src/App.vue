@@ -13,7 +13,9 @@ const SPLASH_MS = 1650
 const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
 
 // Opening a pickup by its link: the logo assembles in the middle, then the pickup appears.
-const splash = ref(window.location.pathname.startsWith('/pickup/') && !reducedMotion())
+// Personal links show the logo on their own page (MemberLinkView).
+const path = window.location.pathname
+const splash = ref(path.startsWith('/pickup/') && !path.includes('/member/') && !reducedMotion())
 onMounted(() => {
   if (splash.value) window.setTimeout(() => (splash.value = false), SPLASH_MS)
 })

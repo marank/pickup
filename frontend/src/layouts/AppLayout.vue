@@ -14,7 +14,10 @@ const pickupId = computed(() =>
 
 <template>
   <div class="min-h-svh">
-    <header class="sticky top-0 z-30 border-b bg-background/85 backdrop-blur">
+    <header
+      v-if="!route.meta.bare"
+      class="sticky top-0 z-30 border-b bg-background/85 backdrop-blur"
+    >
       <!-- In a pickup as wide as the explorer below it. -->
       <div
         class="mx-auto flex h-12 items-center gap-3 px-3 sm:px-4"

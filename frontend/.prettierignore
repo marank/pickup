@@ -1,0 +1,3 @@
+# pnpm writes the lockfile in its own format (as Renovate does); formatting it here causes
+# whole-file rewrites and merge conflicts in every dependency PR
+pnpm-lock.yaml

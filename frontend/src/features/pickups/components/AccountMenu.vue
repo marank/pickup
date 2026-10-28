@@ -3,7 +3,6 @@ import {
   ChevronDownIcon,
   CopyIcon,
   CrownIcon,
-  FolderIcon,
   LogOutIcon,
   MailIcon,
   SettingsIcon,
@@ -71,15 +70,6 @@ const leaveDescription = computed(() =>
     : 'You will be logged out on this device. To log in again, open your personal link (from when you joined, or from your email). Your folder and files are kept.',
 )
 
-function openOwnFolder() {
-  if (ownFolder.value) {
-    void router.push({
-      name: 'explorer-folder',
-      params: { pickupId: props.pickupId, folderId: ownFolder.value.id },
-    })
-  }
-}
-
 const client = useQueryClient()
 
 async function copyPersonalLink() {
@@ -96,7 +86,7 @@ async function confirmLeave() {
   try {
     await leave.mutateAsync()
     toast.success('You are logged out')
-    await router.push({ name: 'explorer', params: { pickupId: props.pickupId } })
+    await router.push({ name: 'home' })
   } catch (err) {
     toast.error(apiErrorMessage(err, 'Could not log out'))
   }
@@ -129,10 +119,6 @@ async function confirmLeave() {
         </p>
       </DropdownMenuLabel>
       <DropdownMenuSeparator />
-      <DropdownMenuItem v-if="ownFolder" @select="openOwnFolder">
-        <FolderIcon />
-        Go to my folder
-      </DropdownMenuItem>
       <DropdownMenuItem
         v-if="!ownFolder && (signedIn || pickup.data.value?.join_policy === 'open')"
         @select="router.push({ name: 'pickup-join', params: { pickupId } })"

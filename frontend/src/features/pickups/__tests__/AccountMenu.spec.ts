@@ -27,15 +27,12 @@ afterEach(() => {
 })
 
 describe('account menu', () => {
-  it('shows the member, goes to their folder and switches the colour scheme', async () => {
-    const { router } = await renderApp(explorerPath())
+  it('shows the member and switches the colour scheme', async () => {
+    await renderApp(explorerPath())
     expect(findButton('Account').textContent).toContain('Alice')
     await openAccount()
     expect(pageText()).toContain('Member of this pickup')
-    await chooseMenuItem('Go to my folder')
-    await vi.waitFor(() => expect(router.currentRoute.value.params.folderId).toBe(ALICE))
-
-    await openAccount()
+    expect(pageText()).not.toContain('Go to my folder')
     await chooseMenuItem('Dark')
     expect(useTheme().value).toBe('dark')
   })
@@ -99,7 +96,7 @@ describe('account menu', () => {
   it('leaves the pickup on this device after a warning', async () => {
     on('DELETE', '/api/pickups/:id/session/', { status: 204 })
     const success = vi.spyOn(toast, 'success')
-    await renderApp(explorerPath(ALICE))
+    const { router } = await renderApp(explorerPath(ALICE))
     await openAccount()
     await chooseMenuItem('Log out')
     expect(pageText()).toContain('open your personal link')
@@ -114,6 +111,7 @@ describe('account menu', () => {
       ),
     ).toBe(true)
     expect(success).toHaveBeenCalledWith('You are logged out')
+    expect(router.currentRoute.value.name).toBe('home')
   })
 
   it('reports a failed leave', async () => {

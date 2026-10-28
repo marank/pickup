@@ -95,9 +95,7 @@ async function enter() {
               <ArrowRightIcon />
             </template>
           </Button>
-          <p class="mt-3 text-xs text-muted-foreground">
-            This logs you in on this device. You stay logged in until you log out.
-          </p>
+          <p class="mt-3 text-xs text-muted-foreground">This logs you in on this device.</p>
         </section>
       </div>
     </div>

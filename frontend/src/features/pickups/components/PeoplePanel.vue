@@ -13,6 +13,7 @@ import { formatRelativeDate } from '@/lib/format'
 import { ownerColor } from '@/lib/ownerColor'
 
 import { usePickupAdmin } from '../composables/usePickupAdmin'
+import SettingsCard from './SettingsCard.vue'
 
 const props = defineProps<{ pickup: Pickup }>()
 const admin = usePickupAdmin(() => props.pickup.id)
@@ -68,7 +69,7 @@ async function remove() {
 </script>
 
 <template>
-  <section class="max-w-3xl space-y-5" aria-label="People">
+  <div class="@container max-w-4xl space-y-6">
     <div>
       <h2 class="font-heading text-xl font-semibold">People</h2>
       <p class="text-sm text-muted-foreground">
@@ -84,9 +85,13 @@ async function remove() {
       </p>
     </div>
 
-    <form class="space-y-2 rounded-xl border bg-pane p-3" @submit.prevent="invite">
-      <p class="text-sm font-medium">Invite by email</p>
-      <div class="grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+    <SettingsCard
+      title="Invite by email"
+      :description="`They get an email with a personal link from “${
+        pickup.member_name === 'Creator' ? 'Someone' : pickup.member_name
+      } via Pickup”. If the address is already in the pickup, the link is sent again.`"
+    >
+      <form class="grid gap-2 @lg:grid-cols-[1fr_1fr_auto]" @submit.prevent="invite">
         <div>
           <Label for="invite-email" class="sr-only">Email</Label>
           <Input
@@ -105,70 +110,70 @@ async function remove() {
           <MailIcon />
           Invite
         </Button>
-      </div>
-      <p class="text-xs text-muted-foreground">
-        They get an email with a personal link from “{{
-          pickup.member_name === 'Creator' ? 'Someone' : pickup.member_name
-        }}
-        via Pickup”. If the address is already in the pickup, the link is sent again.
-      </p>
-    </form>
+      </form>
+    </SettingsCard>
 
-    <ul class="divide-y rounded-xl border" aria-label="Participants">
-      <li v-for="member in members" :key="member.id" class="flex items-center gap-3 p-3">
-        <span
-          class="flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-paper"
-          :style="{
-            background: member.has_folder
-              ? ownerColor(member.user_name)
-              : 'var(--muted-foreground)',
-          }"
-        >
-          {{ (member.user_name || '?').slice(0, 1).toUpperCase() }}
-        </span>
-        <div class="min-w-0 flex-1">
-          <p class="truncate text-sm font-medium">
-            {{ member.user_name || 'Invited person' }}
-            <span v-if="member.is_you" class="font-normal text-muted-foreground">(you)</span>
-          </p>
-          <p class="truncate text-xs text-muted-foreground">
-            {{ status(member) }}
-            <template v-if="member.email"> · {{ member.email }}</template>
-            <template v-else-if="member.has_email"> · email stored privately</template>
-            ·
-            {{
-              member.has_folder
-                ? `active ${formatRelativeDate(member.last_active_at)}`
-                : `added ${formatRelativeDate(member.created_at)}`
-            }}
-          </p>
-        </div>
-        <Button
-          v-if="member.email && !member.is_creator"
-          variant="ghost"
-          size="icon-sm"
-          :aria-label="`Send the invitation to ${member.user_name || member.email} again`"
-          title="Send the link again"
-          @click="resend(member)"
-        >
-          <MailIcon />
-        </Button>
-        <Button
-          v-if="!member.is_creator"
-          variant="ghost"
-          size="icon-sm"
-          class="text-destructive hover:text-destructive"
-          :aria-label="`Remove ${member.user_name || 'invitation'}`"
-          @click="askRemove(member)"
-        >
-          <Trash2Icon />
-        </Button>
-      </li>
-    </ul>
-    <p v-if="!pickup.email_privacy" class="text-xs text-muted-foreground">
-      Privacy mode is off: addresses are stored and shown here.
-    </p>
-  </section>
+    <SettingsCard
+      title="Participants"
+      :description="
+        pickup.email_privacy
+          ? 'Everyone with a personal link to this pickup, including invitations not accepted yet.'
+          : 'Everyone with a personal link to this pickup. Privacy mode is off: addresses are stored and shown here.'
+      "
+    >
+      <ul class="divide-y overflow-hidden rounded-lg border" aria-label="Participants">
+        <li v-for="member in members" :key="member.id" class="flex items-center gap-3 px-3 py-2.5">
+          <span
+            class="flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-paper"
+            :style="{
+              background: member.has_folder
+                ? ownerColor(member.user_name)
+                : 'var(--muted-foreground)',
+            }"
+          >
+            {{ (member.user_name || '?').slice(0, 1).toUpperCase() }}
+          </span>
+          <div class="min-w-0 flex-1">
+            <p class="truncate text-sm font-medium">
+              {{ member.user_name || 'Invited person' }}
+              <span v-if="member.is_you" class="font-normal text-muted-foreground">(you)</span>
+            </p>
+            <p class="truncate text-xs text-muted-foreground">
+              {{ status(member) }}
+              <template v-if="member.email"> · {{ member.email }}</template>
+              <template v-else-if="member.has_email"> · email stored privately</template>
+              ·
+              {{
+                member.has_folder
+                  ? `active ${formatRelativeDate(member.last_active_at)}`
+                  : `added ${formatRelativeDate(member.created_at)}`
+              }}
+            </p>
+          </div>
+          <Button
+            v-if="member.email && !member.is_creator"
+            variant="ghost"
+            size="icon-sm"
+            :aria-label="`Send the invitation to ${member.user_name || member.email} again`"
+            title="Send the link again"
+            @click="resend(member)"
+          >
+            <MailIcon />
+          </Button>
+          <Button
+            v-if="!member.is_creator"
+            variant="ghost"
+            size="icon-sm"
+            class="text-destructive hover:text-destructive"
+            :aria-label="`Remove ${member.user_name || 'invitation'}`"
+            @click="askRemove(member)"
+          >
+            <Trash2Icon />
+          </Button>
+        </li>
+      </ul>
+    </SettingsCard>
+  </div>
 
   <ConfirmDialog
     v-model:open="confirmOpen"

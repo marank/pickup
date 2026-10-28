@@ -27,11 +27,12 @@ async function submit() {
 </script>
 
 <template>
-  <section class="mx-auto max-w-6xl px-4 pb-16">
-    <div class="grid gap-6 rounded-2xl border bg-card p-6 md:grid-cols-[1fr_1fr] md:items-center">
+  <!-- A band of its own, like "Three steps" (HomeView). -->
+  <section class="bg-ink text-paper">
+    <div class="mx-auto grid max-w-6xl gap-6 px-4 py-14 md:grid-cols-[1fr_1fr] md:items-center">
       <div>
-        <h2 class="text-2xl font-bold">Lost your links?</h2>
-        <p class="mt-1 text-muted-foreground">
+        <h2 class="text-3xl font-bold">Lost your links?</h2>
+        <p class="mt-2 text-paper/75">
           Enter your email address. We send you a list of the pickups it belongs to, each with your
           personal link.
         </p>
@@ -44,13 +45,14 @@ async function submit() {
             required
             placeholder="you@example.com"
             aria-label="Your email"
+            class="border-paper/20 bg-paper text-ink placeholder:text-ink/50 dark:bg-paper"
           />
-          <Button type="submit" variant="secondary" :disabled="lookup.isPending.value">
+          <Button type="submit" :disabled="lookup.isPending.value">
             <MailIcon />
             Send
           </Button>
         </div>
-        <p v-if="sent" class="text-sm text-muted-foreground" role="status">{{ sent }}</p>
+        <p v-if="sent" class="text-sm text-paper/75" role="status">{{ sent }}</p>
       </form>
     </div>
   </section>

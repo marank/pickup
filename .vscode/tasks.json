@@ -18,7 +18,7 @@
       "command": "uv run python manage.py runserver",
       "options": { "cwd": "${workspaceFolder}/backend" },
       "isBackground": true,
-      "presentation": { "group": "dev", "panel": "dedicated" },
+      "presentation": { "panel": "dedicated" },
       "problemMatcher": []
     },
     {
@@ -27,7 +27,7 @@
       "command": "pnpm dev",
       "options": { "cwd": "${workspaceFolder}/frontend" },
       "isBackground": true,
-      "presentation": { "group": "dev", "panel": "dedicated" },
+      "presentation": { "panel": "dedicated" },
       "problemMatcher": []
     },
     {

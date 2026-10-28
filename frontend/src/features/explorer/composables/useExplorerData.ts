@@ -82,15 +82,5 @@ export function useExplorerMutations(pickupId: Id) {
         ),
       onSuccess: refresh,
     }),
-    renamePickup: useMutation({
-      mutationFn: (title: string) =>
-        unwrap(
-          api.PATCH('/api/pickups/{id}/', {
-            params: { path: { id: toValue(pickupId) } },
-            body: { title },
-          }),
-        ),
-      onSuccess: refresh,
-    }),
   }
 }

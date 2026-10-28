@@ -660,20 +660,6 @@ describe('explorer: owner actions', () => {
     ).toBe(true)
   })
 
-  it('lets the creator rename the pickup', async () => {
-    on('PATCH', '/api/pickups/:id/', { body: {} })
-    await render(undefined, { creator: true })
-    findButton('Rename pickup').click()
-    await flushPromises()
-    await new DOMWrapper($<HTMLInputElement>('#name-dialog-input')!).setValue('Sommerfest')
-    findButton('Save').click()
-    await settle()
-    expect(requests.find((r) => r.method === 'PATCH')).toMatchObject({
-      path: `/api/pickups/${PICKUP_ID}/`,
-      body: { title: 'Sommerfest' },
-    })
-  })
-
   it('shares the link, with the system share sheet where available', async () => {
     const share = vi
       .fn<(data: ShareData) => Promise<void>>()

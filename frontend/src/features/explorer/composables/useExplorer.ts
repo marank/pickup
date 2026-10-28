@@ -18,7 +18,6 @@ import { useViewPrefs } from './useViewPrefs'
 type ExplorerDialog =
   | { kind: 'new-folder'; parentId: string }
   | { kind: 'rename-folder'; folder: Folder }
-  | { kind: 'rename-pickup'; title: string }
   | { kind: 'caption'; media: Media }
   | { kind: 'delete'; items: ExplorerItem[] }
   | { kind: 'share' }

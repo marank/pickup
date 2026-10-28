@@ -19,7 +19,7 @@ import ContentPane from '../components/ContentPane.vue'
 import DetailsPane from '../components/DetailsPane.vue'
 import FolderTree from '../components/FolderTree.vue'
 import MediaViewer from '../components/MediaViewer.vue'
-import NameDialog from '../components/NameDialog.vue'
+import NameDialog from '@/components/NameDialog.vue'
 import NavBar from '../components/NavBar.vue'
 import PagePane from '../components/PagePane.vue'
 import PickupBar from '../components/PickupBar.vue'
@@ -49,7 +49,6 @@ const dialogOpen = (kind: NonNullable<typeof explorer.dialog>['kind']) =>
   })
 const newFolderOpen = dialogOpen('new-folder')
 const renameFolderOpen = dialogOpen('rename-folder')
-const renamePickupOpen = dialogOpen('rename-pickup')
 const captionOpen = dialogOpen('caption')
 const deleteOpen = dialogOpen('delete')
 const shareOpen = dialogOpen('share')
@@ -87,15 +86,6 @@ async function renameFolder(name: string) {
     mutations.renameFolder.mutateAsync({ folderId, name }),
     'Folder renamed',
     'Could not rename',
-  )
-}
-
-async function renamePickup(title: string) {
-  explorer.closeDialog()
-  await explorer.run(
-    mutations.renamePickup.mutateAsync(title),
-    'Pickup renamed',
-    'Could not rename the pickup',
   )
 }
 
@@ -193,16 +183,6 @@ function onFiles(event: Event) {
       :initial="dialog?.kind === 'rename-folder' ? dialog.folder.name : ''"
       confirm-label="Rename"
       @confirm="renameFolder"
-    />
-    <NameDialog
-      v-model:open="renamePickupOpen"
-      title="Rename pickup"
-      label="Title"
-      description="Everyone sees this name at the top of the pickup."
-      :initial="dialog?.kind === 'rename-pickup' ? dialog.title : ''"
-      confirm-label="Save"
-      allow-empty
-      @confirm="renamePickup"
     />
     <CaptionDialog
       v-model:open="captionOpen"

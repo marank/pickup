@@ -7,6 +7,7 @@ import { ownerColor } from '@/lib/ownerColor'
 
 import { useExplorer } from '../composables/useExplorer'
 import { childrenOf } from '../lib/tree'
+import OwnBadge from './OwnBadge.vue'
 
 const props = defineProps<{ folder: Folder; depth: number; expanded: Set<string> }>()
 const emit = defineEmits<{ toggle: [id: string]; navigated: [] }>()
@@ -15,6 +16,7 @@ const explorer = useExplorer()
 const children = computed(() => childrenOf(explorer.tree, props.folder.id))
 const isOpen = computed(() => props.expanded.has(props.folder.id))
 const isCurrent = computed(() => explorer.folderId === props.folder.id)
+const isOwn = computed(() => explorer.ownFolder?.id === props.folder.id)
 
 function open() {
   explorer.navigate(props.folder.id)
@@ -63,6 +65,7 @@ function onKey(event: KeyboardEvent) {
           fill-opacity="0.2"
         />
         <span class="truncate">{{ folder.name }}</span>
+        <OwnBadge v-if="isOwn" />
       </button>
     </div>
     <ul v-if="isOpen && children.length" role="group">

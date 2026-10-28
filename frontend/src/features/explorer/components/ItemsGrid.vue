@@ -9,6 +9,7 @@ import { typeLabel, type ExplorerItem } from '../lib/items'
 import ItemContextMenu from './ItemContextMenu.vue'
 import ItemMenu from './ItemMenu.vue'
 import ItemThumb from './ItemThumb.vue'
+import OwnBadge from './OwnBadge.vue'
 
 const props = defineProps<{ variant: 'content' | 'small' | 'large' }>()
 const explorer = useExplorer()
@@ -56,7 +57,10 @@ const layout = computed(
         </div>
 
         <div v-if="variant === 'content'" class="min-w-0 flex-1">
-          <p class="truncate font-medium">{{ item.name }}</p>
+          <p class="flex min-w-0 items-center gap-1.5 font-medium">
+            <span class="truncate">{{ item.name }}</span>
+            <OwnBadge v-if="explorer.ownFolder?.id === item.id" />
+          </p>
           <p
             v-if="item.kind === 'file' && item.media.caption"
             class="truncate text-sm text-muted-foreground"
@@ -77,6 +81,9 @@ const layout = computed(
             :class="variant === 'small' && 'text-xs'"
           >
             {{ item.name }}
+          </p>
+          <p v-if="explorer.ownFolder?.id === item.id" class="mt-1 text-center">
+            <OwnBadge />
           </p>
           <p
             v-if="variant === 'large'"

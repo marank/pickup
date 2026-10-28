@@ -282,7 +282,7 @@ describe('explorer: browsing', () => {
     const sheet = $('[role="dialog"]')!
     expect(sheet.textContent).toContain('Folders')
     const alice = Array.from(sheet.querySelectorAll('button')).find(
-      (b) => b.textContent?.trim() === 'Alice',
+      (b) => b.querySelector('.truncate')?.textContent?.trim() === 'Alice',
     )!
     alice.click()
     await settle()

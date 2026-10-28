@@ -9,6 +9,7 @@ import { typeLabel, type SortKey } from '../lib/items'
 import ItemContextMenu from './ItemContextMenu.vue'
 import ItemMenu from './ItemMenu.vue'
 import ItemThumb from './ItemThumb.vue'
+import OwnBadge from './OwnBadge.vue'
 
 const explorer = useExplorer()
 const { onClick, onDoubleClick } = useItemPointer()
@@ -77,6 +78,7 @@ const columns: { key: SortKey; label: string; class: string }[] = [
                 <ItemThumb :item="item" size="icon" />
               </span>
               <span class="truncate">{{ item.name }}</span>
+              <OwnBadge v-if="explorer.ownFolder?.id === item.id" />
             </div>
           </td>
           <td class="truncate px-2 text-muted-foreground max-sm:hidden">{{ item.owner }}</td>

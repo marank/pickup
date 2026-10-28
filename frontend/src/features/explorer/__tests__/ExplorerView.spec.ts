@@ -141,7 +141,7 @@ describe('explorer: browsing', () => {
 
   it('takes typed paths in the address bar and lists subfolders between segments', async () => {
     const { router } = await render(ALICE)
-    findButton('Type a path').click()
+    $('[title="Type a path (Ctrl+L)"]')!.click()
     await flushPromises()
     const input = new DOMWrapper($<HTMLInputElement>('input[aria-label="Folder path"]')!)
     expect((input.element as HTMLInputElement).value).toBe('Summer party / Alice')

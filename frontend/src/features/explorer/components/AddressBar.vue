@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ChevronRightIcon, PencilIcon } from '@lucide/vue'
+import { ChevronRightIcon } from '@lucide/vue'
 import { useEventListener, useResizeObserver } from '@vueuse/core'
 import { computed, nextTick, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
@@ -120,17 +120,13 @@ useEventListener(window, 'keydown', (event: KeyboardEvent) => {
             {{ pageNames[explorer.page] }}
           </span>
         </template>
-        <span class="min-w-6 flex-1 self-stretch" @click="edit" />
+        <!-- Clicking next to the path (or Ctrl+L) turns it into a text field. -->
+        <span
+          class="min-w-6 flex-1 cursor-text self-stretch"
+          title="Type a path (Ctrl+L)"
+          @click="edit"
+        />
       </div>
-      <button
-        type="button"
-        class="mr-1 flex size-7 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
-        aria-label="Type a path"
-        title="Type a path (Ctrl+L)"
-        @click="edit"
-      >
-        <PencilIcon class="size-3.5" />
-      </button>
     </template>
   </div>
 </template>

@@ -20,15 +20,12 @@ const expires = computed(() =>
 <template>
   <div class="flex items-center gap-2 sm:gap-3">
     <Skeleton v-if="!pickup" class="h-9 w-56 rounded-lg" />
-    <!-- Like the logo: the frame around it, the tomato tile tilted the same way, then the name. -->
+    <!-- Like the logo: the frame around it, the tomato tile (upright here), then the name. -->
     <div
       v-else
       class="flex max-w-full min-w-0 items-center gap-2 rounded-xl border-[3px] border-foreground py-1 pr-3 pl-2.5"
     >
-      <span
-        class="size-3.5 shrink-0 rotate-[9deg] rounded-[0.25rem] bg-tomato"
-        aria-hidden="true"
-      />
+      <span class="size-4.5 shrink-0 rounded-[0.3rem] bg-tomato" aria-hidden="true" />
       <h1 class="truncate text-base leading-tight font-semibold sm:text-xl">{{ title }}</h1>
     </div>
 

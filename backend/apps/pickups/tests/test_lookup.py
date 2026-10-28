@@ -46,10 +46,12 @@ def test_an_address_gets_its_live_pickups_with_personal_links() -> None:
     assert len(links) == 2
     for link in links:
         assert link in message.body
-    assert "Wedding" in message.body and "Trip" in message.body
+    assert "Wedding (you created it)\n" in message.body and "Trip\n" in message.body
     assert "Old" not in message.body and "Someone else" not in message.body
     assert isinstance(message, EmailMultiAlternatives)
-    assert all(link in str(message.alternatives[0][0]) for link in links)
+    html = str(message.alternatives[0][0])
+    assert all(link in html for link in links)
+    assert html.count("(you created it)") == 1
 
 
 def test_unknown_addresses_get_the_same_answer_and_no_mail() -> None:

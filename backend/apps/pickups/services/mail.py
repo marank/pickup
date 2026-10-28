@@ -145,24 +145,30 @@ def send_pickup_list(members: list[Member], address: str, request: HttpRequest) 
     Mail an address the pickups it belongs to, each with that member's personal link (the
     start page's "find my pickups"). Failures are logged, never raised.
     """
+    created = " (you created it)"
     entries = [
-        (member.pickup.title or "Untitled pickup", request.build_absolute_uri(member.personal_path))
+        (
+            member.pickup.title or "Untitled pickup",
+            created if member.is_creator else "",
+            request.build_absolute_uri(member.personal_path),
+        )
         for member in members
     ]
     body = (
         "Hello,\n\nthis address belongs to these pickups. Each link logs you in as yourself:\n\n"
-        + "\n\n".join(f"{title}\n{link}" for title, link in entries)
+        + "\n\n".join(f"{title}{note}\n{link}" for title, note, link in entries)
         + "\n\nIf you didn't ask for this mail, you can ignore it."
     )
     items = "\n".join(
         format_html(
-            '<li style="margin:0 0 12px"><a href="{}" style="color:#e75528;font-weight:600">{}</a>'
+            '<li style="margin:0 0 12px"><a href="{}" style="color:#e75528;font-weight:600">{}</a>{}'
             '<br><span style="font-size:13px;color:#4f6866;word-break:break-all">{}</span></li>',
             link,
             title,
+            note,
             link,
         )
-        for title, link in entries
+        for title, note, link in entries
     )
     html = "\n".join(
         [

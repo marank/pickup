@@ -155,7 +155,8 @@ def send_pickup_list(members: list[Member], address: str, request: HttpRequest) 
     ]
     sections = [(heading, entries) for heading, entries in sections if entries]
     body = (
-        "Hello,\n\nthis address belongs to these pickups. Each link logs you in as yourself."
+        "Hello,\n\nhere is a list of all pickups associated with this email address. "
+        "Each link logs you in to that pickup."
         + "".join(
             f"\n\n{heading}:\n\n" + "\n\n".join(f"{title}\n{link}" for title, link in entries)
             for heading, entries in sections
@@ -185,7 +186,8 @@ def send_pickup_list(members: list[Member], address: str, request: HttpRequest) 
             '<div style="max-width:520px;margin:0 auto">',
             f'<p><img src="cid:{LOGO_CID}" width="162" height="48" alt="pickup"></p>',
             "<p>Hello,</p>",
-            "<p>this address belongs to these pickups. Each link logs you in as yourself.</p>",
+            "<p>here is a list of all pickups associated with this email address. "
+            "Each link logs you in to that pickup.</p>",
             lists,
             "<p>If you didn&#x27;t ask for this mail, you can ignore it.</p>",
             "</div></body></html>",

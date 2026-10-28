@@ -145,30 +145,38 @@ def send_pickup_list(members: list[Member], address: str, request: HttpRequest) 
     Mail an address the pickups it belongs to, each with that member's personal link (the
     start page's "find my pickups"). Failures are logged, never raised.
     """
-    created = " (you created it)"
-    entries = [
-        (
-            member.pickup.title or "Untitled pickup",
-            created if member.is_creator else "",
-            request.build_absolute_uri(member.personal_path),
-        )
-        for member in members
+
+    def entry(member: Member) -> tuple[str, str]:
+        return member.pickup.title or "Untitled pickup", request.build_absolute_uri(member.personal_path)
+
+    sections = [
+        (heading, [entry(m) for m in members if m.is_creator == created])
+        for heading, created in (("Pickups you created", True), ("Pickups you participate in", False))
     ]
+    sections = [(heading, entries) for heading, entries in sections if entries]
     body = (
-        "Hello,\n\nthis address belongs to these pickups. Each link logs you in as yourself:\n\n"
-        + "\n\n".join(f"{title}{note}\n{link}" for title, note, link in entries)
+        "Hello,\n\nthis address belongs to these pickups. Each link logs you in as yourself."
+        + "".join(
+            f"\n\n{heading}:\n\n" + "\n\n".join(f"{title}\n{link}" for title, link in entries)
+            for heading, entries in sections
+        )
         + "\n\nIf you didn't ask for this mail, you can ignore it."
     )
-    items = "\n".join(
-        format_html(
-            '<li style="margin:0 0 12px"><a href="{}" style="color:#e75528;font-weight:600">{}</a>{}'
-            '<br><span style="font-size:13px;color:#4f6866;word-break:break-all">{}</span></li>',
-            link,
-            title,
-            note,
-            link,
+    lists = "\n".join(
+        format_html('<h3 style="margin:20px 0 8px;font-size:15px">{}</h3>', heading)
+        + '\n<ul style="margin:0;padding-left:18px">\n'
+        + "\n".join(
+            format_html(
+                '<li style="margin:0 0 12px"><a href="{}" style="color:#e75528;font-weight:600">{}</a>'
+                '<br><span style="font-size:13px;color:#4f6866;word-break:break-all">{}</span></li>',
+                link,
+                title,
+                link,
+            )
+            for title, link in entries
         )
-        for title, note, link in entries
+        + "\n</ul>"
+        for heading, entries in sections
     )
     html = "\n".join(
         [
@@ -177,8 +185,8 @@ def send_pickup_list(members: list[Member], address: str, request: HttpRequest) 
             '<div style="max-width:520px;margin:0 auto">',
             f'<p><img src="cid:{LOGO_CID}" width="162" height="48" alt="pickup"></p>',
             "<p>Hello,</p>",
-            "<p>this address belongs to these pickups. Each link logs you in as yourself:</p>",
-            f'<ul style="padding-left:18px">{items}</ul>',
+            "<p>this address belongs to these pickups. Each link logs you in as yourself.</p>",
+            lists,
             "<p>If you didn&#x27;t ask for this mail, you can ignore it.</p>",
             "</div></body></html>",
         ]

@@ -46,12 +46,17 @@ def test_an_address_gets_its_live_pickups_with_personal_links() -> None:
     assert len(links) == 2
     for link in links:
         assert link in message.body
-    assert "Wedding (you created it)\n" in message.body and "Trip\n" in message.body
+    created, participating = (
+        message.body.index("Pickups you created:"),
+        message.body.index("Pickups you participate in:"),
+    )
+    assert created < message.body.index("Wedding") < participating < message.body.index("Trip")
     assert "Old" not in message.body and "Someone else" not in message.body
     assert isinstance(message, EmailMultiAlternatives)
     html = str(message.alternatives[0][0])
     assert all(link in html for link in links)
-    assert html.count("(you created it)") == 1
+    assert html.index("Pickups you created") < html.index("Pickups you participate in")
+    assert max(len(line) for line in html.splitlines()) < 998  # 8bit line limit
 
 
 def test_unknown_addresses_get_the_same_answer_and_no_mail() -> None:
@@ -73,3 +78,12 @@ def test_the_list_respects_the_mail_cooldown() -> None:
     assert len(mail.outbox) == sent + 1
     assert lookup("anna@example.com").json() == ANSWER  # right after: no second mail
     assert len(mail.outbox) == sent + 1
+
+
+def test_sections_without_pickups_are_left_out() -> None:
+    pickup_id = new_pickup(Client(), title="Trip")
+    join(Client(), pickup_id, "Bob", email="bob@example.com")
+    allow_next_mail()
+    lookup("bob@example.com")
+    body = mail.outbox[-1].body
+    assert "Pickups you participate in:" in body and "Pickups you created" not in body

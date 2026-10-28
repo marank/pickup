@@ -73,6 +73,8 @@ if _ALL_HTTPS:
 SILENCED_SYSTEM_CHECKS = ["security.W005", "security.W021"]
 
 SESSION_COOKIE_SAMESITE = "Lax"
+# How long a browser stays logged in to its pickups after logging in (personal link, joining).
+SESSION_COOKIE_AGE = env_int("SESSION_DAYS", 28) * 24 * 60 * 60
 CSRF_COOKIE_HTTPONLY = False  # the SPA reads csrftoken to send X-CSRFToken
 X_FRAME_OPTIONS = "DENY"
 SECURE_REFERRER_POLICY = "same-origin"

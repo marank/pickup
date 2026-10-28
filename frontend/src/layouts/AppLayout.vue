@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
+import { useRoute } from 'vue-router'
 
-import PickupLogo from '@/components/PickupLogo.vue'
+import HomeLink from '@/components/HomeLink.vue'
 import ThemeMenu from '@/components/ThemeMenu.vue'
 import AccountMenu from '@/features/pickups/components/AccountMenu.vue'
 
@@ -16,9 +16,7 @@ const pickupId = computed(() =>
   <div class="min-h-svh">
     <header class="sticky top-0 z-30 border-b bg-background/85 backdrop-blur">
       <div class="mx-auto flex h-12 max-w-[110rem] items-center gap-3 px-3 sm:px-4">
-        <RouterLink to="/" class="flex h-7 items-center" aria-label="Pickup start page">
-          <PickupLogo />
-        </RouterLink>
+        <HomeLink />
         <div class="ml-auto flex items-center gap-1">
           <AccountMenu v-if="pickupId" :pickup-id="pickupId" />
           <ThemeMenu v-else />

@@ -8,9 +8,13 @@ import { queryClient } from '@/lib/queryClient'
 
 import { pickupKeys } from '../queryKeys'
 
-export function usePickup(pickupId: MaybeRefOrGetter<string>) {
+export function usePickup(
+  pickupId: MaybeRefOrGetter<string>,
+  enabled: MaybeRefOrGetter<boolean> = true,
+) {
   return useQuery({
     queryKey: computed(() => pickupKeys.detail(toValue(pickupId))),
+    enabled: computed(() => toValue(enabled)),
     queryFn: () =>
       unwrap(api.GET('/api/pickups/{id}/', { params: { path: { id: toValue(pickupId) } } })),
   })

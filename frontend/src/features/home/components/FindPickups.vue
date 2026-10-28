@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useMutation } from '@tanstack/vue-query'
-import { Loader2Icon, MailCheckIcon, MailIcon } from '@lucide/vue'
+import { Loader2Icon, MailIcon } from '@lucide/vue'
 import { ref } from 'vue'
 import { toast } from 'vue-sonner'
 
@@ -87,18 +87,13 @@ async function submit() {
     </div>
 
     <Dialog v-model:open="sentOpen">
-      <DialogContent class="sm:max-w-sm">
-        <DialogHeader class="items-center text-center sm:items-center sm:text-center">
-          <span
-            class="mb-2 flex size-12 items-center justify-center rounded-full bg-sage/20 text-sage"
-          >
-            <MailCheckIcon class="size-6" />
-          </span>
+      <DialogContent class="sm:max-w-md">
+        <DialogHeader>
           <DialogTitle>Check your inbox</DialogTitle>
           <DialogDescription>{{ sentMessage }}</DialogDescription>
         </DialogHeader>
-        <DialogFooter class="sm:justify-center">
-          <Button class="w-full sm:w-auto" @click="sentOpen = false">OK</Button>
+        <DialogFooter>
+          <Button @click="sentOpen = false">OK</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -79,10 +79,7 @@ async function submit() {
 </script>
 
 <template>
-  <div
-    class="mx-auto py-4 transition-[max-width] duration-300 sm:py-8"
-    :class="phase === 'ready' ? 'max-w-3xl' : 'max-w-xl'"
-  >
+  <div class="mx-auto max-w-2xl py-4 sm:py-8">
     <div class="mb-4 flex items-center gap-3 text-sm">
       <RouterLink
         v-if="phase === 'form'"
@@ -127,7 +124,7 @@ async function submit() {
     <Transition name="step" mode="out-in">
       <section
         v-if="phase === 'ready' && created"
-        class="tag-hole space-y-6 rounded-2xl rounded-l-[2rem] border bg-card p-6 pl-10 shadow-sm"
+        class="tag-hole space-y-6 rounded-2xl rounded-l-[2rem] border bg-card p-5 pl-8 sm:p-6 sm:pl-10 shadow-sm"
         aria-label="Your pickup is ready"
       >
         <div class="space-y-1">
@@ -137,9 +134,9 @@ async function submit() {
           <p class="text-muted-foreground">Two links, two jobs.</p>
         </div>
 
-        <div class="grid items-start gap-6 md:grid-cols-[15rem_1fr]">
+        <div class="grid items-start gap-6 sm:grid-cols-[13rem_1fr]">
           <!-- The QR card first: it is what most people show around at the event. -->
-          <div class="mx-auto flex w-56 flex-col items-center gap-3 md:w-full">
+          <div class="mx-auto flex w-56 flex-col items-center gap-3 sm:w-full">
             <QrCard
               ref="qr"
               :value="shareUrl"
@@ -189,14 +186,14 @@ async function submit() {
 
       <div
         v-else-if="phase === 'creating'"
-        class="tag-hole rounded-2xl rounded-l-[2rem] border bg-card p-6 pl-10 shadow-sm"
+        class="tag-hole rounded-2xl rounded-l-[2rem] border bg-card p-5 pl-8 sm:p-6 sm:pl-10 shadow-sm"
       >
         <PackingAnimation />
       </div>
 
       <form
         v-else
-        class="tag-hole space-y-6 rounded-2xl rounded-l-[2rem] border bg-card p-6 pl-10 shadow-sm"
+        class="tag-hole space-y-6 rounded-2xl rounded-l-[2rem] border bg-card p-5 pl-8 sm:p-6 sm:pl-10 shadow-sm"
         aria-label="New pickup"
         @submit.prevent="submit"
       >

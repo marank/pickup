@@ -165,6 +165,9 @@ class CreatePickupSerializer(serializers.Serializer[Any]):
     creator_name = serializers.CharField(max_length=100, required=False, allow_blank=True)
     creator_email = serializers.EmailField(required=False, allow_blank=True)
     join_policy = serializers.ChoiceField(choices=JoinPolicy.choices, default=JoinPolicy.OPEN, required=False)
+    code = serializers.CharField(
+        max_length=100, required=False, allow_blank=True, help_text="Creation code (PICKUP_CREATION=code)"
+    )
 
     def validate_join_policy(self, value: str) -> str:
         if value == JoinPolicy.CLOSED:

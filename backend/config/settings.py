@@ -14,6 +14,7 @@ import os
 from pathlib import Path
 
 import django_stubs_ext
+from django.core.exceptions import ImproperlyConfigured
 from django.utils.csp import CSP
 
 from .env import (
@@ -231,6 +232,14 @@ MEMBER_STORAGE_LIMIT = env_size("MEMBER_STORAGE_LIMIT", "5GB")
 FILE_UPLOAD_TEMP_DIR = DATA_DIR / "upload_tmp"
 os.makedirs(FILE_UPLOAD_TEMP_DIR, exist_ok=True)
 UPLOAD_CHUNK_SIZE = 5 * 1024 * 1024
+
+# Who may create pickups: everyone, only with one of PICKUP_CREATION_CODES, or nobody.
+PICKUP_CREATION = env_str("PICKUP_CREATION", "everyone").strip().lower()
+PICKUP_CREATION_CODES = env_list("PICKUP_CREATION_CODES")
+if PICKUP_CREATION not in ("everyone", "code", "none"):
+    raise ImproperlyConfigured(f"PICKUP_CREATION must be everyone, code or none, got {PICKUP_CREATION!r}.")
+if PICKUP_CREATION == "code" and not PICKUP_CREATION_CODES:
+    raise ImproperlyConfigured("PICKUP_CREATION=code needs at least one code in PICKUP_CREATION_CODES.")
 
 
 # Email

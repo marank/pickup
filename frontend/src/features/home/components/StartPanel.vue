@@ -1,15 +1,40 @@
 <script setup lang="ts">
 import { PlusIcon } from '@lucide/vue'
-import { RouterLink } from 'vue-router'
+import { ref } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
 
 import { Button } from '@/components/ui/button'
+import CreationCodeDialog from '@/features/pickups/components/CreationCodeDialog.vue'
+import { creationCode, useCreationMode } from '@/features/pickups/composables/useCreation'
+
+const router = useRouter()
+const creation = useCreationMode()
+const askCode = ref(false)
+
+function accepted(code: string) {
+  creationCode.value = code
+  void router.push({ name: 'create' })
+}
 </script>
 
 <template>
-  <Button as-child size="lg" class="h-12 px-5 text-base">
+  <p v-if="creation.data.value?.mode === 'none'" class="text-muted-foreground">
+    Creating new pickups is turned off on this server.
+  </p>
+  <Button
+    v-else-if="creation.data.value?.mode === 'code'"
+    size="lg"
+    class="h-12 px-5 text-base"
+    @click="askCode = true"
+  >
+    <PlusIcon />
+    Start a pickup
+  </Button>
+  <Button v-else as-child size="lg" class="h-12 px-5 text-base">
     <RouterLink :to="{ name: 'create' }">
       <PlusIcon />
       Start a pickup
     </RouterLink>
   </Button>
+  <CreationCodeDialog v-model:open="askCode" @accepted="accepted" @cancel="askCode = false" />
 </template>

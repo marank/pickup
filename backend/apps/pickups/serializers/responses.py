@@ -53,6 +53,18 @@ class CaptionSerializer(serializers.Serializer[Any]):
     caption = serializers.CharField(allow_blank=True)
 
 
+class CreationSerializer(serializers.Serializer[Any]):
+    """Who may create pickups on this server (PICKUP_CREATION)."""
+
+    mode = serializers.ChoiceField(
+        choices=["everyone", "code", "none"], help_text="code: every creation needs one of the codes"
+    )
+
+
+class CreationCodeSerializer(serializers.Serializer[Any]):
+    code = serializers.CharField(max_length=100)
+
+
 class MessageSerializer(serializers.Serializer[Any]):
     message = serializers.CharField()
 

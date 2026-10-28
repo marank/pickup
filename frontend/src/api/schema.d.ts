@@ -454,6 +454,30 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/pickups/creation/': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /**
+     * @description GET: who may create pickups; POST {code}: check a code before showing the create page.
+     *     Nothing is remembered: creating sends the code again.
+     */
+    get: operations['pickup_creation_retrieve']
+    put?: never
+    /**
+     * @description GET: who may create pickups; POST {code}: check a code before showing the create page.
+     *     Nothing is remembered: creating sends the code again.
+     */
+    post: operations['pickup_creation_check']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/pickups/lookup/': {
     parameters: {
       query?: never
@@ -533,6 +557,8 @@ export interface components {
       creator_email?: string
       /** @default open */
       join_policy: components['schemas']['JoinPolicyEnum']
+      /** @description Creation code (PICKUP_CREATION=code) */
+      code?: string
     }
     /** @description Serializer for creating an upload session. */
     CreateUploadSessionRequest: {
@@ -593,6 +619,20 @@ export interface components {
       /** @description A password is set (only for the creator) */
       readonly has_password: boolean
       readonly member_url: string
+    }
+    /** @description Who may create pickups on this server (PICKUP_CREATION). */
+    Creation: {
+      /**
+       * @description code: every creation needs one of the codes
+       *
+       *     * `everyone` - everyone
+       *     * `code` - code
+       *     * `none` - none
+       */
+      mode: components['schemas']['ModeEnum']
+    }
+    CreationCodeRequest: {
+      code: string
     }
     EmailConfirmRequest: {
       token: string
@@ -747,6 +787,13 @@ export interface components {
     Message: {
       message: string
     }
+    /**
+     * @description * `everyone` - everyone
+     *     * `code` - code
+     *     * `none` - none
+     * @enum {string}
+     */
+    ModeEnum: 'everyone' | 'code' | 'none'
     PatchedCaptionRequest: {
       caption?: string
     }
@@ -1030,6 +1077,14 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['CreatedPickup']
+        }
+      }
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
         }
       }
     }
@@ -2089,6 +2144,58 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['Error']
+        }
+      }
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+    }
+  }
+  pickup_creation_retrieve: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Creation']
+        }
+      }
+    }
+  }
+  pickup_creation_check: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'multipart/form-data': components['schemas']['CreationCodeRequest']
+        'application/x-www-form-urlencoded': components['schemas']['CreationCodeRequest']
+        'application/json': components['schemas']['CreationCodeRequest']
+      }
+    }
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Creation']
         }
       }
       403: {

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ArrowLeftIcon, ArrowRightIcon, DownloadIcon, LinkIcon, MailIcon } from '@lucide/vue'
 import { useResizeObserver } from '@vueuse/core'
-import { computed, reactive, ref } from 'vue'
-import { RouterLink } from 'vue-router'
+import { computed, reactive, ref, watch } from 'vue'
+import { RouterLink, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 
 import { ApiError, apiErrorMessage } from '@/api/errors'
@@ -13,10 +13,30 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
+import CreationCodeDialog from '../components/CreationCodeDialog.vue'
 import PackingAnimation from '../components/PackingAnimation.vue'
+import { creationCode, useCreationMode } from '../composables/useCreation'
 import { useCreatePickup } from '../composables/usePickup'
 
 const createPickup = useCreatePickup()
+const router = useRouter()
+
+/** With PICKUP_CREATION=code the page needs an accepted code (from the start page's dialog,
+ * or asked for here); cancelling goes back to the start page. */
+const creation = useCreationMode()
+const askCode = ref(false)
+watch(
+  () => creation.data.value?.mode,
+  (mode) => {
+    if (mode === 'code' && !creationCode.value) askCode.value = true
+    if (mode === 'none') {
+      toast.error('Creating pickups is turned off on this server.')
+      void router.replace({ name: 'home' })
+    }
+  },
+  { immediate: true },
+)
+const cancelCode = () => router.push({ name: 'home' })
 /** form → creating (a short animation, so it doesn't feel like nothing happened) → ready. */
 const phase = ref<'form' | 'creating' | 'ready'>('form')
 const PACKING_MS = 2000
@@ -65,14 +85,21 @@ async function submit() {
         creator_name: form.creator_name.trim(),
         creator_email: form.creator_email.trim(),
         join_policy: form.join_policy as 'open' | 'invite',
+        ...(creationCode.value && { code: creationCode.value }),
       }),
       pause(reducedMotion() ? 0 : PACKING_MS),
     ])
     created.value = pickup
+    creationCode.value = '' // used up: the next pickup asks again
     emailed.value = Boolean(form.creator_email.trim())
     phase.value = 'ready'
   } catch (err) {
     phase.value = 'form'
+    // The code stopped working meanwhile (changed on the server): ask again.
+    if (err instanceof ApiError && err.status === 403 && creation.data.value?.mode === 'code') {
+      creationCode.value = ''
+      askCode.value = true
+    }
     if (err instanceof ApiError && err.body && typeof err.body === 'object') {
       for (const [field, messages] of Object.entries(err.body)) {
         if (Array.isArray(messages)) fieldErrors.value[field] = String(messages[0])
@@ -290,6 +317,11 @@ async function submit() {
         </Transition>
       </div>
     </div>
+    <CreationCodeDialog
+      v-model:open="askCode"
+      @accepted="(code) => (creationCode = code)"
+      @cancel="cancelCode"
+    />
   </div>
 </template>
 

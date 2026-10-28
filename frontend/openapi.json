@@ -130,6 +130,16 @@
                             }
                         },
                         "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
                     }
                 }
             }
@@ -2087,6 +2097,88 @@
                 }
             }
         },
+        "/api/pickups/creation/": {
+            "get": {
+                "operationId": "pickup_creation_retrieve",
+                "description": "GET: who may create pickups; POST {code}: check a code before showing the create page.\nNothing is remembered: creating sends the code again.",
+                "tags": [
+                    "pickups"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Creation"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
+            "post": {
+                "operationId": "pickup_creation_check",
+                "description": "GET: who may create pickups; POST {code}: check a code before showing the create page.\nNothing is remembered: creating sends the code again.",
+                "tags": [
+                    "pickups"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreationCodeRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreationCodeRequest"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreationCodeRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Creation"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/pickups/lookup/": {
             "post": {
                 "operationId": "pickups_lookup_create",
@@ -2352,6 +2444,11 @@
                             }
                         ],
                         "default": "open"
+                    },
+                    "code": {
+                        "type": "string",
+                        "description": "Creation code (PICKUP_CREATION=code)",
+                        "maxLength": 100
                     }
                 }
             },
@@ -2516,6 +2613,36 @@
                     "share_url",
                     "storage",
                     "visibility"
+                ]
+            },
+            "Creation": {
+                "type": "object",
+                "description": "Who may create pickups on this server (PICKUP_CREATION).",
+                "properties": {
+                    "mode": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/ModeEnum"
+                            }
+                        ],
+                        "description": "code: every creation needs one of the codes\n\n* `everyone` - everyone\n* `code` - code\n* `none` - none"
+                    }
+                },
+                "required": [
+                    "mode"
+                ]
+            },
+            "CreationCodeRequest": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                    }
+                },
+                "required": [
+                    "code"
                 ]
             },
             "EmailConfirmRequest": {
@@ -2939,6 +3066,15 @@
                 "required": [
                     "message"
                 ]
+            },
+            "ModeEnum": {
+                "enum": [
+                    "everyone",
+                    "code",
+                    "none"
+                ],
+                "type": "string",
+                "description": "* `everyone` - everyone\n* `code` - code\n* `none` - none"
             },
             "PatchedCaptionRequest": {
                 "type": "object",

@@ -224,6 +224,10 @@ uv run python manage.py storage_limits <pickup id> --pickup 50GB --member unlimi
 docker compose exec app python manage.py storage_limits <pickup id> --member 10GB
 ```
 
+## Who may create pickups
+
+`PICKUP_CREATION` in `.env` decides: `everyone` (default), `code` or `none`. With `code`, "Start a pickup" asks for one of the comma-separated `PICKUP_CREATION_CODES` (e.g. `1234-5678-9012`) every time; opening `/create` directly asks too, and Cancel goes back to the start page. With `none` the start page has no create button and the API refuses new pickups.
+
 ## Pickup passwords
 
 The creator can protect a pickup with a password (Settings → Password). Without a login, people then need it to join or to log in with their personal link; setting or changing it logs everyone else out. If the creator forgets it, an admin removes it, and the creator sets a new one after logging in with the creator link:

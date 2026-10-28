@@ -15,6 +15,8 @@ from ..models import JoinPolicy, Media, Member, Pickup, live
 from ..serializers import (
     CreatedPickupSerializer,
     CreatePickupSerializer,
+    CreationCodeSerializer,
+    CreationSerializer,
     EmailConfirmSerializer,
     EmailSerializer,
     ErrorSerializer,
@@ -32,6 +34,7 @@ from ..serializers import (
 )
 from ..services.access import can_view
 from ..services.archive import collect, safe_name, stream
+from ..services.creation import creation_mode, creation_refused
 from ..services.identity import forget_plain_emails
 from ..services.members import (
     MembershipError,
@@ -83,11 +86,16 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
             context["member"] = self._member()
         return context
 
-    @extend_schema(request=CreatePickupSerializer, responses={201: CreatedPickupSerializer})
+    @extend_schema(
+        request=CreatePickupSerializer, responses={201: CreatedPickupSerializer, 403: ErrorSerializer}
+    )
     def create(self, request: Request) -> Response:
         """Create a new pickup with its creator member and log this session in as creator."""
         body = CreatePickupSerializer(data=request.data)
         body.is_valid(raise_exception=True)
+        refused = creation_refused(body.validated_data.get("code", ""))
+        if refused:
+            return Response({"error": refused}, status=status.HTTP_403_FORBIDDEN)
         pickup, creator = create_pickup(
             request,
             body.validated_data.get("title", ""),
@@ -344,6 +352,29 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
         except MembershipError as exc:
             return Response({"error": str(exc)}, status=exc.status)
         return Response({"message": "Your new address is confirmed."})
+
+    @extend_schema(
+        methods=["GET"], operation_id="pickup_creation_retrieve", responses={200: CreationSerializer}
+    )
+    @extend_schema(
+        methods=["POST"],
+        operation_id="pickup_creation_check",
+        request=CreationCodeSerializer,
+        responses={200: CreationSerializer, 403: ErrorSerializer},
+    )
+    @action(detail=False, methods=["get", "post"], url_path="creation")
+    def creation(self, request: Request) -> Response:
+        """
+        GET: who may create pickups; POST {code}: check a code before showing the create page.
+        Nothing is remembered: creating sends the code again.
+        """
+        if request.method == "POST":
+            body = CreationCodeSerializer(data=request.data)
+            body.is_valid(raise_exception=True)
+            refused = creation_refused(body.validated_data["code"])
+            if refused:
+                return Response({"error": refused}, status=status.HTTP_403_FORBIDDEN)
+        return Response(CreationSerializer({"mode": creation_mode()}).data)
 
     @extend_schema(request=EmailSerializer, responses={202: MessageSerializer})
     @action(detail=False, methods=["post"], url_path="lookup")

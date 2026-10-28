@@ -730,7 +730,7 @@ describe('explorer: QR code', () => {
     findButton('Share').click()
     await settle()
     expect($('canvas[aria-label="QR code card for “Summer party”"]')).not.toBeNull()
-    expect(texts).toEqual(expect.arrayContaining(['pickup', 'Summer party']))
+    expect(texts).toEqual(expect.arrayContaining(['Summer party']))
 
     findButton('Save QR card').click()
     await settle()

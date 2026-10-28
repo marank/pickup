@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { FolderIcon, PackageOpenIcon } from '@lucide/vue'
+import { FolderIcon } from '@lucide/vue'
+
+import PickupMark from '@/components/PickupMark.vue'
 
 // A drawn, non-interactive preview of the explorer for the start page.
 const folders = [
@@ -31,7 +33,7 @@ const tiles = [
       <div
         class="ml-2 flex flex-1 items-center gap-1 rounded-md border bg-card px-2 py-1 text-muted-foreground"
       >
-        <PackageOpenIcon class="size-3 text-tomato" />
+        <PickupMark class="size-3" />
         Summer party <span>›</span> Alice <span>›</span>
         <span class="font-semibold text-foreground">Beach day</span>
       </div>
@@ -39,7 +41,7 @@ const tiles = [
     <div class="flex">
       <div class="w-32 shrink-0 space-y-0.5 border-r bg-pane p-2 max-sm:hidden">
         <div class="flex items-center gap-1 px-1 py-0.5 font-medium">
-          <PackageOpenIcon class="size-3 text-tomato" />
+          <PickupMark class="size-3" />
           Summer party
         </div>
         <div

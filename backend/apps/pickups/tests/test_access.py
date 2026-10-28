@@ -7,6 +7,7 @@ from typing import Any
 import pytest
 from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.mail import EmailMultiAlternatives
 from django.test import Client
 from django.utils import timezone
 from pytest_django.fixtures import Settings
@@ -242,6 +243,20 @@ def test_creator_link_is_mailed_when_an_address_is_given(creator: Client) -> Non
     assert creator.get(f"/api/pickups/{pickup_id}/").json()["member_name"] == "Anna"
     new_pickup(Client())  # no address, no mail
     assert len(mail.outbox) == 1
+
+
+def test_link_mails_have_an_html_version_with_the_embedded_logo(creator: Client) -> None:
+    new_pickup(creator, creator_name="Anna & Ben", creator_email="anna@example.com")
+    member = Member.objects.get(is_creator=True)
+    sent = mail.outbox[0]
+    assert isinstance(sent, EmailMultiAlternatives)
+    html, _ = sent.alternatives[0]
+    assert member.access_key in str(html)
+    assert "Hello Anna &amp; Ben," in str(html)  # names are escaped
+    message = sent.message()
+    logo = next(part for part in message.walk() if part.get_content_type() == "image/png")
+    assert logo["Content-ID"] == "<logo@pickup>"
+    assert 'src="cid:logo@pickup"' in str(html)
 
 
 def test_link_requests_answer_the_same_and_only_mail_known_addresses(creator: Client) -> None:

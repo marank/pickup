@@ -1,23 +1,29 @@
+<script setup lang="ts">
+import PickupMark from '@/components/PickupMark.vue'
+import { WORDMARK, tileTransform } from '@/lib/brand'
+
+const { dot } = WORDMARK
+</script>
+
 <template>
-  <!-- A parcel tag with a punched hole and a string: the Pickup mark. -->
-  <span class="inline-flex h-full items-center gap-2">
-    <svg viewBox="0 0 40 28" class="h-full w-auto" aria-hidden="true">
-      <path
-        d="M2 14 C 2 9, 6 6, 10 6"
-        fill="none"
-        stroke="var(--sage)"
-        stroke-width="2"
-        stroke-linecap="round"
-      />
-      <path d="M12 3 h22 a4 4 0 0 1 4 4 v14 a4 4 0 0 1 -4 4 h-22 l-8 -11 z" fill="var(--tomato)" />
-      <circle cx="12.5" cy="14" r="2.6" fill="var(--background)" />
-      <path
-        d="M20 11 h12 M20 17 h8"
-        stroke="var(--paper)"
-        stroke-width="2.2"
-        stroke-linecap="round"
+  <!-- The mark and the wordmark (lib/brand.ts): letters and frame in the text colour. -->
+  <span class="inline-flex h-full items-center gap-2" role="img" aria-label="Pickup">
+    <PickupMark class="h-full w-auto" />
+    <svg
+      :viewBox="`0 0 ${WORDMARK.width} ${WORDMARK.height}`"
+      class="h-[62%] w-auto"
+      aria-hidden="true"
+    >
+      <path :d="WORDMARK.d" fill="currentColor" />
+      <rect
+        :x="dot.x"
+        :y="dot.y"
+        :width="dot.size"
+        :height="dot.size"
+        :rx="dot.radius"
+        :transform="tileTransform(dot)"
+        fill="var(--tomato)"
       />
     </svg>
-    <span class="font-heading text-lg font-bold tracking-tight">pickup</span>
   </span>
 </template>

@@ -1,5 +1,7 @@
 import { encode } from 'uqr'
 
+import { BRAND, MARK, WORDMARK, type Tile } from '@/lib/brand'
+
 /**
  * The printable QR card: Pickup logo and wordmark, the code with round dots, the pickup's
  * name. Drawn on a canvas, so the preview and the saved PNG are the same picture. Colours
@@ -8,10 +10,9 @@ import { encode } from 'uqr'
  */
 export const CARD = {
   width: 600,
-  paper: '#f8f5ef',
+  paper: BRAND.paper,
   dots: '#141210',
-  tomato: '#e75528',
-  sage: '#75a189',
+  tomato: BRAND.tomato,
   heading: '"Bricolage Grotesque Variable", system-ui, sans-serif',
 }
 
@@ -22,15 +23,8 @@ const NAME_SIZE = 40
 const NAME_LINE = 50
 const NAME_MAX_LINES = 2
 
-/** The parcel tag of PickupLogo.vue (viewBox 0 0 40 28). */
-const LOGO = {
-  string: 'M2 14 C 2 9, 6 6, 10 6',
-  tag: 'M12 3 h22 a4 4 0 0 1 4 4 v14 a4 4 0 0 1 -4 4 h-22 l-8 -11 z',
-  lines: 'M20 11 h12 M20 17 h8',
-}
-
 export function cardFonts(): string[] {
-  return [`700 36px ${CARD.heading}`, `700 ${NAME_SIZE}px ${CARD.heading}`]
+  return [`700 ${NAME_SIZE}px ${CARD.heading}`]
 }
 
 /** Split the name into at most two lines that fit, with an ellipsis if it is longer. */
@@ -85,33 +79,32 @@ export function drawQrCard(
   context.fillStyle = CARD.paper
   context.fillRect(0, 0, CARD.width, height)
 
-  // Logo and wordmark, centred together.
-  context.font = `700 36px ${CARD.heading}`
-  const word = 'pickup'
-  const logoWidth = 54 // 40 × 28 viewBox at 38.5 px height
+  // Mark and wordmark (lib/brand.ts), centred together.
+  const markSize = 54
+  const wordHeight = 40
+  const wordWidth = (WORDMARK.width / WORDMARK.height) * wordHeight
   const gap = 12
-  const total = logoWidth + gap + context.measureText(word).width
-  const left = (CARD.width - total) / 2
+  const left = (CARD.width - markSize - gap - wordWidth) / 2
   context.save()
-  context.translate(left, 40)
-  context.scale(logoWidth / 40, logoWidth / 40)
-  context.strokeStyle = CARD.sage
-  context.lineWidth = 2
-  context.lineCap = 'round'
-  context.stroke(new Path2D(LOGO.string))
+  context.translate(left, 32)
+  context.scale(markSize / MARK.size, markSize / MARK.size)
+  context.strokeStyle = CARD.dots
+  context.lineWidth = MARK.frame.stroke
+  traceTile(context, MARK.frame)
+  context.stroke()
   context.fillStyle = CARD.tomato
-  context.fill(new Path2D(LOGO.tag))
-  context.fillStyle = CARD.paper
-  context.beginPath()
-  context.arc(12.5, 14, 2.6, 0, Math.PI * 2)
+  traceTile(context, MARK.tile)
   context.fill()
-  context.strokeStyle = CARD.paper
-  context.lineWidth = 2.2
-  context.stroke(new Path2D(LOGO.lines))
   context.restore()
+  context.save()
+  context.translate(left + markSize + gap, 32 + (markSize - wordHeight) / 2)
+  context.scale(wordHeight / WORDMARK.height, wordHeight / WORDMARK.height)
   context.fillStyle = CARD.dots
-  context.textBaseline = 'middle'
-  context.fillText(word, left + logoWidth + gap, 40 + 19)
+  context.fill(new Path2D(WORDMARK.d))
+  context.fillStyle = CARD.tomato
+  traceTile(context, WORDMARK.dot)
+  context.fill()
+  context.restore()
 
   drawCode(context, value, MARGIN, QR_TOP, QR_SIZE)
 
@@ -123,6 +116,17 @@ export function drawQrCard(
   )
   context.restore()
   return height
+}
+
+/** Start a path with a rounded square turned around its centre, as in the SVG logo. */
+function traceTile(context: CanvasRenderingContext2D, tile: Tile) {
+  const half = tile.size / 2
+  context.save()
+  context.translate(tile.x + half, tile.y + half)
+  context.rotate((tile.rotate * Math.PI) / 180)
+  context.beginPath()
+  context.roundRect(-half, -half, tile.size, tile.size, tile.radius)
+  context.restore()
 }
 
 /** Round dots for the data, rounded squares for the three finder patterns. */

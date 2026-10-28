@@ -1,13 +1,18 @@
 """Mails with personal links. Addresses come from the request that triggers the mail."""
 
+import email.message
+import email.policy
 import logging
+from email.policy import Policy
 from email.utils import formataddr, parseaddr
+from pathlib import Path
 from typing import Literal
 
 from django.conf import settings
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMultiAlternatives
 from django.http import HttpRequest
 from django.utils import timezone
+from django.utils.html import format_html
 
 from ..models import Member
 
@@ -41,6 +46,47 @@ _TEXT: dict[Reason, tuple[str, str]] = {
 }
 
 
+# The logo (frontend/src/lib/brand.ts) as PNG at twice its size in the mail, embedded so
+# opening the mail loads nothing from the server.
+LOGO = Path(__file__).resolve().parent.parent / "assets" / "mail-logo.png"
+LOGO_CID = "logo@pickup"
+
+
+class _LinkMail(EmailMultiAlternatives):
+    """Plain text plus an HTML version that shows the embedded logo."""
+
+    def message(self, *, policy: Policy | None = None) -> email.message.EmailMessage:
+        msg = super().message(policy=policy or email.policy.default)
+        html = msg.get_body(("html",))
+        if html is not None:
+            html.add_related(LOGO.read_bytes(), "image", "png", cid=f"<{LOGO_CID}>")
+        return msg
+
+
+def _html(body: str, link: str) -> str:
+    """The text body as HTML paragraphs, the link as a button."""
+    paragraphs = [
+        format_html(
+            '<p><a href="{}" style="display:inline-block;padding:10px 18px;border-radius:8px;'
+            'background:#e75528;color:#ffffff;text-decoration:none;font-weight:600">Open your link</a></p>'
+            '<p style="font-size:13px;color:#4f6866;word-break:break-all">{}</p>',
+            link,
+            link,
+        )
+        if part == link
+        else format_html("<p>{}</p>", part)
+        for part in body.split("\n\n")
+    ]
+    return (
+        '<!doctype html><html><body style="margin:0;padding:24px;background:#f8f5ef;color:#083230;'
+        'font-family:system-ui,-apple-system,Segoe UI,sans-serif;font-size:15px;line-height:1.5">'
+        '<div style="max-width:520px;margin:0 auto">'
+        f'<p><img src="cid:{LOGO_CID}" width="162" height="48" alt="pickup"></p>'
+        + "".join(paragraphs)
+        + "</div></body></html>"
+    )
+
+
 def send_personal_link(
     member: Member, address: str, request: HttpRequest, reason: Reason, *, inviter: Member | None = None
 ) -> None:
@@ -63,7 +109,9 @@ def send_personal_link(
         if inviter and inviter.email:  # only known with the privacy mode off
             reply_to = [inviter.email]
     try:
-        EmailMessage(subject, body, sender, [address], reply_to=reply_to).send()
+        message = _LinkMail(subject, body, sender, [address], reply_to=reply_to)
+        message.attach_alternative(_html(body, values["link"]), "text/html")
+        message.send()
         member.link_sent_at = timezone.now()
         member.save(update_fields=["link_sent_at"])
     except Exception:

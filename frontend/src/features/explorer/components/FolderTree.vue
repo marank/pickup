@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { PackageOpenIcon, SettingsIcon, UsersIcon } from '@lucide/vue'
+import { SettingsIcon, UsersIcon } from '@lucide/vue'
 import { ref, watch } from 'vue'
 
+import PickupMark from '@/components/PickupMark.vue'
 import { Skeleton } from '@/components/ui/skeleton'
 
 import { useExplorer, type ExplorerPage } from '../composables/useExplorer'
@@ -54,7 +55,7 @@ function openPage(page: ExplorerPage) {
         :class="explorer.folderId === null && !explorer.page && 'bg-selection hover:bg-selection'"
         @click="openRoot"
       >
-        <PackageOpenIcon class="size-4 shrink-0 text-tomato" />
+        <PickupMark class="size-4 shrink-0" />
         <span class="truncate">{{ explorer.pickup.data?.title || 'Untitled pickup' }}</span>
       </button>
       <div v-if="explorer.folders.isPending" class="mt-2 space-y-1.5 px-2">

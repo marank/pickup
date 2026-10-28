@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ChevronRightIcon, PackageOpenIcon, PencilIcon } from '@lucide/vue'
+import { ChevronRightIcon, PencilIcon } from '@lucide/vue'
 import { useEventListener, useResizeObserver } from '@vueuse/core'
 import { computed, nextTick, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 
+import PickupMark from '@/components/PickupMark.vue'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -106,7 +107,7 @@ useEventListener(window, 'keydown', (event: KeyboardEvent) => {
             :aria-current="isLast(index) ? 'location' : undefined"
             @click="explorer.navigate(segment.id)"
           >
-            <PackageOpenIcon v-if="index === 0" class="size-4 text-tomato" />
+            <PickupMark v-if="index === 0" class="size-4" />
             {{ segment.name }}
           </button>
         </template>

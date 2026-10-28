@@ -1,6 +1,7 @@
 """Privacy, join policies, e-mail identity, invitations and moderation."""
 
 import os
+import threading
 from datetime import timedelta
 from typing import Any
 
@@ -13,6 +14,7 @@ from django.utils import timezone
 from pytest_django.fixtures import Settings
 
 from apps.pickups.models import Folder, Media, Member, Pickup, UploadSession
+from apps.pickups.services import mail as mail_service
 from apps.pickups.services.identity import email_hash
 
 pytestmark = pytest.mark.django_db
@@ -301,7 +303,7 @@ def test_participants_can_add_their_address_later(creator: Client) -> None:
 
 
 def test_mail_failures_do_not_break_joining(
-    creator: Client, settings: Settings, monkeypatch: pytest.MonkeyPatch
+    creator: Client, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ) -> None:
     pickup_id = new_pickup(creator)
 
@@ -310,7 +312,35 @@ def test_mail_failures_do_not_break_joining(
 
     monkeypatch.setattr("django.core.mail.EmailMessage.send", broken)
     assert join(Client(), pickup_id, "Alice", email="alice@example.com").status_code == 201
-    assert Member.objects.get(user_name="Alice").link_sent_at is None
+    assert "Could not send the personal link" in caplog.text
+    # The cooldown started when the mail was queued, so a quick retry doesn't send twice.
+    assert Member.objects.get(user_name="Alice").link_sent_at is not None
+
+
+def test_mails_go_out_in_the_background_after_the_commit(
+    creator: Client, settings: Settings, django_capture_on_commit_callbacks: Any
+) -> None:
+    settings.MAIL_IN_BACKGROUND = True
+    threads: list[str] = []
+    real_send = EmailMultiAlternatives.send
+
+    def send(message: EmailMultiAlternatives, *args: Any, **kwargs: Any) -> int:
+        threads.append(threading.current_thread().name)
+        return real_send(message, *args, **kwargs)
+
+    pickup_id = new_pickup(creator)
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(EmailMultiAlternatives, "send", send)
+        with django_capture_on_commit_callbacks(execute=False) as callbacks:
+            join(Client(), pickup_id, "Alice", email="alice@example.com")
+        assert threads == []  # nothing before the commit
+        for callback in callbacks:
+            callback()
+        assert mail_service._pool is not None
+        mail_service._pool.shutdown(wait=True)  # wait for the queued mail
+        mail_service._pool = None
+    assert len(threads) == 1 and threads[0].startswith("mail")
+    assert mail.outbox[-1].to == ["alice@example.com"]
 
 
 # --- invitations ----------------------------------------------------------------

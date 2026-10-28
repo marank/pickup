@@ -275,6 +275,9 @@ else:
     MAILERS = {"default": {"BACKEND": "django.core.mail.backends.dummy.EmailBackend"}}
     SILENCED_SYSTEM_CHECKS += ["mail.E001"]  # mail is optional for Pickup
 DEFAULT_FROM_EMAIL = env_str("DEFAULT_FROM_EMAIL", "pickup@localhost")
+# Mails are sent in a background thread after the request's transaction is committed
+# (services/mail.py); the tests turn this off to look at mail.outbox right away.
+MAIL_IN_BACKGROUND = True
 
 
 # API

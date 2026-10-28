@@ -3,6 +3,8 @@
 import email.message
 import email.policy
 import logging
+from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from email.policy import Policy
 from email.utils import formataddr, parseaddr
 from pathlib import Path
@@ -10,6 +12,7 @@ from typing import Literal
 
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
+from django.db import transaction
 from django.http import HttpRequest
 from django.utils import timezone
 from django.utils.html import format_html
@@ -49,6 +52,34 @@ _TEXT: dict[Reason, tuple[str, str]] = {
         "\n\nThe link works for 24 hours. If you didn't ask for this, ignore this mail; nothing changes.",
     ),
 }
+
+
+# Mails go out in the background, so a slow or unreachable mail server doesn't hold up the
+# request. Created on first use (after gunicorn forked its workers); its threads finish what
+# is queued before a worker exits.
+_pool: ThreadPoolExecutor | None = None
+
+
+def _in_background(send: Callable[[], object], what: str) -> None:
+    """Run `send` in a thread once the request's transaction is committed (nothing goes out
+    for a request that fails). MAIL_IN_BACKGROUND off (tests): right away. Failures are logged."""
+
+    def run() -> None:
+        try:
+            send()
+        except Exception:
+            logger.exception("Could not send %s", what)
+
+    def start() -> None:
+        global _pool
+        if _pool is None:
+            _pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="mail")
+        _pool.submit(run)
+
+    if settings.MAIL_IN_BACKGROUND:
+        transaction.on_commit(start)
+    else:
+        run()
 
 
 # The logo (frontend/src/lib/brand.ts) as PNG at twice its size in the mail, embedded so
@@ -111,7 +142,10 @@ def send_personal_link(
     inviter: Member | None = None,
     link: str = "",
 ) -> None:
-    """Send the member's personal link (or `link`) to `address`. Failures are logged, never raised."""
+    """
+    Send the member's personal link (or `link`) to `address`, in the background. The mail
+    cooldown (link_sent_at) starts now, so a second click doesn't queue a second mail.
+    """
     pickup = member.pickup
     inviter_name = inviter.user_name if inviter and inviter.user_name != "Creator" else "Someone"
     values = {
@@ -129,21 +163,18 @@ def send_personal_link(
         sender = formataddr((f"{inviter_name} via Pickup", parseaddr(sender)[1]))
         if inviter and inviter.email:  # only known with the privacy mode off
             reply_to = [inviter.email]
-    try:
-        message = _LinkMail(subject, body, sender, [address], reply_to=reply_to)
-        button = "Confirm address" if reason == "confirm" else "Open your link"
-        message.attach_alternative(_html(body, values["link"], button), "text/html")
-        message.send()
-        member.link_sent_at = timezone.now()
-        member.save(update_fields=["link_sent_at"])
-    except Exception:
-        logger.exception("Could not send the personal link to member %s", member.id)
+    message = _LinkMail(subject, body, sender, [address], reply_to=reply_to)
+    button = "Confirm address" if reason == "confirm" else "Open your link"
+    message.attach_alternative(_html(body, values["link"], button), "text/html")
+    member.link_sent_at = timezone.now()
+    member.save(update_fields=["link_sent_at"])
+    _in_background(message.send, f"the personal link to member {member.id}")
 
 
 def send_pickup_list(members: list[Member], address: str, request: HttpRequest) -> None:
     """
     Mail an address the pickups it belongs to, each with that member's personal link (the
-    start page's "find my pickups"). Failures are logged, never raised.
+    start page's "find my pickups"), in the background; the cooldown starts now.
     """
 
     def entry(member: Member) -> tuple[str, str]:
@@ -193,10 +224,7 @@ def send_pickup_list(members: list[Member], address: str, request: HttpRequest) 
             "</div></body></html>",
         ]
     )
-    try:
-        message = _LinkMail("Your pickups", body, settings.DEFAULT_FROM_EMAIL, [address])
-        message.attach_alternative(html, "text/html")
-        message.send()
-        Member.objects.filter(id__in=[member.id for member in members]).update(link_sent_at=timezone.now())
-    except Exception:
-        logger.exception("Could not send the pickup list")
+    message = _LinkMail("Your pickups", body, settings.DEFAULT_FROM_EMAIL, [address])
+    message.attach_alternative(html, "text/html")
+    Member.objects.filter(id__in=[member.id for member in members]).update(link_sent_at=timezone.now())
+    _in_background(message.send, "the pickup list")

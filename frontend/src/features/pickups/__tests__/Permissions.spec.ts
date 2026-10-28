@@ -129,38 +129,60 @@ describe('creator tools', () => {
     expect(pageText()).toContain('Only the creator of this pickup can open this.')
   })
 
-  it('changes the settings and warns before addresses are deleted', async () => {
+  it('saves each settings card on its own and warns before addresses are deleted', async () => {
     on('PATCH', '/api/pickups/:id/', { body: pickup() })
     const success = vi.spyOn(toast, 'success')
     await renderAsCreator({ email_privacy: false })
     findButton('Settings').click()
     await settle()
+    const card = (name: string) => $(`form[aria-label="${name}"]`)
+    const saveIn = (name: string) =>
+      Array.from(card(name).querySelectorAll('button')).find(
+        (b) => b.textContent?.trim() === 'Save',
+      )!
     expect(($('#settings-title') as HTMLInputElement).value).toBe('Summer party')
-    expect(findButton('Save changes').disabled).toBe(true)
+    expect(['General', 'Access', 'Privacy'].map((name) => saveIn(name).disabled)).toEqual([
+      true,
+      true,
+      true,
+    ])
 
     await type('#settings-title', ' Sommerfest ')
     $<HTMLInputElement>('input[name="visibility"][value="link"]').click()
     $<HTMLInputElement>('input[name="join_policy"][value="invite"]').click()
-    $<HTMLInputElement>('form[aria-label="Pickup settings"] input[type="checkbox"]').click()
+    card('Privacy').querySelector<HTMLInputElement>('input[type="checkbox"]')!.click()
     await flushPromises()
+    expect(['General', 'Access', 'Privacy'].map((name) => saveIn(name).disabled)).toEqual([
+      false,
+      false,
+      false,
+    ])
     expect(pageText()).toContain('Saving deletes all stored addresses')
-    findButton('Discard').click()
+
+    // Discard resets only its own card.
+    Array.from(card('General').querySelectorAll('button'))
+      .find((b) => b.textContent?.trim() === 'Discard')!
+      .click()
     await flushPromises()
     expect(($('#settings-title') as HTMLInputElement).value).toBe('Summer party')
-    await type('#settings-title', ' Sommerfest ')
-    $<HTMLInputElement>('input[name="visibility"][value="link"]').click()
-    $<HTMLInputElement>('input[name="join_policy"][value="invite"]').click()
-    $<HTMLInputElement>('form[aria-label="Pickup settings"] input[type="checkbox"]').click()
-    await flushPromises()
+    expect($<HTMLInputElement>('input[name="visibility"][value="link"]').checked).toBe(true)
 
-    await submit('#settings-title')
+    // Saving a card sends only its fields; the other cards keep their edits.
+    await type('#settings-title', ' Sommerfest ')
+    saveIn('Access').click()
+    await settle()
     expect(lastRequest('PATCH', `/pickups/${PICKUP_ID}/`)?.body).toEqual({
-      title: 'Sommerfest',
       visibility: 'link',
       join_policy: 'invite',
-      email_privacy: true,
     })
-    expect(success).toHaveBeenCalledWith('Settings saved')
+    expect(success).toHaveBeenCalledWith('Saved')
+    expect(($('#settings-title') as HTMLInputElement).value).toBe(' Sommerfest ')
+
+    await submit('#settings-title')
+    expect(lastRequest('PATCH', `/pickups/${PICKUP_ID}/`)?.body).toEqual({ title: 'Sommerfest' })
+    saveIn('Privacy').click()
+    await settle()
+    expect(lastRequest('PATCH', `/pickups/${PICKUP_ID}/`)?.body).toEqual({ email_privacy: true })
   })
 
   it('deletes the pickup for good after a warning', async () => {

@@ -86,26 +86,21 @@ const faqs = [
     <!-- Hero -->
     <section class="overflow-x-clip">
       <div
-        class="mx-auto grid max-w-6xl items-center gap-10 px-4 pt-10 pb-14 md:grid-cols-[1.05fr_1fr] md:pt-16 md:pb-20"
+        class="mx-auto grid max-w-6xl items-center gap-10 px-4 pt-10 pb-14 md:pt-16 md:pb-20 lg:grid-cols-[1.05fr_1fr]"
       >
-        <div class="space-y-6">
-          <p
-            class="inline-flex items-center gap-2 rounded-full border bg-card px-3 py-1 text-xs font-medium text-muted-foreground"
-          >
-            <span class="size-1.5 rounded-full bg-tomato" />
-            Shared photo folders · no accounts
-          </p>
+        <!-- Centred while the picture is below, left-aligned next to it. -->
+        <div class="space-y-6 text-center lg:text-left">
           <h1 class="text-5xl leading-[0.95] font-bold sm:text-6xl">
-            Everyone’s photos.
-            <span class="block text-tomato">One pickup.</span>
+            Pick up the photos
+            <span class="block text-tomato">from your last event.</span>
           </h1>
-          <p class="max-w-lg text-lg text-muted-foreground">
-            After the wedding, the trip or the team day: collect every photo and video in one place.
-            Everyone gets a folder, nobody needs an account.
+          <p class="mx-auto max-w-lg text-lg text-muted-foreground lg:mx-0">
+            Everyone took pictures, but getting them all is always a hassle. Pickup collects them in
+            one place: one link, and every guest gets their own folder. No accounts.
           </p>
           <StartPanel />
         </div>
-        <div class="relative">
+        <div class="relative mx-auto w-full max-w-xl lg:max-w-none">
           <div
             class="absolute -inset-4 -z-10 rotate-2 rounded-3xl bg-butter/45 dark:bg-butter/12"
           />

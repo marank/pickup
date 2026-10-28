@@ -28,7 +28,7 @@ function openLink() {
         Start a pickup
       </RouterLink>
     </Button>
-    <form class="flex max-w-md gap-2" @submit.prevent="openLink">
+    <form class="mx-auto flex max-w-md gap-2 lg:mx-0" @submit.prevent="openLink">
       <label class="relative flex-1">
         <LinkIcon
           class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"

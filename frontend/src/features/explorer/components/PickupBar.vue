@@ -20,15 +20,20 @@ const expires = computed(() =>
 <template>
   <div class="flex items-center gap-2 sm:gap-3">
     <Skeleton v-if="!pickup" class="h-9 w-56 rounded-lg" />
+    <!-- Like the logo: the frame around it, the tomato tile tilted the same way, then the name. -->
     <div
       v-else
-      class="tag-hole flex max-w-full min-w-0 items-center gap-1 rounded-lg rounded-l-2xl bg-ink py-1.5 pr-1.5 pl-7 text-paper shadow-sm"
+      class="flex max-w-full min-w-0 items-center gap-2 rounded-xl border-[3px] border-foreground py-1 pr-1 pl-2.5"
     >
+      <span
+        class="size-3.5 shrink-0 rotate-[9deg] rounded-[0.25rem] bg-tomato"
+        aria-hidden="true"
+      />
       <h1 class="truncate text-base leading-tight font-semibold sm:text-xl">{{ title }}</h1>
       <button
         v-if="pickup.is_creator"
         type="button"
-        class="flex size-7 shrink-0 items-center justify-center rounded-md text-paper/70 hover:bg-paper/10 hover:text-paper"
+        class="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
         aria-label="Rename pickup"
         @click="explorer.dialog = { kind: 'rename-pickup', title: pickup.title ?? '' }"
       >

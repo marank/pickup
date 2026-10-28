@@ -15,7 +15,11 @@ const pickupId = computed(() =>
 <template>
   <div class="min-h-svh">
     <header class="sticky top-0 z-30 border-b bg-background/85 backdrop-blur">
-      <div class="mx-auto flex h-12 max-w-[110rem] items-center gap-3 px-3 sm:px-4">
+      <!-- In a pickup as wide as the explorer below it. -->
+      <div
+        class="mx-auto flex h-12 items-center gap-3 px-3 sm:px-4"
+        :class="!pickupId && 'max-w-[110rem]'"
+      >
         <HomeLink />
         <div class="ml-auto flex items-center gap-1">
           <AccountMenu v-if="pickupId" :pickup-id="pickupId" />

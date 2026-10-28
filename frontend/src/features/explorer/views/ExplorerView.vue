@@ -118,7 +118,7 @@ function onFiles(event: Event) {
 </script>
 
 <template>
-  <div class="mx-auto max-w-[110rem] px-2 py-3 sm:px-4 sm:py-4">
+  <div class="px-2 py-3 sm:px-4 sm:py-4">
     <NotFoundCard
       v-if="isNotFound(explorer.pickup.error)"
       title="Pickup not found"

@@ -59,7 +59,7 @@ function onOpenChange(isOpen: boolean) {
         <DialogHeader>
           <DialogTitle>Enter your code</DialogTitle>
           <DialogDescription>
-            Creating pickups on this server needs a code. Ask whoever runs it.
+            You need a code to create a pickup on this server.
           </DialogDescription>
         </DialogHeader>
         <div class="space-y-1.5">

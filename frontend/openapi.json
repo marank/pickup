@@ -2018,6 +2018,53 @@
                 }
             }
         },
+        "/api/pickups/lookup/": {
+            "post": {
+                "operationId": "pickups_lookup_create",
+                "description": "Mail an address the pickups it belongs to. Same answer for unknown addresses.",
+                "tags": [
+                    "pickups"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EmailRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EmailRequest"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EmailRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "202": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Message"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/upload-sessions/{session_id}/": {
             "get": {
                 "operationId": "upload_sessions_retrieve",

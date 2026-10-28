@@ -138,3 +138,49 @@ def send_personal_link(
         member.save(update_fields=["link_sent_at"])
     except Exception:
         logger.exception("Could not send the personal link to member %s", member.id)
+
+
+def send_pickup_list(members: list[Member], address: str, request: HttpRequest) -> None:
+    """
+    Mail an address the pickups it belongs to, each with that member's personal link (the
+    start page's "find my pickups"). Failures are logged, never raised.
+    """
+    entries = [
+        (member.pickup.title or "Untitled pickup", request.build_absolute_uri(member.personal_path))
+        for member in members
+    ]
+    body = (
+        "Hello,\n\nthis address belongs to these pickups. Each link logs you in as yourself:\n\n"
+        + "\n\n".join(f"{title}\n{link}" for title, link in entries)
+        + "\n\nIf you didn't ask for this mail, you can ignore it."
+    )
+    items = "\n".join(
+        format_html(
+            '<li style="margin:0 0 12px"><a href="{}" style="color:#e75528;font-weight:600">{}</a>'
+            '<br><span style="font-size:13px;color:#4f6866;word-break:break-all">{}</span></li>',
+            link,
+            title,
+            link,
+        )
+        for title, link in entries
+    )
+    html = "\n".join(
+        [
+            '<!doctype html><html><body style="margin:0;padding:24px;background:#f8f5ef;color:#083230;'
+            'font-family:system-ui,-apple-system,Segoe UI,sans-serif;font-size:15px;line-height:1.5">',
+            '<div style="max-width:520px;margin:0 auto">',
+            f'<p><img src="cid:{LOGO_CID}" width="162" height="48" alt="pickup"></p>',
+            "<p>Hello,</p>",
+            "<p>this address belongs to these pickups. Each link logs you in as yourself:</p>",
+            f'<ul style="padding-left:18px">{items}</ul>',
+            "<p>If you didn&#x27;t ask for this mail, you can ignore it.</p>",
+            "</div></body></html>",
+        ]
+    )
+    try:
+        message = _LinkMail("Your pickups", body, settings.DEFAULT_FROM_EMAIL, [address])
+        message.attach_alternative(html, "text/html")
+        message.send()
+        Member.objects.filter(id__in=[member.id for member in members]).update(link_sent_at=timezone.now())
+    except Exception:
+        logger.exception("Could not send the pickup list")

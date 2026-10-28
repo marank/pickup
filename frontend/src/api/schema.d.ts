@@ -437,6 +437,23 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/pickups/lookup/': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** @description Mail an address the pickups it belongs to. Same answer for unknown addresses. */
+    post: operations['pickups_lookup_create']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/upload-sessions/{session_id}/': {
     parameters: {
       query?: never
@@ -2005,6 +2022,31 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['Error']
+        }
+      }
+    }
+  }
+  pickups_lookup_create: {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'multipart/form-data': components['schemas']['EmailRequest']
+        'application/x-www-form-urlencoded': components['schemas']['EmailRequest']
+        'application/json': components['schemas']['EmailRequest']
+      }
+    }
+    responses: {
+      202: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Message']
         }
       }
     }

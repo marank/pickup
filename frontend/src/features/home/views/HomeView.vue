@@ -10,6 +10,7 @@ import {
 } from '@lucide/vue'
 
 import ExplorerMock from '../components/ExplorerMock.vue'
+import FindPickups from '../components/FindPickups.vue'
 import LogoIntro from '../components/LogoIntro.vue'
 import StartPanel from '../components/StartPanel.vue'
 
@@ -151,6 +152,8 @@ const faqs = [
         </article>
       </div>
     </section>
+
+    <FindPickups />
 
     <!-- FAQ -->
     <section class="border-t bg-pane">

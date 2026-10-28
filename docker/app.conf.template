@@ -33,8 +33,9 @@ ${REAL_IP_CONFIG}
 
 ${ADMIN_LOCATION}
 
-    # Mails go out from these (join, link requests, invitations): per client, POSTs only.
-    location ~ ^/api/pickups/[^/]+/(join|link-request|members|session/email)/$ {
+    # Mails go out from these (join, link requests, invitations, the start page's pickup
+    # lookup): per client, POSTs only.
+    location ~ ^/api/pickups/([^/]+/(join|link-request|members|session/email)|lookup)/$ {
         limit_req zone=mail burst=5 nodelay;
         include /etc/nginx/django_proxy.conf;
     }

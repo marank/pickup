@@ -8,11 +8,11 @@ from django.db.models import Q
 from django.http import HttpRequest
 from django.utils import timezone
 
-from ..models import Folder, JoinPolicy, Media, Member, Pickup, UploadSession
+from ..models import Folder, JoinPolicy, Media, Member, Pickup, UploadSession, live
 from .access import is_closed_for
 from .folders import FolderError, rename_folder, subtree_ids
 from .identity import email_hash, normalize_email, normalize_name, remember_email
-from .mail import send_personal_link
+from .mail import send_personal_link, send_pickup_list
 
 SESSION_KEY = "pickup_members"  # {pickup_id: member_id} of the pickups this browser belongs to
 LINK_MAIL_COOLDOWN = timedelta(minutes=2)
@@ -222,6 +222,23 @@ def request_link(request: HttpRequest, pickup: Pickup, email: str) -> None:
     if member.link_sent_at and timezone.now() - member.link_sent_at < LINK_MAIL_COOLDOWN:
         return
     send_personal_link(member, email, request, "requested")
+
+
+def request_pickup_list(request: HttpRequest, email: str) -> None:
+    """
+    Mail an address the live pickups it belongs to, with its personal links. Found by the hash,
+    which is always stored (also in privacy mode). Callers answer the same either way; the
+    cooldown of the members involved stops mail bombing.
+    """
+    members = list(
+        Member.objects.filter(live("pickup__"), email_hash=email_hash(email))
+        .select_related("pickup")
+        .order_by("-pickup__created_at")
+    )
+    now = timezone.now()
+    if not members or any(m.link_sent_at and now - m.link_sent_at < LINK_MAIL_COOLDOWN for m in members):
+        return
+    send_pickup_list(members, email, request)
 
 
 def invite(request: HttpRequest, pickup: Pickup, inviter: Member, email: str, name: str = "") -> Member:

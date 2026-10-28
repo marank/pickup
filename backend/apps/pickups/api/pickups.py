@@ -43,6 +43,7 @@ from ..services.members import (
     logout_member,
     member_for_key,
     request_link,
+    request_pickup_list,
     set_email,
     update_member,
 )
@@ -309,6 +310,18 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
         except MembershipError as exc:
             return Response({"error": str(exc)}, status=exc.status)
         return Response({"message": "Your new address is confirmed."})
+
+    @extend_schema(request=EmailSerializer, responses={202: MessageSerializer})
+    @action(detail=False, methods=["post"], url_path="lookup")
+    def lookup(self, request: Request) -> Response:
+        """Mail an address the pickups it belongs to. Same answer for unknown addresses."""
+        body = EmailSerializer(data=request.data)
+        body.is_valid(raise_exception=True)
+        request_pickup_list(request, body.validated_data["email"])
+        return Response(
+            {"message": "If this address belongs to any pickups, we sent you a list."},
+            status=status.HTTP_202_ACCEPTED,
+        )
 
     @extend_schema(request=EmailSerializer, responses={202: MessageSerializer})
     @action(detail=True, methods=["post"], url_path="link-request")

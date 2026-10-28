@@ -76,6 +76,16 @@
       "automerge": false
     },
     {
+      "description": "requires-python is a lower bound that follows .python-version, the Dockerfile and CI by hand, never bumped on its own",
+      "matchManagers": [
+        "pep621"
+      ],
+      "matchDepTypes": [
+        "requires-python"
+      ],
+      "enabled": false
+    },
+    {
       "description": "Node: only even majors (LTS lines)",
       "matchDatasources": [
         "docker"

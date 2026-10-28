@@ -2,7 +2,7 @@
 name = "pickup-backend"
 version = "0.1.0"
 description = "Pickup backend (Django + DRF)"
-requires-python = ">=3.15.1"
+requires-python = ">=3.14"
 dependencies = [
     "django-stubs-ext>=6.1.2",
     "django[argon2]>=6.1.2",

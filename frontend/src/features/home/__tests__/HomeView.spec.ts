@@ -26,6 +26,7 @@ describe('HomeView', () => {
       status: 202,
       body: { message: 'If this address belongs to any pickups, we sent you a list.' },
     })
+    vi.useFakeTimers({ toFake: ['setTimeout'] })
     const { wrapper } = await renderAt(HomeView, '/')
     expect(wrapper.find('input[aria-label="Share link"]').exists()).toBe(false)
     await wrapper.find('input[aria-label="Your email"]').setValue(' anna@example.com ')
@@ -34,7 +35,15 @@ describe('HomeView', () => {
     expect(requests.find((r) => r.path === '/api/pickups/lookup/')?.body).toEqual({
       email: 'anna@example.com',
     })
-    expect(pageText()).toContain('we sent you a list')
+    // The button spins for a moment, then a dialog says what happened.
+    expect(document.body.querySelector('button[aria-label="Sending"]')).not.toBeNull()
+    expect(document.body.querySelector('[role="dialog"]')).toBeNull()
+    await vi.advanceTimersByTimeAsync(800)
+    vi.useRealTimers()
+    await flushPromises()
+    expect(document.body.querySelector('[role="dialog"]')?.textContent).toContain(
+      'we sent you a list',
+    )
   })
 
   it('reports a rejected address', async () => {
@@ -43,7 +52,7 @@ describe('HomeView', () => {
     const { wrapper } = await renderAt(HomeView, '/')
     await wrapper.find('input[aria-label="Your email"]').setValue('x@y')
     await wrapper.find('form').trigger('submit')
-    await flushPromises()
-    expect(error).toHaveBeenCalledWith('Enter a valid email.')
+    await vi.waitFor(() => expect(error).toHaveBeenCalledWith('Enter a valid email.'))
+    expect(document.body.querySelector('[role="dialog"]')).toBeNull()
   })
 })

@@ -1,27 +1,49 @@
 <script setup lang="ts">
 import { useMutation } from '@tanstack/vue-query'
-import { MailIcon } from '@lucide/vue'
+import { Loader2Icon, MailCheckIcon, MailIcon } from '@lucide/vue'
 import { ref } from 'vue'
 import { toast } from 'vue-sonner'
 
 import { api } from '@/api/client'
 import { apiErrorMessage, unwrap } from '@/api/errors'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 
 /** Lost your links? The backend mails the address the pickups it belongs to. */
 const email = ref('')
-const sent = ref('')
+const sending = ref(false)
+const sentMessage = ref('')
+const sentOpen = ref(false)
 const lookup = useMutation({
   mutationFn: (address: string) =>
     unwrap(api.POST('/api/pickups/lookup/', { body: { email: address } })),
 })
+/** The spinner stays a moment even when the answer is instant, so the click registers. */
+const MIN_SPINNER_MS = 700
+const pause = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms))
 
 async function submit() {
+  sending.value = true
   try {
-    sent.value = (await lookup.mutateAsync(email.value.trim())).message
+    const [{ message }] = await Promise.all([
+      lookup.mutateAsync(email.value.trim()),
+      pause(MIN_SPINNER_MS),
+    ])
+    sentMessage.value = message
+    sentOpen.value = true
+    email.value = ''
   } catch (err) {
     toast.error(apiErrorMessage(err, 'Please check the address'))
+  } finally {
+    sending.value = false
   }
 }
 </script>
@@ -37,23 +59,48 @@ async function submit() {
           personal link.
         </p>
       </div>
-      <form class="space-y-2" @submit.prevent="submit">
-        <div class="flex gap-2">
-          <Input
-            v-model="email"
-            type="email"
-            required
-            placeholder="you@example.com"
-            aria-label="Your email"
-            class="border-paper/20 bg-paper text-ink placeholder:text-ink/50 dark:bg-paper"
-          />
-          <Button type="submit" :disabled="lookup.isPending.value">
+      <form class="flex gap-2" @submit.prevent="submit">
+        <Input
+          v-model="email"
+          type="email"
+          required
+          placeholder="you@example.com"
+          aria-label="Your email"
+          class="border-paper/20 bg-paper text-ink placeholder:text-ink/50 dark:bg-paper"
+          :disabled="sending"
+        />
+        <!-- Same width while sending, so the field next to it doesn't move. -->
+        <Button
+          type="submit"
+          class="w-24 shrink-0 transition-transform active:scale-95"
+          :class="sending && 'scale-95'"
+          :disabled="sending"
+          :aria-label="sending ? 'Sending' : undefined"
+        >
+          <Loader2Icon v-if="sending" class="animate-spin" />
+          <template v-else>
             <MailIcon />
             Send
-          </Button>
-        </div>
-        <p v-if="sent" class="text-sm text-paper/75" role="status">{{ sent }}</p>
+          </template>
+        </Button>
       </form>
     </div>
+
+    <Dialog v-model:open="sentOpen">
+      <DialogContent class="sm:max-w-sm">
+        <DialogHeader class="items-center text-center sm:items-center sm:text-center">
+          <span
+            class="mb-2 flex size-12 items-center justify-center rounded-full bg-sage/20 text-sage"
+          >
+            <MailCheckIcon class="size-6" />
+          </span>
+          <DialogTitle>Check your inbox</DialogTitle>
+          <DialogDescription>{{ sentMessage }}</DialogDescription>
+        </DialogHeader>
+        <DialogFooter class="sm:justify-center">
+          <Button class="w-full sm:w-auto" @click="sentOpen = false">OK</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </section>
 </template>

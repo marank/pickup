@@ -257,6 +257,9 @@ def test_link_mails_have_an_html_version_with_the_embedded_logo(creator: Client)
     logo = next(part for part in message.walk() if part.get_content_type() == "image/png")
     assert logo["Content-ID"] == "<logo@pickup>"
     assert 'src="cid:logo@pickup"' in str(html)
+    # The long link stays in one piece in the raw mail (no quoted-printable "=" line breaks).
+    raw = message.as_bytes().decode()
+    assert raw.count(member.personal_path) == 3  # text, button, link below the button
 
 
 def test_link_requests_answer_the_same_and_only_mail_known_addresses(creator: Client) -> None:

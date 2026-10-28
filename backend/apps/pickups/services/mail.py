@@ -62,6 +62,12 @@ class _LinkMail(EmailMultiAlternatives):
 
     def message(self, *, policy: Policy | None = None) -> email.message.EmailMessage:
         msg = super().message(policy=policy or email.policy.default)
+        # Text as 8bit, not quoted-printable: that wraps the long personal link with "=" soft
+        # breaks, and mail programs that show the undecoded text break the link there.
+        for part in msg.walk():
+            if part.get_content_maintype() == "text":
+                part.set_content(part.get_content(), subtype=part.get_content_subtype(), cte="8bit")
+                del part["MIME-Version"]  # set_content adds it; only the message itself has one
         html = msg.get_body(("html",))
         if html is not None:
             html.add_related(LOGO.read_bytes(), "image", "png", cid=f"<{LOGO_CID}>")
@@ -83,13 +89,16 @@ def _html(body: str, link: str, button: str = "Open your link") -> str:
         else format_html("<p>{}</p>", part)
         for part in body.split("\n\n")
     ]
-    return (
-        '<!doctype html><html><body style="margin:0;padding:24px;background:#f8f5ef;color:#083230;'
-        'font-family:system-ui,-apple-system,Segoe UI,sans-serif;font-size:15px;line-height:1.5">'
-        '<div style="max-width:520px;margin:0 auto">'
-        f'<p><img src="cid:{LOGO_CID}" width="162" height="48" alt="pickup"></p>'
-        + "".join(paragraphs)
-        + "</div></body></html>"
+    # One element per line: 8bit allows at most 998 characters per line.
+    return "\n".join(
+        [
+            '<!doctype html><html><body style="margin:0;padding:24px;background:#f8f5ef;color:#083230;'
+            'font-family:system-ui,-apple-system,Segoe UI,sans-serif;font-size:15px;line-height:1.5">',
+            '<div style="max-width:520px;margin:0 auto">',
+            f'<p><img src="cid:{LOGO_CID}" width="162" height="48" alt="pickup"></p>',
+            *paragraphs,
+            "</div></body></html>",
+        ]
     )
 
 

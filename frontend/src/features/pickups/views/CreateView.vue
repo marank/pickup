@@ -19,7 +19,7 @@ import { useCreatePickup } from '../composables/usePickup'
 const createPickup = useCreatePickup()
 /** form → creating (a short animation, so it doesn't feel like nothing happened) → ready. */
 const phase = ref<'form' | 'creating' | 'ready'>('form')
-const PACKING_MS = 1600
+const PACKING_MS = 2000
 const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
 const pause = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms))
 /** Step 2: the new pickup and whether its creator link went out by mail. */

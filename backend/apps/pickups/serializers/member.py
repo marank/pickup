@@ -48,6 +48,12 @@ class EmailSerializer(serializers.Serializer[Any]):
     email = serializers.EmailField()
 
 
+class MemberNameSerializer(serializers.Serializer[Any]):
+    """A participant's new name for themselves."""
+
+    user_name = serializers.CharField(max_length=100)
+
+
 class InviteSerializer(serializers.Serializer[Any]):
     email = serializers.EmailField()
     name = serializers.CharField(max_length=100, required=False, allow_blank=True)

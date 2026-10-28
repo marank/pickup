@@ -189,13 +189,23 @@ export interface paths {
     }
     get?: never
     put?: never
-    /** @description POST {access_key}: log this browser in as the member; DELETE: leave. */
+    /**
+     * @description POST {access_key}: log this browser in as the member; PATCH {user_name}: change your
+     *     name; DELETE: leave.
+     */
     post: operations['pickup_session_create']
-    /** @description POST {access_key}: log this browser in as the member; DELETE: leave. */
+    /**
+     * @description POST {access_key}: log this browser in as the member; PATCH {user_name}: change your
+     *     name; DELETE: leave.
+     */
     delete: operations['pickup_session_destroy']
     options?: never
     head?: never
-    patch?: never
+    /**
+     * @description POST {access_key}: log this browser in as the member; PATCH {user_name}: change your
+     *     name; DELETE: leave.
+     */
+    patch: operations['pickup_session_partial_update']
     trace?: never
   }
   '/api/pickups/{id}/session/email/': {
@@ -672,6 +682,10 @@ export interface components {
     /** @description Name for a new or renamed folder. */
     PatchedFolderNameRequest: {
       name?: string
+    }
+    /** @description A participant's new name for themselves. */
+    PatchedMemberNameRequest: {
+      user_name?: string
     }
     /** @description What the creator may change. */
     PatchedPickupUpdateRequest: {
@@ -1256,6 +1270,50 @@ export interface operations {
           [name: string]: unknown
         }
         content?: never
+      }
+    }
+  }
+  pickup_session_partial_update: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        /** @description A UUID string identifying this pickup. */
+        id: string
+      }
+      cookie?: never
+    }
+    requestBody?: {
+      content: {
+        'multipart/form-data': components['schemas']['PatchedMemberNameRequest']
+        'application/x-www-form-urlencoded': components['schemas']['PatchedMemberNameRequest']
+        'application/json': components['schemas']['PatchedMemberNameRequest']
+      }
+    }
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Pickup']
+        }
+      }
+      400: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
       }
     }
   }

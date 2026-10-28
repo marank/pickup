@@ -600,7 +600,7 @@
         "/api/pickups/{id}/session/": {
             "post": {
                 "operationId": "pickup_session_create",
-                "description": "POST {access_key}: log this browser in as the member; DELETE: leave.",
+                "description": "POST {access_key}: log this browser in as the member; PATCH {user_name}: change your\nname; DELETE: leave.",
                 "parameters": [
                     {
                         "in": "path",
@@ -665,9 +665,85 @@
                     }
                 }
             },
+            "patch": {
+                "operationId": "pickup_session_partial_update",
+                "description": "POST {access_key}: log this browser in as the member; PATCH {user_name}: change your\nname; DELETE: leave.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this pickup.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedMemberNameRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedMemberNameRequest"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PatchedMemberNameRequest"
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Pickup"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "400": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            },
             "delete": {
                 "operationId": "pickup_session_destroy",
-                "description": "POST {access_key}: log this browser in as the member; DELETE: leave.",
+                "description": "POST {access_key}: log this browser in as the member; PATCH {user_name}: change your\nname; DELETE: leave.",
                 "parameters": [
                     {
                         "in": "path",
@@ -2629,6 +2705,17 @@
                 "description": "Name for a new or renamed folder.",
                 "properties": {
                     "name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                    }
+                }
+            },
+            "PatchedMemberNameRequest": {
+                "type": "object",
+                "description": "A participant's new name for themselves.",
+                "properties": {
+                    "user_name": {
                         "type": "string",
                         "minLength": 1,
                         "maxLength": 100

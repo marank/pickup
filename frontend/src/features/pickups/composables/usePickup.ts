@@ -76,6 +76,21 @@ export function useLeavePickup(pickupId: MaybeRefOrGetter<string>) {
   })
 }
 
+/** The signed-in member changes their own name (their folders follow, see the backend). */
+export function useRenameMember(pickupId: MaybeRefOrGetter<string>) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: (userName: string) =>
+      unwrap(
+        api.PATCH('/api/pickups/{id}/session/', {
+          params: { path: { id: toValue(pickupId) } },
+          body: { user_name: userName },
+        }),
+      ),
+    onSuccess: () => client.invalidateQueries({ queryKey: pickupKeys.all(toValue(pickupId)) }),
+  })
+}
+
 /** Personal link: trade the access key for a session (used by the router guard). */
 export async function enterPickup(pickupId: string, accessKey: string): Promise<void> {
   const pickup = await unwrap(

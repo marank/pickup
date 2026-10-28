@@ -6,6 +6,7 @@ import {
   FolderIcon,
   LogOutIcon,
   MailIcon,
+  PencilIcon,
   SettingsIcon,
   UserPlusIcon,
   UsersIcon,
@@ -17,6 +18,7 @@ import { toast } from 'vue-sonner'
 
 import { apiErrorMessage } from '@/api/errors'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import NameDialog from '@/components/NameDialog.vue'
 import ThemeOptions from '@/components/ThemeOptions.vue'
 import {
   DropdownMenu,
@@ -33,6 +35,7 @@ import { useTheme } from '@/lib/theme'
 import {
   personalLinkQuery,
   useLeavePickup,
+  useRenameMember,
   usePickup,
   usePickupFolders,
 } from '../composables/usePickup'
@@ -48,6 +51,8 @@ const folders = usePickupFolders(
   () => pickup.data.value?.can_view ?? false,
 )
 const leave = useLeavePickup(() => props.pickupId)
+const rename = useRenameMember(() => props.pickupId)
+const renameOpen = ref(false)
 const confirmOpen = ref(false)
 const emailOpen = ref(false)
 const openPage = (page: 'settings' | 'people') =>
@@ -86,6 +91,16 @@ async function copyPersonalLink() {
     toast.success(isCreator.value ? 'Creator link copied' : 'Personal link copied')
   } catch (err) {
     toast.error(apiErrorMessage(err, 'Could not copy your link'))
+  }
+}
+
+async function changeName(userName: string) {
+  renameOpen.value = false
+  try {
+    await rename.mutateAsync(userName)
+    toast.success('Name changed')
+  } catch (err) {
+    toast.error(apiErrorMessage(err, 'Could not change your name'))
   }
 }
 
@@ -137,6 +152,10 @@ async function confirmLeave() {
         <UserPlusIcon />
         {{ signedIn ? 'Create my folder' : 'Join this pickup' }}
       </DropdownMenuItem>
+      <DropdownMenuItem v-if="signedIn" @select="renameOpen = true">
+        <PencilIcon />
+        Change my name
+      </DropdownMenuItem>
       <DropdownMenuItem v-if="signedIn" @select="copyPersonalLink">
         <CopyIcon />
         Copy my {{ isCreator ? 'creator' : 'personal' }} link
@@ -172,6 +191,17 @@ async function confirmLeave() {
   </DropdownMenu>
 
   <EmailLinkDialog v-if="pickup.data.value" v-model:open="emailOpen" :pickup="pickup.data.value" />
+
+  <NameDialog
+    v-model:open="renameOpen"
+    title="Change your name"
+    label="Your name"
+    description="Everyone in the pickup sees this name."
+    :initial="pickup.data.value?.member_name ?? ''"
+    confirm-label="Save"
+    :pending="rename.isPending.value"
+    @confirm="changeName"
+  />
 
   <ConfirmDialog
     v-model:open="confirmOpen"

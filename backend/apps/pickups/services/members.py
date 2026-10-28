@@ -3,6 +3,7 @@
 from datetime import timedelta
 
 from django.db import transaction
+from django.db.models import Q
 from django.http import HttpRequest
 from django.utils import timezone
 
@@ -133,6 +134,33 @@ def join_pickup(
     member.save()
     if email:
         send_personal_link(member, email, request, "joined")
+    return member
+
+
+@transaction.atomic
+def rename_member(member: Member, user_name: str) -> Member:
+    """
+    A participant changes their own name; it must stay unique like when joining. Their folders
+    show the new owner name, and a top-level folder still named like them is renamed with them.
+    """
+    pickup = member.pickup
+    if is_closed_for(pickup, member):
+        raise MembershipError("This pickup is closed.", status=403)
+    user_name = normalize_name(user_name)
+    if not user_name:
+        raise MembershipError("Enter a name.")
+    if name_taken(pickup, user_name, exclude=member):
+        raise MembershipError("This name is already taken in this pickup.")
+    old_name = member.user_name
+    member.user_name = user_name
+    member.save(update_fields=["user_name"])
+    folder = member.folder
+    if folder is not None:
+        Folder.objects.filter(Q(id=folder.id) | Q(root_id=folder.id)).update(user_name=user_name)
+        named_after_member = folder.name.casefold() == old_name.casefold()
+        others = Folder.objects.filter(pickup=pickup, parent__isnull=True, name__iexact=user_name)
+        if named_after_member and not others.exclude(id=folder.id).exists():
+            Folder.objects.filter(id=folder.id).update(name=user_name)
     return member
 
 

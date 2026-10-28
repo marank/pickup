@@ -21,6 +21,7 @@ from ..serializers import (
     JoinResponseSerializer,
     JoinSerializer,
     MediaSerializer,
+    MemberNameSerializer,
     MessageSerializer,
     PersonalLinkSerializer,
     PickupSerializer,
@@ -39,6 +40,7 @@ from ..services.members import (
     login_member,
     logout_member,
     member_for_key,
+    rename_member,
     request_link,
     set_email,
 )
@@ -215,14 +217,23 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
         request=SessionSerializer,
         responses={200: PickupSerializer, 403: ErrorSerializer},
     )
+    @extend_schema(
+        methods=["PATCH"],
+        operation_id="pickup_session_partial_update",
+        request=MemberNameSerializer,
+        responses={200: PickupSerializer, 400: ErrorSerializer, 403: ErrorSerializer},
+    )
     @extend_schema(methods=["DELETE"], operation_id="pickup_session_destroy", responses={204: None})
-    @action(detail=True, methods=["post", "delete"])
+    @action(detail=True, methods=["post", "patch", "delete"])
     def session(self, request: Request, id: str | None = None) -> Response:
-        """POST {access_key}: log this browser in as the member; DELETE: leave."""
+        """POST {access_key}: log this browser in as the member; PATCH {user_name}: change your
+        name; DELETE: leave."""
         pickup = self.get_object()
         if request.method == "DELETE":
             logout_member(request, pickup)
             return Response(status=status.HTTP_204_NO_CONTENT)
+        if request.method == "PATCH":
+            return self._rename_member(request, pickup)
 
         key = SessionSerializer(data=request.data)
         member = member_for_key(pickup, key.validated_data["access_key"]) if key.is_valid() else None
@@ -230,6 +241,19 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
             return Response({"error": "This personal link is not valid."}, status=status.HTTP_403_FORBIDDEN)
         login_member(request, member)
         member.touch()
+        return Response(PickupSerializer(pickup, context={"member": member}).data)
+
+    def _rename_member(self, request: Request, pickup: Pickup) -> Response:
+        member = self._member()
+        if member is None:
+            return Response({"error": "Join the pickup first."}, status=status.HTTP_403_FORBIDDEN)
+        body = MemberNameSerializer(data=request.data)
+        if not body.is_valid():
+            return Response(body.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            rename_member(member, body.validated_data["user_name"])
+        except MembershipError as exc:
+            return Response({"error": str(exc)}, status=exc.status)
         return Response(PickupSerializer(pickup, context={"member": member}).data)
 
     @extend_schema(responses={200: PersonalLinkSerializer, 403: ErrorSerializer})

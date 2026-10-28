@@ -1,4 +1,4 @@
-import { flushPromises } from '@vue/test-utils'
+import { DOMWrapper, flushPromises } from '@vue/test-utils'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { toast } from 'vue-sonner'
 
@@ -38,6 +38,38 @@ describe('account menu', () => {
     await openAccount()
     await chooseMenuItem('Dark')
     expect(useTheme().value).toBe('dark')
+  })
+
+  it('changes the own name', async () => {
+    on('PATCH', '/api/pickups/:id/session/', { body: {} })
+    const success = vi.spyOn(toast, 'success')
+    await renderApp(explorerPath())
+    await openAccount()
+    await chooseMenuItem('Change my name')
+    const input = document.body.querySelector<HTMLInputElement>('#name-dialog-input')!
+    expect(input.value).toBe('Alice')
+    await new DOMWrapper(input).setValue('Alicia')
+    findButton('Save').click()
+    for (let i = 0; i < 5; i++) await flushPromises()
+    expect(requests.find((r) => r.method === 'PATCH')).toMatchObject({
+      path: `/api/pickups/${PICKUP_ID}/session/`,
+      body: { user_name: 'Alicia' },
+    })
+    expect(success).toHaveBeenCalledWith('Name changed')
+  })
+
+  it('reports a name that is taken', async () => {
+    on('PATCH', '/api/pickups/:id/session/', {
+      status: 400,
+      body: { error: 'This name is already taken in this pickup.' },
+    })
+    const error = vi.spyOn(toast, 'error')
+    await renderApp(explorerPath())
+    await openAccount()
+    await chooseMenuItem('Change my name')
+    findButton('Save').click()
+    for (let i = 0; i < 5; i++) await flushPromises()
+    expect(error).toHaveBeenCalledWith('This name is already taken in this pickup.')
   })
 
   it('leaves the pickup on this device after a warning', async () => {

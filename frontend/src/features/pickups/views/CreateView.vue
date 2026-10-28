@@ -12,9 +12,15 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
+import PackingAnimation from '../components/PackingAnimation.vue'
 import { useCreatePickup } from '../composables/usePickup'
 
 const createPickup = useCreatePickup()
+/** form → creating (a short animation, so it doesn't feel like nothing happened) → ready. */
+const phase = ref<'form' | 'creating' | 'ready'>('form')
+const PACKING_MS = 1600
+const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
+const pause = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms))
 /** Step 2: the new pickup and whether its creator link went out by mail. */
 const created = ref<CreatedPickup | null>(null)
 const emailed = ref(false)
@@ -23,6 +29,10 @@ const absolute = (path: string) => `${window.location.origin}${path}`
 const shareUrl = computed(() => (created.value ? absolute(`/pickup/${created.value.id}`) : ''))
 const form = reactive({ title: '', creator_name: '', creator_email: '', join_policy: 'open' })
 const fieldErrors = ref<Record<string, string>>({})
+const steps = computed(() => [
+  { label: 'Details', current: phase.value !== 'ready' },
+  { label: 'Links', current: phase.value === 'ready' },
+])
 
 const policies = [
   {
@@ -41,16 +51,23 @@ const policies = [
 
 async function submit() {
   fieldErrors.value = {}
+  phase.value = 'creating'
+  window.scrollTo({ top: 0 })
   try {
-    created.value = await createPickup.mutateAsync({
-      title: form.title.trim(),
-      creator_name: form.creator_name.trim(),
-      creator_email: form.creator_email.trim(),
-      join_policy: form.join_policy as 'open' | 'invite',
-    })
+    const [pickup] = await Promise.all([
+      createPickup.mutateAsync({
+        title: form.title.trim(),
+        creator_name: form.creator_name.trim(),
+        creator_email: form.creator_email.trim(),
+        join_policy: form.join_policy as 'open' | 'invite',
+      }),
+      pause(reducedMotion() ? 0 : PACKING_MS),
+    ])
+    created.value = pickup
     emailed.value = Boolean(form.creator_email.trim())
-    window.scrollTo({ top: 0 })
+    phase.value = 'ready'
   } catch (err) {
+    phase.value = 'form'
     if (err instanceof ApiError && err.body && typeof err.body === 'object') {
       for (const [field, messages] of Object.entries(err.body)) {
         if (Array.isArray(messages)) fieldErrors.value[field] = String(messages[0])
@@ -62,10 +79,13 @@ async function submit() {
 </script>
 
 <template>
-  <div class="mx-auto max-w-xl py-4 sm:py-8">
+  <div
+    class="mx-auto py-4 transition-[max-width] duration-300 sm:py-8"
+    :class="phase === 'ready' ? 'max-w-3xl' : 'max-w-xl'"
+  >
     <div class="mb-4 flex items-center gap-3 text-sm">
       <RouterLink
-        v-if="!created"
+        v-if="phase === 'form'"
         :to="{ name: 'home' }"
         class="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
       >
@@ -73,157 +93,227 @@ async function submit() {
         Back
       </RouterLink>
       <ol class="ml-auto flex items-center gap-2 text-muted-foreground" aria-label="Steps">
-        <li
-          v-for="(step, index) in ['Details', 'Links']"
-          :key="step"
-          class="flex items-center gap-1.5"
-          :aria-current="(index === 0) === !created ? 'step' : undefined"
-        >
-          <span
-            class="flex size-5 items-center justify-center rounded-full text-xs font-semibold"
-            :class="(index === 0) === !created ? 'bg-tomato text-paper' : 'bg-muted'"
-            >{{ index + 1 }}</span
+        <template v-for="(step, index) in steps" :key="step.label">
+          <!-- The line between the steps fills while the pickup is packed. -->
+          <li
+            v-if="index"
+            class="relative h-0.5 w-10 overflow-hidden rounded bg-muted"
+            aria-hidden="true"
           >
-          <span :class="(index === 0) === !created && 'font-medium text-foreground'">{{
-            step
-          }}</span>
-        </li>
+            <span
+              class="absolute inset-y-0 left-0 bg-tomato transition-[width] ease-out motion-reduce:transition-none"
+              :style="{
+                width: phase === 'form' ? '0%' : '100%',
+                transitionDuration: `${PACKING_MS}ms`,
+              }"
+            />
+          </li>
+          <li class="flex items-center gap-1.5" :aria-current="step.current ? 'step' : undefined">
+            <span
+              class="flex size-5 items-center justify-center rounded-full text-xs font-semibold transition-colors duration-300"
+              :class="step.current ? 'bg-tomato text-paper' : 'bg-muted'"
+              >{{ index + 1 }}</span
+            >
+            <span
+              class="transition-colors duration-300"
+              :class="step.current && 'font-medium text-foreground'"
+              >{{ step.label }}</span
+            >
+          </li>
+        </template>
       </ol>
     </div>
 
-    <section
-      v-if="created"
-      class="tag-hole space-y-6 rounded-2xl rounded-l-[2rem] border bg-card p-6 pl-10 shadow-sm"
-      aria-label="Your pickup is ready"
-    >
-      <div class="space-y-1">
-        <h1 class="font-heading text-2xl font-bold">
-          “{{ created.title || 'Untitled pickup' }}” is ready
-        </h1>
-        <p class="text-muted-foreground">Two links, two jobs.</p>
-      </div>
+    <Transition name="step" mode="out-in">
+      <section
+        v-if="phase === 'ready' && created"
+        class="tag-hole space-y-6 rounded-2xl rounded-l-[2rem] border bg-card p-6 pl-10 shadow-sm"
+        aria-label="Your pickup is ready"
+      >
+        <div class="space-y-1">
+          <h1 class="font-heading text-2xl font-bold">
+            “{{ created.title || 'Untitled pickup' }}” is ready
+          </h1>
+          <p class="text-muted-foreground">Two links, two jobs.</p>
+        </div>
 
-      <div class="space-y-2">
-        <p class="font-medium">
-          Share link <span class="font-normal text-muted-foreground">— for everyone else</span>
-        </p>
-        <CopyField :value="shareUrl" label="Share link" />
-        <div class="flex items-center gap-4 rounded-xl border bg-pane p-3">
-          <QrCard
-            ref="qr"
-            :value="shareUrl"
-            :title="created.title || 'Untitled pickup'"
-            class="w-24 shrink-0"
-          />
-          <div class="space-y-2 text-sm">
-            <p class="text-muted-foreground">
-              The same link as QR card, for a table card, a poster or a slide at the party.
-            </p>
-            <Button variant="outline" size="sm" @click="qr?.save()">
+        <div class="grid items-start gap-6 md:grid-cols-[15rem_1fr]">
+          <!-- The QR card first: it is what most people show around at the event. -->
+          <div class="mx-auto flex w-56 flex-col items-center gap-3 md:w-full">
+            <QrCard
+              ref="qr"
+              :value="shareUrl"
+              :title="created.title || 'Untitled pickup'"
+              class="w-full"
+            />
+            <Button variant="outline" class="w-full" @click="qr?.save()">
               <DownloadIcon />
               Save QR card
             </Button>
           </div>
+
+          <div class="space-y-6">
+            <div class="space-y-2">
+              <p class="font-medium">
+                Share link
+                <span class="font-normal text-muted-foreground">— for everyone else</span>
+              </p>
+              <CopyField :value="shareUrl" label="Share link" />
+              <p class="text-sm text-muted-foreground">
+                Send it around, or print the QR card for a table card, a poster or a slide at the
+                party.
+              </p>
+            </div>
+
+            <div class="space-y-2">
+              <p class="font-medium">
+                Your creator link
+                <span class="font-normal text-muted-foreground">— only for you</span>
+              </p>
+              <CopyField :value="absolute(created.member_url)" label="Creator link" />
+              <p class="text-sm text-muted-foreground">
+                <template v-if="emailed">We also emailed it to you. </template>It brings you back as
+                the creator on any device. You can copy it again anytime from the account menu.
+              </p>
+            </div>
+          </div>
         </div>
+
+        <Button as-child size="lg" class="w-full">
+          <RouterLink :to="{ name: 'explorer', params: { pickupId: created.id } }">
+            Open the pickup
+            <ArrowRightIcon />
+          </RouterLink>
+        </Button>
+      </section>
+
+      <div
+        v-else-if="phase === 'creating'"
+        class="tag-hole rounded-2xl rounded-l-[2rem] border bg-card p-6 pl-10 shadow-sm"
+      >
+        <PackingAnimation />
       </div>
 
-      <div class="space-y-2">
-        <p class="font-medium">
-          Your creator link <span class="font-normal text-muted-foreground">— only for you</span>
-        </p>
-        <CopyField :value="absolute(created.member_url)" label="Creator link" />
-        <p class="text-sm text-muted-foreground">
-          <template v-if="emailed">We also emailed it to you. </template>It brings you back as the
-          creator on any device. You can copy it again anytime from the account menu.
-        </p>
-      </div>
-
-      <Button as-child size="lg" class="w-full">
-        <RouterLink :to="{ name: 'explorer', params: { pickupId: created.id } }">
-          Open the pickup
-          <ArrowRightIcon />
-        </RouterLink>
-      </Button>
-    </section>
-
-    <form
-      v-else
-      class="tag-hole space-y-6 rounded-2xl rounded-l-[2rem] border bg-card p-6 pl-10 shadow-sm"
-      aria-label="New pickup"
-      @submit.prevent="submit"
-    >
-      <div class="space-y-1">
-        <h1 class="font-heading text-2xl font-bold">Start a pickup</h1>
-        <p class="text-muted-foreground">
-          A shared place for everyone's photos and videos. No accounts needed — not for you, not for
-          your guests.
-        </p>
-      </div>
-
-      <div class="space-y-1.5">
-        <Label for="create-title">Name of the pickup</Label>
-        <Input
-          id="create-title"
-          v-model="form.title"
-          required
-          maxlength="200"
-          placeholder="e.g. Anna & Mark’s wedding"
-          autocomplete="off"
-        />
-        <p v-if="fieldErrors.title" class="text-sm text-destructive">{{ fieldErrors.title }}</p>
-      </div>
-
-      <div class="grid gap-4 sm:grid-cols-2">
-        <div class="space-y-1.5">
-          <Label for="create-name"
-            >Your name <span class="text-muted-foreground">(optional)</span></Label
-          >
-          <Input id="create-name" v-model="form.creator_name" maxlength="100" autocomplete="name" />
-          <p class="text-xs text-muted-foreground">You get a folder with this name right away.</p>
-        </div>
-        <div class="space-y-1.5">
-          <Label for="create-email"
-            >Your email <span class="text-muted-foreground">(optional)</span></Label
-          >
-          <Input id="create-email" v-model="form.creator_email" type="email" autocomplete="email" />
-          <p class="text-xs text-muted-foreground">We send you your link to get back in.</p>
-          <p v-if="fieldErrors.creator_email" class="text-sm text-destructive">
-            {{ fieldErrors.creator_email }}
+      <form
+        v-else
+        class="tag-hole space-y-6 rounded-2xl rounded-l-[2rem] border bg-card p-6 pl-10 shadow-sm"
+        aria-label="New pickup"
+        @submit.prevent="submit"
+      >
+        <div class="space-y-1">
+          <h1 class="font-heading text-2xl font-bold">Start a pickup</h1>
+          <p class="text-muted-foreground">
+            A shared place for everyone's photos and videos. No accounts needed — not for you, not
+            for your guests.
           </p>
         </div>
-      </div>
 
-      <fieldset class="space-y-2">
-        <legend class="mb-1 text-sm font-medium">Who can join?</legend>
-        <div class="grid gap-2 sm:grid-cols-2">
-          <label
-            v-for="policy in policies"
-            :key="policy.value"
-            class="flex cursor-pointer flex-col gap-1 rounded-xl border p-3 has-checked:border-tomato has-checked:bg-tomato/5"
-          >
-            <span class="flex items-center gap-2 text-sm font-medium">
-              <input
-                v-model="form.join_policy"
-                type="radio"
-                name="join_policy"
-                :value="policy.value"
-                class="accent-tomato"
-              />
-              <component :is="policy.icon" class="size-4 text-muted-foreground" />
-              {{ policy.label }}
-            </span>
-            <span class="text-sm text-muted-foreground">{{ policy.hint }}</span>
-          </label>
+        <div class="space-y-1.5">
+          <Label for="create-title">Name of the pickup</Label>
+          <Input
+            id="create-title"
+            v-model="form.title"
+            required
+            maxlength="200"
+            placeholder="e.g. Anna & Mark’s wedding"
+            autocomplete="off"
+          />
+          <p v-if="fieldErrors.title" class="text-sm text-destructive">{{ fieldErrors.title }}</p>
         </div>
-        <p class="text-xs text-muted-foreground">
-          Only participants see the photos. You can change this and more later in the settings.
-        </p>
-      </fieldset>
 
-      <Button type="submit" size="lg" class="w-full" :disabled="createPickup.isPending.value">
-        {{ createPickup.isPending.value ? 'Creating…' : 'Create pickup' }}
-        <ArrowRightIcon />
-      </Button>
-    </form>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div class="space-y-1.5">
+            <Label for="create-name"
+              >Your name <span class="text-muted-foreground">(optional)</span></Label
+            >
+            <Input
+              id="create-name"
+              v-model="form.creator_name"
+              maxlength="100"
+              autocomplete="name"
+            />
+            <p class="text-xs text-muted-foreground">You get a folder with this name right away.</p>
+          </div>
+          <div class="space-y-1.5">
+            <Label for="create-email"
+              >Your email <span class="text-muted-foreground">(optional)</span></Label
+            >
+            <Input
+              id="create-email"
+              v-model="form.creator_email"
+              type="email"
+              autocomplete="email"
+            />
+            <p class="text-xs text-muted-foreground">We send you your link to get back in.</p>
+            <p v-if="fieldErrors.creator_email" class="text-sm text-destructive">
+              {{ fieldErrors.creator_email }}
+            </p>
+          </div>
+        </div>
+
+        <fieldset class="space-y-2">
+          <legend class="mb-1 text-sm font-medium">Who can join?</legend>
+          <div class="grid gap-2 sm:grid-cols-2">
+            <label
+              v-for="policy in policies"
+              :key="policy.value"
+              class="flex cursor-pointer flex-col gap-1 rounded-xl border p-3 has-checked:border-tomato has-checked:bg-tomato/5"
+            >
+              <span class="flex items-center gap-2 text-sm font-medium">
+                <input
+                  v-model="form.join_policy"
+                  type="radio"
+                  name="join_policy"
+                  :value="policy.value"
+                  class="accent-tomato"
+                />
+                <component :is="policy.icon" class="size-4 text-muted-foreground" />
+                {{ policy.label }}
+              </span>
+              <span class="text-sm text-muted-foreground">{{ policy.hint }}</span>
+            </label>
+          </div>
+          <p class="text-xs text-muted-foreground">
+            Only participants see the photos. You can change this and more later in the settings.
+          </p>
+        </fieldset>
+
+        <Button type="submit" size="lg" class="w-full" :disabled="phase !== 'form'">
+          Create pickup
+          <ArrowRightIcon />
+        </Button>
+      </form>
+    </Transition>
   </div>
 </template>
+
+<style scoped>
+.step-enter-active,
+.step-leave-active {
+  transition:
+    opacity 0.28s ease,
+    translate 0.28s ease,
+    scale 0.28s ease;
+}
+.step-enter-from {
+  opacity: 0;
+  translate: 0 16px;
+  scale: 0.98;
+}
+.step-leave-to {
+  opacity: 0;
+  translate: 0 -16px;
+  scale: 0.98;
+}
+@media (prefers-reduced-motion: reduce) {
+  .step-enter-active,
+  .step-leave-active {
+    transition: opacity 0.15s;
+  }
+  .step-enter-from,
+  .step-leave-to {
+    translate: none;
+    scale: none;
+  }
+}
+</style>

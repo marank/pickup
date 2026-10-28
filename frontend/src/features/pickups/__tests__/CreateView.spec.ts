@@ -1,5 +1,5 @@
 import { DOMWrapper, flushPromises } from '@vue/test-utils'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { toast } from 'vue-sonner'
 
 import App from '@/App.vue'
@@ -20,7 +20,24 @@ const clipboard = (writeText = vi.fn<(text: string) => Promise<void>>().mockReso
   return writeText
 }
 
-afterEach(() => vi.restoreAllMocks())
+/** "Reduce motion": no packing animation, so the tests don't wait for it. */
+function reduceMotion(reduce = true) {
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    value: (query: string) => ({
+      matches: reduce && query.includes('reduce'),
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }),
+  })
+}
+
+beforeEach(() => reduceMotion())
+afterEach(() => {
+  vi.restoreAllMocks()
+  Reflect.deleteProperty(window, 'matchMedia')
+})
 
 describe('create page', () => {
   async function create(email = '', beforeSubmit = () => {}) {
@@ -66,6 +83,21 @@ describe('create page', () => {
     expect(writeText).toHaveBeenCalledWith(values[1])
   })
 
+  it('packs the pickup with a short animation before showing the links', async () => {
+    reduceMotion(false)
+    on('POST', '/api/pickups/', { status: 201, body: createdPickup() })
+    await renderAt(CreateView, '/create')
+    await type('#create-title', 'Party')
+    $('form').dispatchEvent(new Event('submit'))
+    await flushPromises()
+    expect(pageText()).toContain('Packing your pickup…')
+    expect(document.body.querySelector('section[aria-label="Your pickup is ready"]')).toBeNull()
+    await vi.waitFor(() => expect($('section[aria-label="Your pickup is ready"]')).not.toBeNull(), {
+      timeout: 3000,
+    })
+    expect(pageText()).not.toContain('Packing your pickup…')
+  })
+
   it('opens the pickup from the second step', async () => {
     const { router } = await create()
     expect($('section[aria-label="Your pickup is ready"]').textContent).not.toContain('emailed')
@@ -93,6 +125,7 @@ describe('create page', () => {
     await settle()
     expect(pageText()).toContain('Enter a valid email.')
     expect(error).toHaveBeenCalled()
+    expect(($('#create-title') as HTMLInputElement).value).toBe('Party') // back to the form
   })
 })
 

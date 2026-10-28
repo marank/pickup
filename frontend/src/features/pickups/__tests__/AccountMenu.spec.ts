@@ -40,33 +40,57 @@ describe('account menu', () => {
     expect(useTheme().value).toBe('dark')
   })
 
-  it('changes the own name', async () => {
+  it('saves the own name and folder name', async () => {
     on('PATCH', '/api/pickups/:id/session/', { body: {} })
+    on('GET', '/api/pickups/:id/session/link/', { body: { member_url: '/x', has_email: false } })
     const success = vi.spyOn(toast, 'success')
     await renderApp(explorerPath())
     await openAccount()
-    await chooseMenuItem('Change my name')
-    const input = document.body.querySelector<HTMLInputElement>('#name-dialog-input')!
-    expect(input.value).toBe('Alice')
-    await new DOMWrapper(input).setValue('Alicia')
+    await chooseMenuItem('Edit my details')
+    const field = (id: string) => document.body.querySelector<HTMLInputElement>(id)!
+    expect(field('#details-name').value).toBe('Alice')
+    expect(field('#details-folder').value).toBe('Alice')
+    expect(pageText()).toContain('We send you your personal link to this address.')
+    await new DOMWrapper(field('#details-name')).setValue('Alicia')
+    await new DOMWrapper(field('#details-folder')).setValue('Alicia’s photos')
     findButton('Save').click()
     for (let i = 0; i < 5; i++) await flushPromises()
     expect(requests.find((r) => r.method === 'PATCH')).toMatchObject({
       path: `/api/pickups/${PICKUP_ID}/session/`,
-      body: { user_name: 'Alicia' },
+      body: { user_name: 'Alicia', folder_name: 'Alicia’s photos' },
     })
-    expect(success).toHaveBeenCalledWith('Name changed')
+    expect(requests.some((r) => r.path.endsWith('/session/email/'))).toBe(false)
+    expect(success).toHaveBeenCalledWith('Saved')
   })
 
-  it('reports a name that is taken', async () => {
+  it('sends a new address for confirmation and reports errors', async () => {
+    on('GET', '/api/pickups/:id/session/link/', { body: { member_url: '/x', has_email: true } })
+    on('POST', '/api/pickups/:id/session/email/', {
+      body: { message: 'We sent a confirmation link to the new address.' },
+    })
+    const success = vi.spyOn(toast, 'success')
+    const error = vi.spyOn(toast, 'error')
+    await renderApp(explorerPath())
+    await openAccount()
+    await chooseMenuItem('Edit my details')
+    for (let i = 0; i < 5; i++) await flushPromises()
+    expect(pageText()).toContain('only saved after you confirm it')
+    const email = document.body.querySelector<HTMLInputElement>('#details-email')!
+    await new DOMWrapper(email).setValue('alice@new.example')
+    findButton('Save').click()
+    for (let i = 0; i < 5; i++) await flushPromises()
+    expect(requests.some((r) => r.method === 'PATCH')).toBe(false)
+    expect(success).toHaveBeenCalledWith('We sent a confirmation link to the new address.')
+
     on('PATCH', '/api/pickups/:id/session/', {
       status: 400,
       body: { error: 'This name is already taken in this pickup.' },
     })
-    const error = vi.spyOn(toast, 'error')
-    await renderApp(explorerPath())
     await openAccount()
-    await chooseMenuItem('Change my name')
+    await chooseMenuItem('Edit my details')
+    await new DOMWrapper(document.body.querySelector<HTMLInputElement>('#details-name')!).setValue(
+      'Bob',
+    )
     findButton('Save').click()
     for (let i = 0; i < 5; i++) await flushPromises()
     expect(error).toHaveBeenCalledWith('This name is already taken in this pickup.')

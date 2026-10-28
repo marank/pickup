@@ -6,6 +6,7 @@ import { enterPickup } from '@/features/pickups/composables/usePickup'
 const ExplorerView = () => import('@/features/explorer/views/ExplorerView.vue')
 const JoinView = () => import('@/features/pickups/views/JoinView.vue')
 const CreateView = () => import('@/features/pickups/views/CreateView.vue')
+const ConfirmEmailView = () => import('@/features/pickups/views/ConfirmEmailView.vue')
 
 export const pickupRoutes: RouteRecordRaw[] = [
   { path: '/create', name: 'create', component: CreateView },
@@ -48,6 +49,13 @@ export const pickupRoutes: RouteRecordRaw[] = [
     },
   },
   { path: '/pickup/:pickupId/join', name: 'pickup-join', component: JoinView, props: true },
+  {
+    // From the mail that confirms a new address; the token follows after the #.
+    path: '/pickup/:pickupId/confirm-email',
+    name: 'pickup-confirm-email',
+    component: ConfirmEmailView,
+    props: true,
+  },
   // Links from before the explorer.
   { path: '/pickup/:pickupId/folder/:folderId', redirect: { name: 'explorer-folder' } },
 ]

@@ -3,6 +3,7 @@ from typing import Any
 from rest_framework import serializers
 
 from ..models import Member
+from ..models.folder import validate_folder_name
 
 
 class MemberSerializer(serializers.ModelSerializer[Member]):
@@ -48,10 +49,15 @@ class EmailSerializer(serializers.Serializer[Any]):
     email = serializers.EmailField()
 
 
-class MemberNameSerializer(serializers.Serializer[Any]):
-    """A participant's new name for themselves."""
+class MemberDetailsSerializer(serializers.Serializer[Any]):
+    """A participant's own name and the name of their top-level folder; both optional."""
 
-    user_name = serializers.CharField(max_length=100)
+    user_name = serializers.CharField(max_length=100, required=False)
+    folder_name = serializers.CharField(max_length=100, required=False, validators=[validate_folder_name])
+
+
+class EmailConfirmSerializer(serializers.Serializer[Any]):
+    token = serializers.CharField()
 
 
 class InviteSerializer(serializers.Serializer[Any]):

@@ -76,15 +76,15 @@ export function useLeavePickup(pickupId: MaybeRefOrGetter<string>) {
   })
 }
 
-/** The signed-in member changes their own name (their folders follow, see the backend). */
-export function useRenameMember(pickupId: MaybeRefOrGetter<string>) {
+/** The signed-in member changes their own name and/or their folder's name. */
+export function useUpdateMember(pickupId: MaybeRefOrGetter<string>) {
   const client = useQueryClient()
   return useMutation({
-    mutationFn: (userName: string) =>
+    mutationFn: (details: { user_name?: string; folder_name?: string }) =>
       unwrap(
         api.PATCH('/api/pickups/{id}/session/', {
           params: { path: { id: toValue(pickupId) } },
-          body: { user_name: userName },
+          body: details,
         }),
       ),
     onSuccess: () => client.invalidateQueries({ queryKey: pickupKeys.all(toValue(pickupId)) }),

@@ -6,8 +6,8 @@ import {
   FolderIcon,
   LogOutIcon,
   MailIcon,
-  PencilIcon,
   SettingsIcon,
+  UserPenIcon,
   UserPlusIcon,
   UsersIcon,
 } from '@lucide/vue'
@@ -18,7 +18,6 @@ import { toast } from 'vue-sonner'
 
 import { apiErrorMessage } from '@/api/errors'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import NameDialog from '@/components/NameDialog.vue'
 import ThemeOptions from '@/components/ThemeOptions.vue'
 import {
   DropdownMenu,
@@ -35,11 +34,11 @@ import { useTheme } from '@/lib/theme'
 import {
   personalLinkQuery,
   useLeavePickup,
-  useRenameMember,
   usePickup,
   usePickupFolders,
 } from '../composables/usePickup'
 import EmailLinkDialog from './EmailLinkDialog.vue'
+import MemberDetailsDialog from './MemberDetailsDialog.vue'
 
 const props = defineProps<{ pickupId: string }>()
 
@@ -51,8 +50,7 @@ const folders = usePickupFolders(
   () => pickup.data.value?.can_view ?? false,
 )
 const leave = useLeavePickup(() => props.pickupId)
-const rename = useRenameMember(() => props.pickupId)
-const renameOpen = ref(false)
+const detailsOpen = ref(false)
 const confirmOpen = ref(false)
 const emailOpen = ref(false)
 const openPage = (page: 'settings' | 'people') =>
@@ -91,16 +89,6 @@ async function copyPersonalLink() {
     toast.success(isCreator.value ? 'Creator link copied' : 'Personal link copied')
   } catch (err) {
     toast.error(apiErrorMessage(err, 'Could not copy your link'))
-  }
-}
-
-async function changeName(userName: string) {
-  renameOpen.value = false
-  try {
-    await rename.mutateAsync(userName)
-    toast.success('Name changed')
-  } catch (err) {
-    toast.error(apiErrorMessage(err, 'Could not change your name'))
   }
 }
 
@@ -152,9 +140,9 @@ async function confirmLeave() {
         <UserPlusIcon />
         {{ signedIn ? 'Create my folder' : 'Join this pickup' }}
       </DropdownMenuItem>
-      <DropdownMenuItem v-if="signedIn" @select="renameOpen = true">
-        <PencilIcon />
-        Change my name
+      <DropdownMenuItem v-if="signedIn" @select="detailsOpen = true">
+        <UserPenIcon />
+        Edit my details
       </DropdownMenuItem>
       <DropdownMenuItem v-if="signedIn" @select="copyPersonalLink">
         <CopyIcon />
@@ -192,15 +180,11 @@ async function confirmLeave() {
 
   <EmailLinkDialog v-if="pickup.data.value" v-model:open="emailOpen" :pickup="pickup.data.value" />
 
-  <NameDialog
-    v-model:open="renameOpen"
-    title="Change your name"
-    label="Your name"
-    description="Everyone in the pickup sees this name."
-    :initial="pickup.data.value?.member_name ?? ''"
-    confirm-label="Save"
-    :pending="rename.isPending.value"
-    @confirm="changeName"
+  <MemberDetailsDialog
+    v-if="pickup.data.value && signedIn"
+    v-model:open="detailsOpen"
+    :pickup="pickup.data.value"
+    :folder-name="ownFolder?.name ?? null"
   />
 
   <ConfirmDialog

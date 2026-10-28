@@ -18,7 +18,7 @@ from ..models import Member
 
 logger = logging.getLogger(__name__)
 
-Reason = Literal["created", "joined", "requested", "invited"]
+Reason = Literal["created", "joined", "requested", "invited", "confirm"]
 
 _TEXT: dict[Reason, tuple[str, str]] = {
     "created": (
@@ -43,6 +43,11 @@ _TEXT: dict[Reason, tuple[str, str]] = {
         "Open your personal link to join — no account needed:\n\n{link}\n\nThe link is just for you; "
         "please don't forward it.",
     ),
+    "confirm": (
+        "Confirm your new address for “{title}”",
+        "Hello {name},\n\nplease confirm that this is your new email address for “{title}”:\n\n{link}"
+        "\n\nThe link works for 24 hours. If you didn't ask for this, ignore this mail; nothing changes.",
+    ),
 }
 
 
@@ -63,14 +68,15 @@ class _LinkMail(EmailMultiAlternatives):
         return msg
 
 
-def _html(body: str, link: str) -> str:
+def _html(body: str, link: str, button: str = "Open your link") -> str:
     """The text body as HTML paragraphs, the link as a button."""
     paragraphs = [
         format_html(
             '<p><a href="{}" style="display:inline-block;padding:10px 18px;border-radius:8px;'
-            'background:#e75528;color:#ffffff;text-decoration:none;font-weight:600">Open your link</a></p>'
+            'background:#e75528;color:#ffffff;text-decoration:none;font-weight:600">{}</a></p>'
             '<p style="font-size:13px;color:#4f6866;word-break:break-all">{}</p>',
             link,
+            button,
             link,
         )
         if part == link
@@ -88,9 +94,15 @@ def _html(body: str, link: str) -> str:
 
 
 def send_personal_link(
-    member: Member, address: str, request: HttpRequest, reason: Reason, *, inviter: Member | None = None
+    member: Member,
+    address: str,
+    request: HttpRequest,
+    reason: Reason,
+    *,
+    inviter: Member | None = None,
+    link: str = "",
 ) -> None:
-    """Send the member's personal link to `address`. Failures are logged, never raised."""
+    """Send the member's personal link (or `link`) to `address`. Failures are logged, never raised."""
     pickup = member.pickup
     inviter_name = inviter.user_name if inviter and inviter.user_name != "Creator" else "Someone"
     values = {
@@ -98,7 +110,7 @@ def send_personal_link(
         "name": member.user_name or "there",
         "greeting": f" {member.user_name}" if member.user_name else "",
         "inviter": inviter_name,
-        "link": request.build_absolute_uri(member.personal_path),
+        "link": link or request.build_absolute_uri(member.personal_path),
     }
     subject, body = (part.format(**values) for part in _TEXT[reason])
     sender = settings.DEFAULT_FROM_EMAIL
@@ -110,7 +122,8 @@ def send_personal_link(
             reply_to = [inviter.email]
     try:
         message = _LinkMail(subject, body, sender, [address], reply_to=reply_to)
-        message.attach_alternative(_html(body, values["link"]), "text/html")
+        button = "Confirm address" if reason == "confirm" else "Open your link"
+        message.attach_alternative(_html(body, values["link"], button), "text/html")
         message.send()
         member.link_sent_at = timezone.now()
         member.save(update_fields=["link_sent_at"])

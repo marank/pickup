@@ -15,13 +15,14 @@ from ..models import JoinPolicy, Media, Member, Pickup, live
 from ..serializers import (
     CreatedPickupSerializer,
     CreatePickupSerializer,
+    EmailConfirmSerializer,
     EmailSerializer,
     ErrorSerializer,
     FolderSerializer,
     JoinResponseSerializer,
     JoinSerializer,
     MediaSerializer,
-    MemberNameSerializer,
+    MemberDetailsSerializer,
     MessageSerializer,
     PersonalLinkSerializer,
     PickupSerializer,
@@ -33,6 +34,7 @@ from ..services.archive import collect, safe_name, stream
 from ..services.identity import forget_plain_emails
 from ..services.members import (
     MembershipError,
+    confirm_email,
     create_pickup,
     delete_pickup,
     get_member_from_request,
@@ -40,9 +42,9 @@ from ..services.members import (
     login_member,
     logout_member,
     member_for_key,
-    rename_member,
     request_link,
     set_email,
+    update_member,
 )
 
 
@@ -220,20 +222,20 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
     @extend_schema(
         methods=["PATCH"],
         operation_id="pickup_session_partial_update",
-        request=MemberNameSerializer,
+        request=MemberDetailsSerializer,
         responses={200: PickupSerializer, 400: ErrorSerializer, 403: ErrorSerializer},
     )
     @extend_schema(methods=["DELETE"], operation_id="pickup_session_destroy", responses={204: None})
     @action(detail=True, methods=["post", "patch", "delete"])
     def session(self, request: Request, id: str | None = None) -> Response:
-        """POST {access_key}: log this browser in as the member; PATCH {user_name}: change your
-        name; DELETE: leave."""
+        """POST {access_key}: log this browser in as the member; PATCH {user_name, folder_name}:
+        change your name and your folder's; DELETE: leave."""
         pickup = self.get_object()
         if request.method == "DELETE":
             logout_member(request, pickup)
             return Response(status=status.HTTP_204_NO_CONTENT)
         if request.method == "PATCH":
-            return self._rename_member(request, pickup)
+            return self._update_member(request, pickup)
 
         key = SessionSerializer(data=request.data)
         member = member_for_key(pickup, key.validated_data["access_key"]) if key.is_valid() else None
@@ -243,15 +245,19 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
         member.touch()
         return Response(PickupSerializer(pickup, context={"member": member}).data)
 
-    def _rename_member(self, request: Request, pickup: Pickup) -> Response:
+    def _update_member(self, request: Request, pickup: Pickup) -> Response:
         member = self._member()
         if member is None:
             return Response({"error": "Join the pickup first."}, status=status.HTTP_403_FORBIDDEN)
-        body = MemberNameSerializer(data=request.data)
+        body = MemberDetailsSerializer(data=request.data)
         if not body.is_valid():
             return Response(body.errors, status=status.HTTP_400_BAD_REQUEST)
         try:
-            rename_member(member, body.validated_data["user_name"])
+            update_member(
+                member,
+                user_name=body.validated_data.get("user_name"),
+                folder_name=body.validated_data.get("folder_name"),
+            )
         except MembershipError as exc:
             return Response({"error": str(exc)}, status=exc.status)
         return Response(PickupSerializer(pickup, context={"member": member}).data)
@@ -268,17 +274,41 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
         response["Cache-Control"] = "private, no-store"
         return response
 
-    @extend_schema(request=EmailSerializer, responses={200: MessageSerializer, 403: ErrorSerializer})
+    @extend_schema(
+        request=EmailSerializer,
+        responses={200: MessageSerializer, 403: ErrorSerializer, 429: ErrorSerializer},
+    )
     @action(detail=True, methods=["post"], url_path="session/email")
     def session_email(self, request: Request, id: str | None = None) -> Response:
-        """The signed-in participant adds their address and gets their personal link mailed."""
+        """
+        The signed-in participant adds their address and gets their personal link mailed; a
+        different address than the stored one only gets a confirmation link.
+        """
         member = self._member()
         if member is None:
             return Response({"error": "Join the pickup first."}, status=status.HTTP_403_FORBIDDEN)
         body = EmailSerializer(data=request.data)
         body.is_valid(raise_exception=True)
-        set_email(request, member, body.validated_data["email"])
+        try:
+            pending = set_email(request, member, body.validated_data["email"])
+        except MembershipError as exc:
+            return Response({"error": str(exc)}, status=exc.status)
+        if pending:
+            return Response({"message": "We sent a confirmation link to the new address."})
         return Response({"message": "We sent you your personal link."})
+
+    @extend_schema(request=EmailConfirmSerializer, responses={200: MessageSerializer, 400: ErrorSerializer})
+    @action(detail=True, methods=["post"], url_path="session/email/confirm")
+    def session_email_confirm(self, request: Request, id: str | None = None) -> Response:
+        """The link from the confirmation mail: store the new address (no session needed)."""
+        pickup = self.get_object()
+        body = EmailConfirmSerializer(data=request.data)
+        body.is_valid(raise_exception=True)
+        try:
+            confirm_email(pickup, body.validated_data["token"])
+        except MembershipError as exc:
+            return Response({"error": str(exc)}, status=exc.status)
+        return Response({"message": "Your new address is confirmed."})
 
     @extend_schema(request=EmailSerializer, responses={202: MessageSerializer})
     @action(detail=True, methods=["post"], url_path="link-request")

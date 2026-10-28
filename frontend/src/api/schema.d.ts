@@ -190,20 +190,20 @@ export interface paths {
     get?: never
     put?: never
     /**
-     * @description POST {access_key}: log this browser in as the member; PATCH {user_name}: change your
-     *     name; DELETE: leave.
+     * @description POST {access_key}: log this browser in as the member; PATCH {user_name, folder_name}:
+     *     change your name and your folder's; DELETE: leave.
      */
     post: operations['pickup_session_create']
     /**
-     * @description POST {access_key}: log this browser in as the member; PATCH {user_name}: change your
-     *     name; DELETE: leave.
+     * @description POST {access_key}: log this browser in as the member; PATCH {user_name, folder_name}:
+     *     change your name and your folder's; DELETE: leave.
      */
     delete: operations['pickup_session_destroy']
     options?: never
     head?: never
     /**
-     * @description POST {access_key}: log this browser in as the member; PATCH {user_name}: change your
-     *     name; DELETE: leave.
+     * @description POST {access_key}: log this browser in as the member; PATCH {user_name, folder_name}:
+     *     change your name and your folder's; DELETE: leave.
      */
     patch: operations['pickup_session_partial_update']
     trace?: never
@@ -217,8 +217,28 @@ export interface paths {
     }
     get?: never
     put?: never
-    /** @description The signed-in participant adds their address and gets their personal link mailed. */
+    /**
+     * @description The signed-in participant adds their address and gets their personal link mailed; a
+     *     different address than the stored one only gets a confirmation link.
+     */
     post: operations['pickups_session_email_create']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
+  '/api/pickups/{id}/session/email/confirm/': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** @description The link from the confirmation mail: store the new address (no session needed). */
+    post: operations['pickups_session_email_confirm_create']
     delete?: never
     options?: never
     head?: never
@@ -536,6 +556,9 @@ export interface components {
       readonly storage: components['schemas']['Storage']
       readonly member_url: string
     }
+    EmailConfirmRequest: {
+      token: string
+    }
     EmailRequest: {
       /** Format: email */
       email: string
@@ -683,9 +706,10 @@ export interface components {
     PatchedFolderNameRequest: {
       name?: string
     }
-    /** @description A participant's new name for themselves. */
-    PatchedMemberNameRequest: {
+    /** @description A participant's own name and the name of their top-level folder; both optional. */
+    PatchedMemberDetailsRequest: {
       user_name?: string
+      folder_name?: string
     }
     /** @description What the creator may change. */
     PatchedPickupUpdateRequest: {
@@ -1285,9 +1309,9 @@ export interface operations {
     }
     requestBody?: {
       content: {
-        'multipart/form-data': components['schemas']['PatchedMemberNameRequest']
-        'application/x-www-form-urlencoded': components['schemas']['PatchedMemberNameRequest']
-        'application/json': components['schemas']['PatchedMemberNameRequest']
+        'multipart/form-data': components['schemas']['PatchedMemberDetailsRequest']
+        'application/x-www-form-urlencoded': components['schemas']['PatchedMemberDetailsRequest']
+        'application/json': components['schemas']['PatchedMemberDetailsRequest']
       }
     }
     responses: {
@@ -1344,6 +1368,50 @@ export interface operations {
         }
       }
       403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+      429: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+    }
+  }
+  pickups_session_email_confirm_create: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        /** @description A UUID string identifying this pickup. */
+        id: string
+      }
+      cookie?: never
+    }
+    requestBody: {
+      content: {
+        'multipart/form-data': components['schemas']['EmailConfirmRequest']
+        'application/x-www-form-urlencoded': components['schemas']['EmailConfirmRequest']
+        'application/json': components['schemas']['EmailConfirmRequest']
+      }
+    }
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Message']
+        }
+      }
+      400: {
         headers: {
           [name: string]: unknown
         }

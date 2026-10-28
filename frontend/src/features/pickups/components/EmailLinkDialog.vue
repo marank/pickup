@@ -26,8 +26,9 @@ watch(open, () => (email.value = ''))
 
 async function submit() {
   try {
-    await setEmail.mutateAsync(email.value.trim())
-    toast.success('Check your inbox for your personal link')
+    const { message } = await setEmail.mutateAsync(email.value.trim())
+    // A different address than the stored one only gets a confirmation link.
+    toast.success(message || 'Check your inbox for your personal link')
     open.value = false
   } catch (err) {
     toast.error(apiErrorMessage(err, 'Could not send the mail'))

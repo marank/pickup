@@ -351,7 +351,7 @@ describe('personal link by email', () => {
     await type('#own-email', 'alice@example.com')
     await submit('#own-email')
     expect(lastRequest('POST', '/session/email/')?.body).toEqual({ email: 'alice@example.com' })
-    expect(success).toHaveBeenCalledWith('Check your inbox for your personal link')
+    expect(success).toHaveBeenCalledWith('Sent.')
   })
 
   it('reports a failed mail', async () => {

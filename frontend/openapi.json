@@ -600,7 +600,7 @@
         "/api/pickups/{id}/session/": {
             "post": {
                 "operationId": "pickup_session_create",
-                "description": "POST {access_key}: log this browser in as the member; PATCH {user_name}: change your\nname; DELETE: leave.",
+                "description": "POST {access_key}: log this browser in as the member; PATCH {user_name, folder_name}:\nchange your name and your folder's; DELETE: leave.",
                 "parameters": [
                     {
                         "in": "path",
@@ -667,7 +667,7 @@
             },
             "patch": {
                 "operationId": "pickup_session_partial_update",
-                "description": "POST {access_key}: log this browser in as the member; PATCH {user_name}: change your\nname; DELETE: leave.",
+                "description": "POST {access_key}: log this browser in as the member; PATCH {user_name, folder_name}:\nchange your name and your folder's; DELETE: leave.",
                 "parameters": [
                     {
                         "in": "path",
@@ -687,17 +687,17 @@
                     "content": {
                         "multipart/form-data": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedMemberNameRequest"
+                                "$ref": "#/components/schemas/PatchedMemberDetailsRequest"
                             }
                         },
                         "application/x-www-form-urlencoded": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedMemberNameRequest"
+                                "$ref": "#/components/schemas/PatchedMemberDetailsRequest"
                             }
                         },
                         "application/json": {
                             "schema": {
-                                "$ref": "#/components/schemas/PatchedMemberNameRequest"
+                                "$ref": "#/components/schemas/PatchedMemberDetailsRequest"
                             }
                         }
                     }
@@ -743,7 +743,7 @@
             },
             "delete": {
                 "operationId": "pickup_session_destroy",
-                "description": "POST {access_key}: log this browser in as the member; PATCH {user_name}: change your\nname; DELETE: leave.",
+                "description": "POST {access_key}: log this browser in as the member; PATCH {user_name, folder_name}:\nchange your name and your folder's; DELETE: leave.",
                 "parameters": [
                     {
                         "in": "path",
@@ -775,7 +775,7 @@
         "/api/pickups/{id}/session/email/": {
             "post": {
                 "operationId": "pickups_session_email_create",
-                "description": "The signed-in participant adds their address and gets their personal link mailed.",
+                "description": "The signed-in participant adds their address and gets their personal link mailed; a\ndifferent address than the stored one only gets a confirmation link.",
                 "parameters": [
                     {
                         "in": "path",
@@ -829,6 +829,85 @@
                         "description": ""
                     },
                     "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "429": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/api/pickups/{id}/session/email/confirm/": {
+            "post": {
+                "operationId": "pickups_session_email_confirm_create",
+                "description": "The link from the confirmation mail: store the new address (no session needed).",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this pickup.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EmailConfirmRequest"
+                            }
+                        },
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EmailConfirmRequest"
+                            }
+                        },
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EmailConfirmRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Message"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "400": {
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -2311,6 +2390,18 @@
                     "visibility"
                 ]
             },
+            "EmailConfirmRequest": {
+                "type": "object",
+                "properties": {
+                    "token": {
+                        "type": "string",
+                        "minLength": 1
+                    }
+                },
+                "required": [
+                    "token"
+                ]
+            },
             "EmailRequest": {
                 "type": "object",
                 "properties": {
@@ -2711,11 +2802,16 @@
                     }
                 }
             },
-            "PatchedMemberNameRequest": {
+            "PatchedMemberDetailsRequest": {
                 "type": "object",
-                "description": "A participant's new name for themselves.",
+                "description": "A participant's own name and the name of their top-level folder; both optional.",
                 "properties": {
                     "user_name": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 100
+                    },
+                    "folder_name": {
                         "type": "string",
                         "minLength": 1,
                         "maxLength": 100

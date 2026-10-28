@@ -2,6 +2,7 @@
 
 from datetime import timedelta
 
+from django.core import signing
 from django.db import transaction
 from django.db.models import Q
 from django.http import HttpRequest
@@ -9,12 +10,14 @@ from django.utils import timezone
 
 from ..models import Folder, JoinPolicy, Media, Member, Pickup, UploadSession
 from .access import is_closed_for
-from .folders import subtree_ids
-from .identity import email_hash, normalize_name, remember_email
+from .folders import FolderError, rename_folder, subtree_ids
+from .identity import email_hash, normalize_email, normalize_name, remember_email
 from .mail import send_personal_link
 
 SESSION_KEY = "pickup_members"  # {pickup_id: member_id} of the pickups this browser belongs to
 LINK_MAIL_COOLDOWN = timedelta(minutes=2)
+EMAIL_CHANGE_SALT = "pickups.email-change"
+EMAIL_CHANGE_MAX_AGE = timedelta(days=1)
 
 
 class MembershipError(Exception):
@@ -138,37 +141,74 @@ def join_pickup(
 
 
 @transaction.atomic
-def rename_member(member: Member, user_name: str) -> Member:
+def update_member(member: Member, *, user_name: str | None = None, folder_name: str | None = None) -> Member:
     """
-    A participant changes their own name; it must stay unique like when joining. Their folders
-    show the new owner name, and a top-level folder still named like them is renamed with them.
+    A participant changes their own name (unique like when joining; their folders show the new
+    owner name) and/or the name of their top-level folder.
     """
     pickup = member.pickup
     if is_closed_for(pickup, member):
         raise MembershipError("This pickup is closed.", status=403)
-    user_name = normalize_name(user_name)
-    if not user_name:
-        raise MembershipError("Enter a name.")
-    if name_taken(pickup, user_name, exclude=member):
-        raise MembershipError("This name is already taken in this pickup.")
-    old_name = member.user_name
-    member.user_name = user_name
-    member.save(update_fields=["user_name"])
-    folder = member.folder
-    if folder is not None:
-        Folder.objects.filter(Q(id=folder.id) | Q(root_id=folder.id)).update(user_name=user_name)
-        named_after_member = folder.name.casefold() == old_name.casefold()
-        others = Folder.objects.filter(pickup=pickup, parent__isnull=True, name__iexact=user_name)
-        if named_after_member and not others.exclude(id=folder.id).exists():
-            Folder.objects.filter(id=folder.id).update(name=user_name)
+    if user_name is not None:
+        user_name = normalize_name(user_name)
+        if not user_name:
+            raise MembershipError("Enter a name.")
+        if name_taken(pickup, user_name, exclude=member):
+            raise MembershipError("This name is already taken in this pickup.")
+        member.user_name = user_name
+        member.save(update_fields=["user_name"])
+        if member.folder_id is not None:
+            Folder.objects.filter(Q(id=member.folder_id) | Q(root_id=member.folder_id)).update(
+                user_name=user_name
+            )
+    if folder_name is not None:
+        if member.folder is None:
+            raise MembershipError("You don't have a folder in this pickup yet.")
+        try:
+            rename_folder(member.folder, normalize_name(folder_name))
+        except FolderError as exc:
+            raise MembershipError(str(exc)) from exc
     return member
 
 
-def set_email(request: HttpRequest, member: Member, email: str) -> None:
-    """A participant adds (or changes) their address and gets their link mailed."""
-    remember_email(member, email)
+def set_email(request: HttpRequest, member: Member, email: str) -> bool:
+    """
+    A participant adds their address and gets their link mailed. An address they already have
+    is not replaced right away: the new one gets a confirmation link first (confirm_email).
+    Returns whether a confirmation is pending.
+    """
+    if not member.email_hash or member.email_hash == email_hash(email):
+        remember_email(member, email)
+        member.save(update_fields=["email", "email_hash"])
+        send_personal_link(member, email, request, "requested")
+        return False
+    if member.link_sent_at and timezone.now() - member.link_sent_at < LINK_MAIL_COOLDOWN:
+        raise MembershipError("We just sent you a mail. Please wait a few minutes.", status=429)
+    # The address travels signed in the link (after the #, so it never reaches the server's
+    # logs); nothing is stored until it is confirmed, also not in privacy mode.
+    token = signing.dumps(
+        {"member": str(member.id), "email": normalize_email(email)}, salt=EMAIL_CHANGE_SALT, compress=True
+    )
+    link = request.build_absolute_uri(f"/pickup/{member.pickup_id}/confirm-email") + f"#{token}"
+    send_personal_link(member, email, request, "confirm", link=link)
+    return True
+
+
+def confirm_email(pickup: Pickup, token: str) -> Member:
+    """The link from the confirmation mail: store the new address."""
+    try:
+        data = signing.loads(token, salt=EMAIL_CHANGE_SALT, max_age=EMAIL_CHANGE_MAX_AGE)
+    except signing.BadSignature as exc:  # also expired
+        raise MembershipError("This confirmation link is not valid or has expired.") from exc
+    member = Member.objects.select_related("pickup").filter(id=data["member"], pickup=pickup).first()
+    if member is None:
+        raise MembershipError("This confirmation link is not valid or has expired.")
+    others = Member.objects.filter(pickup=pickup, email_hash=email_hash(data["email"])).exclude(id=member.id)
+    if others.exists():
+        raise MembershipError("Someone else in this pickup already uses this address.")
+    remember_email(member, data["email"])
     member.save(update_fields=["email", "email_hash"])
-    send_personal_link(member, email, request, "requested")
+    return member
 
 
 def request_link(request: HttpRequest, pickup: Pickup, email: str) -> None:

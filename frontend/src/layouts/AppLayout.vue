@@ -7,7 +7,6 @@ import ThemeMenu from '@/components/ThemeMenu.vue'
 import AccountMenu from '@/features/pickups/components/AccountMenu.vue'
 
 const route = useRoute()
-const wide = computed(() => route.meta.wide === true)
 const pickupId = computed(() =>
   typeof route.params.pickupId === 'string' ? route.params.pickupId : null,
 )
@@ -26,10 +25,8 @@ const pickupId = computed(() =>
         </div>
       </div>
     </header>
-    <main v-if="wide">
-      <slot />
-    </main>
-    <main v-else class="mx-auto max-w-6xl px-4 py-8">
+    <!-- The page width comes with each page (App.vue), so it can fade out with it. -->
+    <main>
       <slot />
     </main>
   </div>

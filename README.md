@@ -111,7 +111,7 @@ The app runs at http://localhost:8080 (`APP_PORT`). Compose starts three service
 
 `/admin` is closed in Docker unless `ADMIN_ENABLED=true`. Change the admin password with `docker compose exec app python manage.py set_password admin`.
 
-Behind a TLS reverse proxy: set `APP_URLS=https://your.domain` and `TRUSTED_PROXIES` to the proxy's address. Django then uses secure cookies, redirects to HTTPS and sends HSTS.
+Behind a TLS reverse proxy: set `APP_URLS=https://your.domain` and `TRUSTED_PROXIES` to the proxy's address. Django then uses secure cookies and redirects to HTTPS; HSTS is up to the proxy.
 
 Upload limits: nginx accepts request bodies up to 25 MB. The SPA sends files up to 20 MB in one request and larger files in 5 MB chunks, so files of many GB work. Finalizing a chunked upload copies the file once; `GUNICORN_TIMEOUT` (default 300 s) must cover that.
 

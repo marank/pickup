@@ -64,13 +64,10 @@ if _ALL_HTTPS:
     SECURE_SSL_REDIRECT = True
     # The container's own healthcheck talks plain http to 127.0.0.1.
     SECURE_REDIRECT_EXEMPT = [r"^api/health$"]
-    # One year. Subdomains and preload are decisions for the domain owner.
-    SECURE_HSTS_SECONDS = env_int("SECURE_HSTS_SECONDS", 31_536_000)
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool("SECURE_HSTS_INCLUDE_SUBDOMAINS", False)
-    SECURE_HSTS_PRELOAD = env_bool("SECURE_HSTS_PRELOAD", False)
+    # HSTS is the TLS reverse proxy's job (it owns the domain and its subdomains).
 
 # Deliberate choices, not oversights (see above), so the deploy check stays quiet about them.
-SILENCED_SYSTEM_CHECKS = ["security.W005", "security.W021"]
+SILENCED_SYSTEM_CHECKS = ["security.W004", "security.W005", "security.W021"]
 
 SESSION_COOKIE_SAMESITE = "Lax"
 # How long a browser stays logged in to its pickups after logging in (personal link, joining).

@@ -11,7 +11,7 @@ from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from ..models import Media, Member, Pickup, live
+from ..models import JoinPolicy, Media, Member, Pickup, live
 from ..serializers import (
     CreatedPickupSerializer,
     CreatePickupSerializer,
@@ -22,6 +22,7 @@ from ..serializers import (
     JoinSerializer,
     MediaSerializer,
     MessageSerializer,
+    PersonalLinkSerializer,
     PickupSerializer,
     PickupUpdateSerializer,
     SessionSerializer,
@@ -84,6 +85,7 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
             body.validated_data.get("title", ""),
             body.validated_data.get("creator_name", ""),
             body.validated_data.get("creator_email", ""),
+            body.validated_data.get("join_policy", JoinPolicy.OPEN),
         )
         login_member(request, creator)
         data = CreatedPickupSerializer(pickup, context={"member": creator}).data
@@ -229,6 +231,18 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
         login_member(request, member)
         member.touch()
         return Response(PickupSerializer(pickup, context={"member": member}).data)
+
+    @extend_schema(responses={200: PersonalLinkSerializer, 403: ErrorSerializer})
+    @action(detail=True, methods=["get"], url_path="session/link")
+    def session_link(self, request: Request, id: str | None = None) -> Response:
+        """Your own personal link, to copy it again (only while this browser is signed in as you)."""
+        member = self._member()
+        if member is None:
+            return Response({"error": "Join the pickup first."}, status=status.HTTP_403_FORBIDDEN)
+        data = {"member_url": member.personal_path, "has_email": bool(member.email_hash)}
+        response = Response(PersonalLinkSerializer(data).data)
+        response["Cache-Control"] = "private, no-store"
+        return response
 
     @extend_schema(request=EmailSerializer, responses={200: MessageSerializer, 403: ErrorSerializer})
     @action(detail=True, methods=["post"], url_path="session/email")

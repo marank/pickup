@@ -8,6 +8,7 @@ from .responses import (
     ErrorSerializer,
     JoinResponseSerializer,
     MessageSerializer,
+    PersonalLinkSerializer,
     SessionSerializer,
 )
 from .upload_session import (
@@ -22,6 +23,7 @@ __all__ = [
     "ErrorSerializer",
     "JoinResponseSerializer",
     "MessageSerializer",
+    "PersonalLinkSerializer",
     "SessionSerializer",
     "CreatePickupSerializer",
     "EmailSerializer",

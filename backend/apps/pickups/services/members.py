@@ -69,13 +69,17 @@ def folder_name_taken(pickup: Pickup, name: str) -> bool:
 
 @transaction.atomic
 def create_pickup(
-    request: HttpRequest, title: str, creator_name: str = "", creator_email: str = ""
+    request: HttpRequest,
+    title: str,
+    creator_name: str = "",
+    creator_email: str = "",
+    join_policy: str = JoinPolicy.OPEN,
 ) -> tuple[Pickup, Member]:
     """
     Create a pickup with its creator; a creator who gives their name gets a folder named
     after them right away. Mail the creator link if an address was given.
     """
-    pickup = Pickup.objects.create(title=title)
+    pickup = Pickup.objects.create(title=title, join_policy=join_policy)
     name = normalize_name(creator_name)
     creator = Member(pickup=pickup, user_name=name or "Creator", is_creator=True)
     if name:

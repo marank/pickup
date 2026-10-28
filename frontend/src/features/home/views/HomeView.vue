@@ -13,7 +13,7 @@ import ExplorerMock from '../components/ExplorerMock.vue'
 import StartPanel from '../components/StartPanel.vue'
 
 const steps = [
-  { title: 'Start a pickup', text: 'One click. No sign-up, no app to install.' },
+  { title: 'Start a pickup', text: 'Give it a name. No sign-up, no app to install.' },
   { title: 'Send the link', text: 'Into the group chat, by email — anywhere a link fits.' },
   {
     title: 'Everyone adds theirs',

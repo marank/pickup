@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 import { isNotFound } from '@/api/errors'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
@@ -26,6 +27,7 @@ import PickupBar from '../components/PickupBar.vue'
 import ShareDialog from '../components/ShareDialog.vue'
 import StatusBar from '../components/StatusBar.vue'
 import UploadTray from '../components/UploadTray.vue'
+import WelcomeCard from '../components/WelcomeCard.vue'
 import { provideExplorer, type ExplorerPage } from '../composables/useExplorer'
 import type { ExplorerItem } from '../lib/items'
 
@@ -37,6 +39,15 @@ const explorer = provideExplorer(
   () => props.page ?? null,
 )
 const { mutations } = explorer
+const route = useRoute()
+const router = useRouter()
+/** Right after creating: a one-time card with the links (the query goes when dismissed). */
+const welcome = computed(() => 'welcome' in route.query && explorer.pickup.data?.is_creator)
+function dismissWelcome() {
+  const query = { ...route.query }
+  delete query.welcome
+  void router.replace({ query })
+}
 const treeOpen = ref(false)
 
 /** One v-model per dialog kind, so each dialog keeps its own open/close animation. */
@@ -132,6 +143,7 @@ function onFiles(event: Event) {
       class="flex h-[calc(100dvh-5.5rem)] min-h-[28rem] flex-col gap-2 sm:h-[calc(100dvh-6.5rem)]"
     >
       <PickupBar />
+      <WelcomeCard v-if="welcome" @dismiss="dismissWelcome" />
       <div
         class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card shadow-sm select-none"
       >

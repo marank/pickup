@@ -5,8 +5,10 @@ import { enterPickup } from '@/features/pickups/composables/usePickup'
 // Loaded on demand: the start page doesn't need them.
 const ExplorerView = () => import('@/features/explorer/views/ExplorerView.vue')
 const JoinView = () => import('@/features/pickups/views/JoinView.vue')
+const CreateView = () => import('@/features/pickups/views/CreateView.vue')
 
 export const pickupRoutes: RouteRecordRaw[] = [
+  { path: '/create', name: 'create', component: CreateView },
   {
     path: '/pickup/:pickupId',
     name: 'explorer',

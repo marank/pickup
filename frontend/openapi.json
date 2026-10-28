@@ -765,6 +765,55 @@
                 }
             }
         },
+        "/api/pickups/{id}/session/link/": {
+            "get": {
+                "operationId": "pickups_session_link_retrieve",
+                "description": "Your own personal link, to copy it again (only while this browser is signed in as you).",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this pickup.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PersonalLink"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/pickups/{pickup_id}/folders/{folder_id}/media/{id}/": {
             "get": {
                 "operationId": "pickups_folders_media_retrieve",
@@ -2024,6 +2073,14 @@
                                 "maxLength": 0
                             }
                         ]
+                    },
+                    "join_policy": {
+                        "allOf": [
+                            {
+                                "$ref": "#/components/schemas/JoinPolicyEnum"
+                            }
+                        ],
+                        "default": "open"
                     }
                 }
             },
@@ -2614,6 +2671,23 @@
                         "description": "When the pickup is deleted with all files (empty: never)"
                     }
                 }
+            },
+            "PersonalLink": {
+                "type": "object",
+                "description": "The signed-in member's own personal link (only ever returned to them).",
+                "properties": {
+                    "member_url": {
+                        "type": "string"
+                    },
+                    "has_email": {
+                        "type": "boolean",
+                        "description": "An address is stored, so the link can be mailed again"
+                    }
+                },
+                "required": [
+                    "has_email",
+                    "member_url"
+                ]
             },
             "Pickup": {
                 "type": "object",

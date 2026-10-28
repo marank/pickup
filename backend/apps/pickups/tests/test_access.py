@@ -445,3 +445,16 @@ def test_settings_are_for_the_creator(creator: Client) -> None:
         "email_privacy": False,
     }
     assert Pickup.objects.get().join_policy == "invite"
+
+
+def test_members_can_get_their_own_link_again(creator: Client) -> None:
+    pickup_id = new_pickup(creator, creator_email="anna@example.com", join_policy="invite")
+    assert Pickup.objects.get(id=pickup_id).join_policy == "invite"
+    response = creator.get(f"/api/pickups/{pickup_id}/session/link/")
+    assert response.status_code == 200
+    assert response["Cache-Control"] == "private, no-store"
+    creator_member = Member.objects.get(is_creator=True)
+    assert response.json() == {"member_url": creator_member.personal_path, "has_email": True}
+    assert Client().get(f"/api/pickups/{pickup_id}/session/link/").status_code == 403
+    rejected = post(Client(), "/api/pickups/", {"join_policy": "closed"})
+    assert rejected.status_code == 400

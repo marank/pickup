@@ -5,7 +5,7 @@ from django.utils import timezone
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
-from ..models import Pickup
+from ..models import JoinPolicy, Pickup
 from ..services.access import can_view
 from ..services.storage import member_usage, pickup_usage
 
@@ -132,3 +132,9 @@ class CreatePickupSerializer(serializers.Serializer[Any]):
     title = serializers.CharField(max_length=200, required=False, allow_blank=True)
     creator_name = serializers.CharField(max_length=100, required=False, allow_blank=True)
     creator_email = serializers.EmailField(required=False, allow_blank=True)
+    join_policy = serializers.ChoiceField(choices=JoinPolicy.choices, default=JoinPolicy.OPEN, required=False)
+
+    def validate_join_policy(self, value: str) -> str:
+        if value == JoinPolicy.CLOSED:
+            raise serializers.ValidationError("A new pickup can't start closed.")
+        return value

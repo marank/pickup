@@ -26,6 +26,13 @@ class JoinResponseSerializer(serializers.Serializer[Any]):
     member_url = serializers.CharField(help_text="Personal link with the secret access key")
 
 
+class PersonalLinkSerializer(serializers.Serializer[Any]):
+    """The signed-in member's own personal link (only ever returned to them)."""
+
+    member_url = serializers.CharField()
+    has_email = serializers.BooleanField(help_text="An address is stored, so the link can be mailed again")
+
+
 class SessionSerializer(serializers.Serializer[Any]):
     access_key = serializers.CharField()
 

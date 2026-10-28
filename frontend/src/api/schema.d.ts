@@ -215,6 +215,23 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/pickups/{id}/session/link/': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** @description Your own personal link, to copy it again (only while this browser is signed in as you). */
+    get: operations['pickups_session_link_retrieve']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/pickups/{pickup_id}/folders/{folder_id}/media/{id}/': {
     parameters: {
       query?: never
@@ -450,6 +467,8 @@ export interface components {
       title?: string
       creator_name?: string
       creator_email?: string
+      /** @default open */
+      join_policy: components['schemas']['JoinPolicyEnum']
     }
     /** @description Serializer for creating an upload session. */
     CreateUploadSessionRequest: {
@@ -681,6 +700,12 @@ export interface components {
        * @description When the pickup is deleted with all files (empty: never)
        */
       expires_at?: string | null
+    }
+    /** @description The signed-in member's own personal link (only ever returned to them). */
+    PersonalLink: {
+      member_url: string
+      /** @description An address is stored, so the link can be mailed again */
+      has_email: boolean
     }
     /** @description Serializer for Pickup model. */
     Pickup: {
@@ -1258,6 +1283,36 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['Message']
+        }
+      }
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+    }
+  }
+  pickups_session_link_retrieve: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        /** @description A UUID string identifying this pickup. */
+        id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['PersonalLink']
         }
       }
       403: {

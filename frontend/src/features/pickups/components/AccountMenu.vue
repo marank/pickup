@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
   ChevronDownIcon,
+  CopyIcon,
   CrownIcon,
   FolderIcon,
   LogOutIcon,
@@ -9,6 +10,7 @@ import {
   UserPlusIcon,
   UsersIcon,
 } from '@lucide/vue'
+import { useQueryClient } from '@tanstack/vue-query'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
@@ -28,7 +30,12 @@ import {
 import { ownerColor } from '@/lib/ownerColor'
 import { useTheme } from '@/lib/theme'
 
-import { useLeavePickup, usePickup, usePickupFolders } from '../composables/usePickup'
+import {
+  personalLinkQuery,
+  useLeavePickup,
+  usePickup,
+  usePickupFolders,
+} from '../composables/usePickup'
 import EmailLinkDialog from './EmailLinkDialog.vue'
 
 const props = defineProps<{ pickupId: string }>()
@@ -67,6 +74,18 @@ function openOwnFolder() {
       name: 'explorer-folder',
       params: { pickupId: props.pickupId, folderId: ownFolder.value.id },
     })
+  }
+}
+
+const client = useQueryClient()
+
+async function copyPersonalLink() {
+  try {
+    const { member_url } = await client.fetchQuery(personalLinkQuery(props.pickupId))
+    await navigator.clipboard.writeText(`${window.location.origin}${member_url}`)
+    toast.success(isCreator.value ? 'Creator link copied' : 'Personal link copied')
+  } catch (err) {
+    toast.error(apiErrorMessage(err, 'Could not copy your link'))
   }
 }
 
@@ -117,6 +136,10 @@ async function confirmLeave() {
       >
         <UserPlusIcon />
         {{ signedIn ? 'Create my folder' : 'Join this pickup' }}
+      </DropdownMenuItem>
+      <DropdownMenuItem v-if="signedIn" @select="copyPersonalLink">
+        <CopyIcon />
+        Copy my {{ isCreator ? 'creator' : 'personal' }} link
       </DropdownMenuItem>
       <DropdownMenuItem v-if="signedIn" @select="emailOpen = true">
         <MailIcon />

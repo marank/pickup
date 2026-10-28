@@ -3,7 +3,7 @@ import { computed, toValue, type MaybeRefOrGetter } from 'vue'
 
 import { api } from '@/api/client'
 import { unwrap } from '@/api/errors'
-import type { JoinRequest } from '@/api/types'
+import type { CreatePickupRequest, JoinRequest } from '@/api/types'
 import { queryClient } from '@/lib/queryClient'
 
 import { pickupKeys } from '../queryKeys'
@@ -32,8 +32,27 @@ export function usePickupFolders(
 
 export function useCreatePickup() {
   return useMutation({
-    mutationFn: (body: { title?: string; creator_name?: string; creator_email?: string } = {}) =>
-      unwrap(api.POST('/api/pickups/', { body })),
+    mutationFn: (body: CreatePickupRequest) => unwrap(api.POST('/api/pickups/', { body })),
+  })
+}
+
+/** The signed-in member's own personal link, to copy it again. */
+export function personalLinkQuery(pickupId: string) {
+  return {
+    queryKey: pickupKeys.link(pickupId),
+    queryFn: () =>
+      unwrap(api.GET('/api/pickups/{id}/session/link/', { params: { path: { id: pickupId } } })),
+  }
+}
+
+export function usePersonalLink(
+  pickupId: MaybeRefOrGetter<string>,
+  enabled: MaybeRefOrGetter<boolean> = true,
+) {
+  return useQuery({
+    queryKey: computed(() => pickupKeys.link(toValue(pickupId))),
+    queryFn: () => personalLinkQuery(toValue(pickupId)).queryFn(),
+    enabled: computed(() => toValue(enabled)),
   })
 }
 

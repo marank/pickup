@@ -16,6 +16,7 @@ from .mail import send_personal_link, send_pickup_list
 
 SESSION_KEY = "pickup_members"  # {pickup_id: member_id} of the pickups this browser belongs to
 LINK_MAIL_COOLDOWN = timedelta(minutes=2)
+SESSION_RENEWED_KEY = "pickup_session_renewed"  # the day the session was last renewed
 EMAIL_CHANGE_SALT = "pickups.email-change"
 EMAIL_CHANGE_MAX_AGE = timedelta(days=1)
 
@@ -33,7 +34,21 @@ def get_member_from_request(request: HttpRequest, pickup: Pickup) -> Member | No
     member_id = request.session.get(SESSION_KEY, {}).get(str(pickup.id))
     if not member_id:
         return None
-    return Member.objects.select_related("folder", "pickup").filter(id=member_id, pickup=pickup).first()
+    member = Member.objects.select_related("folder", "pickup").filter(id=member_id, pickup=pickup).first()
+    if member is not None:
+        keep_session_alive(request)
+    return member
+
+
+def keep_session_alive(request: HttpRequest) -> None:
+    """
+    Using a pickup restarts the session's SESSION_DAYS; at most once a day, so not every
+    request (uploads send many) writes the session.
+    """
+    today = timezone.localdate().isoformat()
+    if request.session.get(SESSION_RENEWED_KEY) != today:
+        # Any change saves the session with a fresh expiry, and the cookie is sent again.
+        request.session[SESSION_RENEWED_KEY] = today
 
 
 def login_member(request: HttpRequest, member: Member) -> None:

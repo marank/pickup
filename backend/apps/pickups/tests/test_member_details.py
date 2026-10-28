@@ -1,12 +1,15 @@
 """Participants change their own name, their folder's name and their address."""
 
 import time
+from datetime import timedelta
 from typing import Any
 
 import pytest
+from django.contrib.sessions.models import Session
 from django.core import mail
 from django.core.mail import EmailMultiAlternatives
 from django.test import Client
+from django.utils import timezone
 
 from apps.pickups.models import Folder, Member
 from apps.pickups.services.identity import email_hash
@@ -172,3 +175,30 @@ def test_a_personal_link_shows_whose_it_is_without_logging_in() -> None:
     assert browser.get(f"/api/pickups/{pickup_id}/").json()["is_member"] is False  # not logged in
     assert post(browser, url, {"access_key": "wrong"}).status_code == 403
     assert post(browser, url, {}).status_code == 403
+
+
+# --- staying logged in ----------------------------------------------------------
+
+
+def test_using_a_pickup_restarts_the_session_at_most_once_a_day() -> None:
+    creator = Client()
+    pickup_id = new_pickup(creator, creator_name="Anna")
+    key = creator.session.session_key
+
+    def expires_in(days: int, renewed: str) -> None:
+        session = creator.session
+        session["pickup_session_renewed"] = renewed
+        session.save()
+        Session.objects.filter(pk=key).update(expire_date=timezone.now() + timedelta(days=days))
+
+    def days_left() -> int:
+        return (Session.objects.get(pk=key).expire_date - timezone.now()).days
+
+    expires_in(3, renewed=timezone.localdate().isoformat())
+    creator.get(f"/api/pickups/{pickup_id}/")
+    assert days_left() == 2  # renewed today already: not written again
+
+    expires_in(3, renewed=(timezone.localdate() - timedelta(days=1)).isoformat())
+    response = creator.get(f"/api/pickups/{pickup_id}/")
+    assert days_left() == 27  # 28 days from now (minus the seconds this test takes)
+    assert "sessionid" in response.cookies  # the browser gets the longer cookie too

@@ -248,16 +248,24 @@ if PICKUP_CREATION == "code" and not PICKUP_CREATION_CODES:
 # SMTP once EMAIL_HOST is set. Without it, mails are printed to the console in DEBUG and
 # not sent at all otherwise (share links are also shown in the app).
 _EMAIL_HOST = env_str("EMAIL_HOST", "")  # not EMAIL_HOST: deprecated name
+# STARTTLS (usually port 587) or implicit TLS from the first byte (usually port 465).
+_EMAIL_USE_SSL = env_bool("EMAIL_USE_SSL", False)
+_EMAIL_USE_TLS = env_bool("EMAIL_USE_TLS", not _EMAIL_USE_SSL)
+if _EMAIL_USE_SSL and _EMAIL_USE_TLS:
+    raise ImproperlyConfigured("Set only one of EMAIL_USE_TLS (port 587) and EMAIL_USE_SSL (port 465).")
 if _EMAIL_HOST:
     MAILERS = {
         "default": {
             "BACKEND": "django.core.mail.backends.smtp.EmailBackend",
             "OPTIONS": {
                 "host": _EMAIL_HOST,
-                "port": env_int("EMAIL_PORT", 587),
+                "port": env_int("EMAIL_PORT", 465 if _EMAIL_USE_SSL else 587),
                 "username": env_str("EMAIL_HOST_USER", ""),
                 "password": env_str("EMAIL_HOST_PASSWORD", ""),
-                "use_tls": env_bool("EMAIL_USE_TLS", True),
+                "use_tls": _EMAIL_USE_TLS,
+                "use_ssl": _EMAIL_USE_SSL,
+                # Seconds; without it an unreachable server would hang the request.
+                "timeout": env_int("EMAIL_TIMEOUT", 10),
             },
         },
     }

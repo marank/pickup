@@ -9,7 +9,8 @@ import { useExplorer } from '../composables/useExplorer'
 import UploadQueueList from './UploadQueueList.vue'
 
 const explorer = useExplorer()
-const open = ref(true)
+// Collapsed by default: the title and the progress bar say enough; a tap shows the files.
+const open = ref(false)
 const queue = computed(() => explorer.uploads)
 const total = computed(() => queue.value.items.length)
 const progress = computed(() =>

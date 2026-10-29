@@ -51,7 +51,7 @@ function goHome() {
 
 <template>
   <a href="/" class="flex h-7 items-center" aria-label="Pickup start page" @click="click">
-    <PickupLogo />
+    <PickupLogo :compact="pickupId !== ''" />
   </a>
 
   <AlertDialog v-model:open="askOpen">

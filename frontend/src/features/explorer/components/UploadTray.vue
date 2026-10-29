@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ChevronDownIcon, ChevronUpIcon, UploadIcon } from '@lucide/vue'
-import { computed, ref } from 'vue'
+import { useResizeObserver } from '@vueuse/core'
+import { computed, onBeforeUnmount, ref } from 'vue'
 
 import { Progress } from '@/components/ui/progress'
 
@@ -21,6 +22,13 @@ const progress = computed(() =>
       )
     : 0,
 )
+// The phone's upload button (UploadFab) sits above the list while it is shown.
+const tray = ref<HTMLElement | null>(null)
+const setHeight = (px: number) =>
+  document.documentElement.style.setProperty('--upload-tray-height', `${px}px`)
+useResizeObserver(tray, ([entry]) => setHeight(entry ? entry.contentRect.height + 12 : 0))
+onBeforeUnmount(() => setHeight(0))
+
 const title = computed(() =>
   queue.value.busy
     ? `Uploading ${queue.value.finished + 1} of ${total.value}`
@@ -31,6 +39,7 @@ const title = computed(() =>
 <template>
   <div
     v-if="total"
+    ref="tray"
     class="fixed right-3 bottom-3 left-3 z-40 overflow-hidden rounded-xl border bg-card shadow-lg sm:left-auto sm:w-96"
     role="region"
     aria-label="Uploads"

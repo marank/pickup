@@ -24,6 +24,12 @@ const pickupId = computed(() =>
         :class="!pickupId && 'max-w-[110rem]'"
       >
         <HomeLink />
+        <!-- On phones the explorer puts the pickup's title and Share here (PickupBar). -->
+        <div
+          v-if="pickupId"
+          id="header-pickup"
+          class="flex min-w-0 flex-1 items-center sm:hidden"
+        />
         <div class="ml-auto flex items-center gap-1">
           <AccountMenu v-if="pickupId" :pickup-id="pickupId" />
           <ThemeMenu v-else />

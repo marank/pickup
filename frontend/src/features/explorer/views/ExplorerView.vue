@@ -19,14 +19,17 @@ import ContentPane from '../components/ContentPane.vue'
 import DetailsPane from '../components/DetailsPane.vue'
 import FolderTree from '../components/FolderTree.vue'
 import MediaViewer from '../components/MediaViewer.vue'
+import MobileToolbar from '../components/MobileToolbar.vue'
 import NameDialog from '@/components/NameDialog.vue'
 import NavBar from '../components/NavBar.vue'
 import PagePane from '../components/PagePane.vue'
 import PickupBar from '../components/PickupBar.vue'
 import ShareDialog from '../components/ShareDialog.vue'
 import StatusBar from '../components/StatusBar.vue'
+import UploadFab from '../components/UploadFab.vue'
 import UploadTray from '../components/UploadTray.vue'
 import { provideExplorer, type ExplorerPage } from '../composables/useExplorer'
+import { usePhone } from '../composables/usePhone'
 import type { ExplorerItem } from '../lib/items'
 
 const props = defineProps<{ pickupId: string; folderId?: string; page?: ExplorerPage }>()
@@ -38,6 +41,7 @@ const explorer = provideExplorer(
 )
 const { mutations } = explorer
 const treeOpen = ref(false)
+const phone = usePhone()
 
 /** One v-model per dialog kind, so each dialog keeps its own open/close animation. */
 const dialogOpen = (kind: NonNullable<typeof explorer.dialog>['kind']) =>
@@ -108,7 +112,7 @@ function onFiles(event: Event) {
 </script>
 
 <template>
-  <div class="px-2 py-3 sm:px-4 sm:py-4">
+  <div class="px-2 py-3 max-sm:p-0 sm:px-4 sm:py-4">
     <NotFoundCard
       v-if="isNotFound(explorer.pickup.error)"
       title="Pickup not found"
@@ -117,17 +121,21 @@ function onFiles(event: Event) {
     <div v-else-if="explorer.pickup.data && !explorer.canView" class="py-6 sm:py-10">
       <JoinPanel :pickup="explorer.pickup.data" />
     </div>
+    <!-- On phones: up to the edges, one toolbar, the title in the header (PickupBar). -->
     <div
       v-else
-      class="flex h-[calc(100dvh-5.5rem)] min-h-[28rem] flex-col gap-2 sm:h-[calc(100dvh-6.5rem)]"
+      class="flex h-[calc(100dvh-5.5rem)] min-h-[28rem] flex-col gap-2 max-sm:h-[calc(100dvh-3rem)] max-sm:min-h-0 max-sm:gap-0 sm:h-[calc(100dvh-6.5rem)]"
     >
       <PickupBar />
       <div
-        class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card shadow-sm select-none"
+        class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border bg-card shadow-sm select-none max-sm:rounded-none max-sm:border-0 max-sm:shadow-none"
       >
-        <div class="space-y-1 border-b bg-pane px-2 py-2">
-          <NavBar />
-          <CommandBar @open-tree="treeOpen = true" />
+        <div class="space-y-1 border-b bg-pane px-2 py-2 max-sm:px-1 max-sm:py-1">
+          <MobileToolbar v-if="phone" @open-tree="treeOpen = true" />
+          <template v-else>
+            <NavBar />
+            <CommandBar @open-tree="treeOpen = true" />
+          </template>
         </div>
         <div class="flex min-h-0 flex-1">
           <aside
@@ -142,7 +150,7 @@ function onFiles(event: Event) {
             <DetailsPane v-if="explorer.prefs.detailsPane" class="max-lg:hidden" />
           </template>
         </div>
-        <StatusBar v-if="!page" />
+        <StatusBar v-if="!page && !phone" />
       </div>
     </div>
 
@@ -167,6 +175,7 @@ function onFiles(event: Event) {
     />
 
     <UploadTray />
+    <UploadFab v-if="phone" />
     <MediaViewer />
 
     <NameDialog

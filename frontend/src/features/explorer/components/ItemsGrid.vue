@@ -25,8 +25,9 @@ function subtitle(item: ExplorerItem): string {
 const layout = computed(
   () =>
     ({
-      small: 'grid grid-cols-3 gap-2 sm:grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))]',
-      large: 'grid grid-cols-2 gap-2 sm:grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] sm:gap-3',
+      small:
+        'grid grid-cols-4 gap-1.5 sm:grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))] sm:gap-2',
+      large: 'grid grid-cols-3 gap-1.5 sm:grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] sm:gap-3',
       content: 'flex flex-col gap-1',
     })[props.variant],
 )

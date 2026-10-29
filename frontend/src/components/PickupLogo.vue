@@ -2,6 +2,8 @@
 import PickupMark from '@/components/PickupMark.vue'
 import { WORDMARK, tileTransform } from '@/lib/brand'
 
+/** compact: only the mark on phones (the pickup's header needs the room). */
+defineProps<{ compact?: boolean }>()
 const { dot } = WORDMARK
 </script>
 
@@ -12,6 +14,7 @@ const { dot } = WORDMARK
     <svg
       :viewBox="`0 0 ${WORDMARK.width} ${WORDMARK.height}`"
       class="h-[62%] w-auto"
+      :class="compact && 'max-sm:hidden'"
       aria-hidden="true"
     >
       <path :d="WORDMARK.d" fill="currentColor" />

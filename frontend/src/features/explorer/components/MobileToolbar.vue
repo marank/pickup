@@ -1,13 +1,18 @@
 <script setup lang="ts">
 import {
+  ArrowDownWideNarrowIcon,
   ArrowUpIcon,
   DownloadIcon,
   EllipsisVerticalIcon,
   FolderPlusIcon,
   HourglassIcon,
+  LayoutGridIcon,
+  ListIcon,
   PencilIcon,
   RefreshCwIcon,
+  RowsIcon,
   SearchIcon,
+  SquareIcon,
   Trash2Icon,
   UserPlusIcon,
   XIcon,
@@ -49,12 +54,16 @@ const router = useRouter()
 const client = useQueryClient()
 const searchOpen = ref(false)
 
-const views: { mode: ViewMode; label: string }[] = [
-  { mode: 'details', label: 'Details' },
-  { mode: 'content', label: 'Content' },
-  { mode: 'small', label: 'Small icons' },
-  { mode: 'large', label: 'Large icons' },
+// The same icons as in CommandBar's view menu.
+const views: { mode: ViewMode; label: string; icon: unknown }[] = [
+  { mode: 'details', label: 'Details', icon: ListIcon },
+  { mode: 'content', label: 'Content', icon: RowsIcon },
+  { mode: 'small', label: 'Small icons', icon: LayoutGridIcon },
+  { mode: 'large', label: 'Large icons', icon: SquareIcon },
 ]
+const currentView = computed(
+  () => views.find((view) => view.mode === explorer.prefs.view) ?? views[0]!,
+)
 const sorts: { key: SortKey; label: string }[] = [
   { key: 'name', label: 'Name' },
   { key: 'date', label: 'Date added' },
@@ -160,7 +169,10 @@ function toggleSearch() {
               {{ explorer.folderId ? 'Download folder' : 'Download all' }}
             </DropdownMenuItem>
             <DropdownMenuSub>
-              <DropdownMenuSubTrigger>Sort by</DropdownMenuSubTrigger>
+              <DropdownMenuSubTrigger>
+                <ArrowDownWideNarrowIcon />
+                Sort by
+              </DropdownMenuSubTrigger>
               <DropdownMenuSubContent class="min-w-44">
                 <DropdownMenuRadioGroup v-model="explorer.prefs.sortKey">
                   <DropdownMenuRadioItem v-for="sort in sorts" :key="sort.key" :value="sort.key">
@@ -175,10 +187,14 @@ function toggleSearch() {
               </DropdownMenuSubContent>
             </DropdownMenuSub>
             <DropdownMenuSub>
-              <DropdownMenuSubTrigger>View</DropdownMenuSubTrigger>
+              <DropdownMenuSubTrigger>
+                <component :is="currentView.icon" />
+                View
+              </DropdownMenuSubTrigger>
               <DropdownMenuSubContent class="min-w-44">
                 <DropdownMenuRadioGroup v-model="explorer.prefs.view">
                   <DropdownMenuRadioItem v-for="view in views" :key="view.mode" :value="view.mode">
+                    <component :is="view.icon" />
                     {{ view.label }}
                   </DropdownMenuRadioItem>
                 </DropdownMenuRadioGroup>

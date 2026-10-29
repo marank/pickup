@@ -23,6 +23,17 @@ const emit = defineEmits<{ accepted: [code: string]; cancel: [] }>()
 const code = ref('')
 const error = ref('')
 const checking = ref(false)
+/** A code, not a login: no suggestions, autocorrect or password managers filling it in. */
+const noAutofill = {
+  autocomplete: 'off',
+  autocorrect: 'off',
+  autocapitalize: 'characters',
+  spellcheck: 'false',
+  'data-1p-ignore': '',
+  'data-lpignore': 'true',
+  'data-bwignore': '',
+  'data-form-type': 'other',
+}
 const accepted = ref(false)
 watch(open, (isOpen) => {
   if (!isOpen) return
@@ -68,8 +79,8 @@ function onOpenChange(isOpen: boolean) {
             id="creation-code"
             v-model="code"
             required
-            autocomplete="off"
             placeholder="1234-5678-9012"
+            v-bind="noAutofill"
             :aria-invalid="error ? true : undefined"
           />
           <p v-if="error" class="text-sm text-destructive" role="alert">{{ error }}</p>

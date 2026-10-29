@@ -41,6 +41,8 @@ describe('creating pickups with a code', () => {
     findButton(/Start a pickup/).click()
     await settle()
     expect(pageText()).toContain('Enter your code')
+    const field = $<HTMLInputElement>('#creation-code')
+    expect([field.autocomplete, field.getAttribute('data-1p-ignore')]).toEqual(['off', ''])
 
     on('POST', '/api/pickups/creation/', {
       status: 403,

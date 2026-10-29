@@ -107,11 +107,11 @@ export function useUploadQueue(
     const controller = new AbortController()
     Object.assign(item, { status: 'uploading', progress: 0, error: undefined, controller })
     try {
-      const media = item.chunked
-        ? await uploadChunked(item, controller.signal)
-        : await uploadDirect(item, controller.signal)
+      // Done shows in the upload list; no toast per file.
+      await (item.chunked
+        ? uploadChunked(item, controller.signal)
+        : uploadDirect(item, controller.signal))
       Object.assign(item, { status: 'done', progress: 100 })
-      toast.success(`${media.original_filename} uploaded`)
       await client.invalidateQueries({ queryKey: pickupKeys.all(toValue(pickupId)) })
     } catch (err) {
       if (controller.signal.aborted) {

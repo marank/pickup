@@ -417,8 +417,23 @@ def test_member_management_is_for_the_creator_only(creator: Client) -> None:
     alice_id = members[1]["id"]
     assert post(alice, f"{members_url}{alice_id}/resend/").status_code == 403
     assert alice.delete(f"{members_url}{alice_id}/").status_code == 403
+    assert alice.get(f"{members_url}{alice_id}/link/").status_code == 403
     creator_id = members[0]["id"]
     assert "cannot be removed" in creator.delete(f"{members_url}{creator_id}/").json()["error"]
+
+
+def test_the_creator_can_copy_a_members_lost_link(creator: Client) -> None:
+    pickup_id = new_pickup(creator)
+    alice = Client()
+    join(alice, pickup_id, "Alice")
+    alice_id = Member.objects.get(user_name="Alice").id
+    response = creator.get(f"/api/pickups/{pickup_id}/members/{alice_id}/link/")
+    assert response["Cache-Control"] == "private, no-store"
+    link = response.json()["member_url"]
+    assert link == alice.get(f"/api/pickups/{pickup_id}/session/link/").json()["member_url"]
+    sign_in_with(Client(), link)  # works on her new phone
+    other = new_pickup(creator)
+    assert creator.get(f"/api/pickups/{other}/members/{alice_id}/link/").status_code == 404
 
 
 def test_removing_a_member_deletes_their_folder_and_files(creator: Client) -> None:

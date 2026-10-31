@@ -454,6 +454,23 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/pickups/{pickup_id}/members/{id}/link/': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** @description A participant's personal link, for the creator to pass on when they lost theirs. */
+    get: operations['pickups_members_link_retrieve']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/pickups/{pickup_id}/members/{id}/resend/': {
     parameters: {
       query?: never
@@ -855,7 +872,7 @@ export interface components {
       /** @description New password; empty removes it */
       password?: string
     }
-    /** @description The signed-in member's own personal link (only ever returned to them). */
+    /** @description A personal link: only for the member themselves and the pickup's creator. */
     PersonalLink: {
       member_url: string
       /** @description An address is stored, so the link can be mailed again */
@@ -2152,6 +2169,37 @@ export interface operations {
         }
         content: {
           'application/json': components['schemas']['Error']
+        }
+      }
+      403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+    }
+  }
+  pickups_members_link_retrieve: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        /** @description A UUID string identifying this member. */
+        id: string
+        pickup_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['PersonalLink']
         }
       }
       403: {

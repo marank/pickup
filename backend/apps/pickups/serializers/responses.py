@@ -36,7 +36,7 @@ class LinkPreviewSerializer(serializers.Serializer[Any]):
 
 
 class PersonalLinkSerializer(serializers.Serializer[Any]):
-    """The signed-in member's own personal link (only ever returned to them)."""
+    """A personal link: only for the member themselves and the pickup's creator."""
 
     member_url = serializers.CharField()
     has_email = serializers.BooleanField(help_text="An address is stored, so the link can be mailed again")

@@ -10,7 +10,13 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 
 from ..models import Member, Pickup, live
-from ..serializers import ErrorSerializer, InviteSerializer, MemberSerializer, MessageSerializer
+from ..serializers import (
+    ErrorSerializer,
+    InviteSerializer,
+    MemberSerializer,
+    MessageSerializer,
+    PersonalLinkSerializer,
+)
 from ..services.members import MembershipError, get_member_from_request, invite, remove_member, resend_invite
 
 _PICKUP_ID = OpenApiParameter("pickup_id", OpenApiTypes.UUID, OpenApiParameter.PATH)
@@ -95,6 +101,18 @@ class MemberViewSet(mixins.ListModelMixin, viewsets.GenericViewSet[Member]):
         except MembershipError as exc:
             return Response({"error": str(exc)}, status=exc.status)
         return Response({"message": "Invitation sent again."})
+
+    @extend_schema(parameters=[_PICKUP_ID], responses={200: PersonalLinkSerializer, 403: ErrorSerializer})
+    @action(detail=True, methods=["get"])
+    def link(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """A participant's personal link, for the creator to pass on when they lost theirs."""
+        if self._creator() is None:
+            return _creator_only()
+        member = self.get_object()
+        data = {"member_url": member.personal_path, "has_email": bool(member.email_hash)}
+        response = Response(PersonalLinkSerializer(data).data)
+        response["Cache-Control"] = "private, no-store"
+        return response
 
     @extend_schema(parameters=[_PICKUP_ID], responses={204: None, 400: ErrorSerializer, 403: ErrorSerializer})
     def destroy(self, request: Request, *args: Any, **kwargs: Any) -> Response:

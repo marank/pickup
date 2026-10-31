@@ -2071,6 +2071,64 @@
                 }
             }
         },
+        "/api/pickups/{pickup_id}/members/{id}/link/": {
+            "get": {
+                "operationId": "pickups_members_link_retrieve",
+                "description": "A participant's personal link, for the creator to pass on when they lost theirs.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this member.",
+                        "required": true
+                    },
+                    {
+                        "in": "path",
+                        "name": "pickup_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PersonalLink"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/pickups/{pickup_id}/members/{id}/resend/": {
             "post": {
                 "operationId": "pickups_members_resend_create",
@@ -3205,7 +3263,7 @@
             },
             "PersonalLink": {
                 "type": "object",
-                "description": "The signed-in member's own personal link (only ever returned to them).",
+                "description": "A personal link: only for the member themselves and the pickup's creator.",
                 "properties": {
                     "member_url": {
                         "type": "string"

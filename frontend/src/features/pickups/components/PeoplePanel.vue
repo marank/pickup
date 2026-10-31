@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { MailIcon, Trash2Icon } from '@lucide/vue'
+import { LinkIcon, MailIcon, Trash2Icon } from '@lucide/vue'
 import { computed, reactive, ref } from 'vue'
 import { toast } from 'vue-sonner'
 
@@ -9,6 +9,7 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { copyText } from '@/lib/clipboard'
 import { formatRelativeDate } from '@/lib/format'
 import { ownerColor } from '@/lib/ownerColor'
 
@@ -48,6 +49,17 @@ async function resend(member: Member) {
     toast.success(`Invitation sent again to ${member.email}`)
   } catch (err) {
     toast.error(apiErrorMessage(err, 'Could not send the invitation'))
+  }
+}
+
+async function copyLink(member: Member) {
+  try {
+    await copyText(admin.memberLink(member.id))
+    toast.success(`Personal link of ${member.user_name || 'the invited person'} copied`, {
+      description: 'Whoever opens it takes part as them, so only give it to them.',
+    })
+  } catch (err) {
+    toast.error(apiErrorMessage(err, 'Could not copy the link'))
   }
 }
 
@@ -150,6 +162,16 @@ async function remove() {
               }}
             </p>
           </div>
+          <Button
+            v-if="!member.is_you"
+            variant="ghost"
+            size="icon-sm"
+            :aria-label="`Copy the personal link of ${member.user_name || 'the invited person'}`"
+            title="Copy their personal link, if they lost it"
+            @click="copyLink(member)"
+          >
+            <LinkIcon />
+          </Button>
           <Button
             v-if="member.email && !member.is_creator"
             variant="ghost"

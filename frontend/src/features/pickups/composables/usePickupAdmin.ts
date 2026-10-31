@@ -24,6 +24,11 @@ export function usePickupAdmin(pickupId: Id, enabled: MaybeRefOrGetter<boolean> 
 
   return {
     members,
+    /** A participant's personal link (not cached: it is a secret). */
+    memberLink: (memberId: string) =>
+      unwrap(
+        api.GET('/api/pickups/{pickup_id}/members/{id}/link/', { params: memberPath(memberId) }),
+      ).then(({ member_url }) => `${window.location.origin}${member_url}`),
     updateSettings: useMutation({
       mutationFn: (changes: PickupSettings) =>
         unwrap(

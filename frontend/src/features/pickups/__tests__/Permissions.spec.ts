@@ -322,6 +322,19 @@ describe('creator tools', () => {
     await settle()
     expect(lastRequest('POST', '/m-mark/resend/')).toBeDefined()
 
+    expect(
+      document.body.querySelector('button[aria-label^="Copy the personal link of Anna"]'),
+    ).toBeNull()
+    const writeText = vi.fn<(text: string) => Promise<void>>().mockResolvedValue()
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true })
+    on('GET', '/api/pickups/:p/members/:m/link/', {
+      body: { member_url: '/pickup/p1/member/bob-key', has_email: true },
+    })
+    findButton('Copy the personal link of Bob').click()
+    await settle()
+    expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/pickup/p1/member/bob-key`)
+    expect(success).toHaveBeenCalledWith('Personal link of Bob copied', expect.anything())
+
     findButton('Remove Bob').click()
     await settle()
     expect(pageText()).toContain('their folder with everything in it is deleted')
@@ -338,6 +351,10 @@ describe('creator tools', () => {
     on('POST', '/api/pickups/:p/members/', { status: 400, body: { email: ['Invalid.'] } })
     on('POST', '/api/pickups/:p/members/:m/resend/', { status: 429, body: {} })
     on('DELETE', '/api/pickups/:p/members/:m/', { status: 500, body: {} })
+    on('GET', '/api/pickups/:p/members/:m/link/', {
+      status: 403,
+      body: { error: 'Only the creator can manage participants.' },
+    })
     const error = vi.spyOn(toast, 'error')
     await renderAsCreator()
     findButton('People').click()
@@ -353,7 +370,10 @@ describe('creator tools', () => {
       .click()
     await settle()
     expect(error).toHaveBeenCalledWith('Could not remove')
-    expect(error).toHaveBeenCalledTimes(3)
+    findButton('Copy the personal link of Bob').click()
+    await settle()
+    expect(error).toHaveBeenCalledWith('Only the creator can manage participants.')
+    expect(error).toHaveBeenCalledTimes(4)
   })
 })
 

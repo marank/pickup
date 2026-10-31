@@ -27,6 +27,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { copyText } from '@/lib/clipboard'
 import { ownerColor } from '@/lib/ownerColor'
 import { useTheme } from '@/lib/theme'
 
@@ -74,8 +75,11 @@ const client = useQueryClient()
 
 async function copyPersonalLink() {
   try {
-    const { member_url } = await client.fetchQuery(personalLinkQuery(props.pickupId))
-    await navigator.clipboard.writeText(`${window.location.origin}${member_url}`)
+    await copyText(
+      client
+        .fetchQuery(personalLinkQuery(props.pickupId))
+        .then(({ member_url }) => `${window.location.origin}${member_url}`),
+    )
     toast.success(isCreator.value ? 'Creator link copied' : 'Personal link copied')
   } catch (err) {
     toast.error(apiErrorMessage(err, 'Could not copy your link'))

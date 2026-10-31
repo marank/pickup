@@ -25,6 +25,12 @@ ${REAL_IP_CONFIG}
         include /etc/nginx/django_proxy.conf;
     }
 
+    # The container's health check asks every 30 s; not worth a log line each time.
+    location = /api/health {
+        access_log off;
+        include /etc/nginx/django_proxy.conf;
+    }
+
     # Finalizing a chunked upload concatenates the whole file; give it as long as gunicorn.
     location ~ ^/api/upload-sessions/[^/]+/finalize/$ {
         proxy_read_timeout ${GUNICORN_TIMEOUT}s;

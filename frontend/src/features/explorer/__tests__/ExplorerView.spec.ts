@@ -36,6 +36,18 @@ const click = async (el: Element, init: MouseEventInit & { touch?: boolean } = {
   el.dispatchEvent(event)
   await flushPromises()
 }
+/** A finger on the media viewer (pointer events as jsdom can make them). */
+const touch = (el: Element, type: string, x: number, y = 100, id = 1) => {
+  const event = new MouseEvent(type, { bubbles: true, clientX: x, clientY: y })
+  Object.defineProperty(event, 'pointerType', { value: 'touch' })
+  Object.defineProperty(event, 'pointerId', { value: id })
+  el.dispatchEvent(event)
+}
+/** Wait until a swipe has slid out (or a tap has been told from a double tap). */
+const slideDone = async () => {
+  await new Promise((resolve) => setTimeout(resolve, 320))
+  await flushPromises()
+}
 const dblclick = async (el: Element) => {
   el.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))
   await flushPromises()
@@ -246,19 +258,25 @@ describe('explorer: browsing', () => {
     await flushPromises()
     expect(dialog().textContent).toContain('apple.jpg')
 
-    // swipe
+    // swipe: the pictures follow the finger, then the next one slides in
     const stage = $('[data-testid="viewer-stage"]')!
-    const pointer = (type: string, x: number) => {
-      const event = new MouseEvent(type, { bubbles: true, clientX: x })
-      Object.defineProperty(event, 'pointerType', { value: 'touch' })
-      stage.dispatchEvent(event)
-    }
-    pointer('pointerdown', 200)
-    pointer('pointerup', 80)
+    const strip = () => stage.firstElementChild as HTMLElement
+    touch(stage, 'pointerdown', 200)
+    touch(stage, 'pointermove', 150)
     await flushPromises()
+    expect(strip().style.transform).toBe('translate3d(-50px, 0px, 0)')
+    touch(stage, 'pointerup', 80)
+    await slideDone()
     expect(dialog().textContent).toContain('clip.mp4')
-    pointer('pointerup', 80) // no matching pointerdown: ignored
-    await flushPromises()
+    expect(strip().style.transform).toBe('translate3d(0px, 0px, 0)')
+    touch(stage, 'pointerup', 80) // no matching pointerdown: ignored
+    await slideDone()
+    expect(dialog().textContent).toContain('clip.mp4')
+    touch(stage, 'pointerdown', 200)
+    touch(stage, 'pointermove', 180)
+    await new Promise((resolve) => setTimeout(resolve, 100))
+    touch(stage, 'pointerup', 180) // too short and too slow: springs back
+    await slideDone()
     expect(dialog().textContent).toContain('clip.mp4')
 
     findButton('Close').click()
@@ -273,6 +291,83 @@ describe('explorer: browsing', () => {
     expect(router.currentRoute.value.params.folderId).toBe(ALICE)
     await click(item('apple.jpg'), { touch: true })
     expect($('[data-testid="viewer-stage"]')).not.toBeNull()
+  })
+
+  it('opens on tap in Safari, whose click carries no pointer type', async () => {
+    const { router } = await render()
+    touch(item('Alice'), 'pointerdown', 10)
+    await click(item('Alice')) // a plain MouseEvent, as WebKit sends it
+    await settle()
+    expect(router.currentRoute.value.params.folderId).toBe(ALICE)
+    await click(item('apple.jpg')) // and after a tap, a mouse click selects again
+    expect($('[data-testid="viewer-stage"]')).toBeNull()
+    expect(item('apple.jpg').getAttribute('aria-selected')).toBe('true')
+  })
+
+  it('handles the viewer by touch: swipe down to close, tap for the bars, zoom', async () => {
+    await render(ALICE)
+    await click(item('apple.jpg'), { touch: true })
+    const stage = $('[data-testid="viewer-stage"]')!
+    const picture = () => stage.querySelector<HTMLElement>('img[alt]:not([alt=""])')!
+    const header = () => $('[role="dialog"] header')!
+
+    // a tap hides the bars, the next one brings them back
+    touch(stage, 'pointerdown', 100)
+    touch(stage, 'pointerup', 100)
+    await slideDone()
+    expect(header().className).toContain('opacity-0')
+    touch(stage, 'pointerdown', 100)
+    touch(stage, 'pointerup', 100)
+    await slideDone()
+    expect(header().className).not.toContain('opacity-0')
+
+    // double tap zooms in and out
+    for (const zoom of ['scale(2.5)', 'scale(1)']) {
+      touch(stage, 'pointerdown', 100)
+      touch(stage, 'pointerup', 100)
+      touch(stage, 'pointerdown', 100)
+      touch(stage, 'pointerup', 100)
+      await slideDone()
+      expect(picture().style.transform).toContain(zoom)
+    }
+
+    // pinch with two fingers, then let go
+    touch(stage, 'pointerdown', 100, 100, 1)
+    touch(stage, 'pointerdown', 200, 100, 2)
+    touch(stage, 'pointermove', 300, 100, 2)
+    await flushPromises()
+    expect(picture().style.transform).toContain('scale(2)')
+    touch(stage, 'pointerup', 300, 100, 2)
+    touch(stage, 'pointermove', 50, 100, 1) // the finger left over doesn't swipe
+    touch(stage, 'pointerup', 50, 100, 1)
+    await slideDone()
+    expect($('[role="dialog"]')!.textContent).toContain('apple.jpg')
+    // zoomed in, one finger drags the picture instead of swiping
+    touch(stage, 'pointerdown', 100)
+    touch(stage, 'pointermove', 20)
+    touch(stage, 'pointerup', 20)
+    await slideDone()
+    expect($('[role="dialog"]')!.textContent).toContain('apple.jpg')
+    // pinched back below 1: springs back to the whole picture
+    touch(stage, 'pointerdown', 100, 100, 1)
+    touch(stage, 'pointerdown', 300, 100, 2)
+    touch(stage, 'pointermove', 110, 100, 2)
+    touch(stage, 'pointerup', 110, 100, 2)
+    touch(stage, 'pointerup', 100, 100, 1)
+    await flushPromises()
+    expect(picture().style.transform).toContain('scale(1)')
+
+    // swipe down closes
+    touch(stage, 'pointerdown', 100, 100)
+    touch(stage, 'pointermove', 105, 200)
+    await flushPromises()
+    expect((stage.firstElementChild as HTMLElement).style.transform).toBe(
+      'translate3d(0px, 100px, 0)',
+    )
+    touch(stage, 'pointerup', 105, 300)
+    await slideDone()
+    await settle()
+    expect($('[data-testid="viewer-stage"]')).toBeNull()
   })
 
   it('shows the folder tree in a panel on small screens', async () => {
@@ -517,9 +612,12 @@ describe('explorer: owner actions', () => {
     ;(release as (() => void) | null)?.()
     await settle()
     expect($('[aria-label="Uploads"]')!.textContent).toContain('Cancelled')
+    document.documentElement.style.setProperty('--upload-tray-height', '300px') // as measured
     findButton('Clear finished').click()
     await settle()
     expect($('[aria-label="Uploads"]')).toBeNull()
+    // the phone's upload button goes back down to the corner
+    expect(document.documentElement.style.getPropertyValue('--upload-tray-height')).toBe('0px')
   })
 
   it('reports failed actions', async () => {

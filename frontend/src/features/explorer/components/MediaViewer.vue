@@ -1,18 +1,30 @@
 <script setup lang="ts">
 import { ChevronLeftIcon, ChevronRightIcon, DownloadIcon, PencilIcon, XIcon } from '@lucide/vue'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { formatFileSize } from '@/lib/format'
 
 import { useExplorer } from '../composables/useExplorer'
+import { useViewerGestures } from '../composables/useViewerGestures'
 
 const explorer = useExplorer()
 const files = computed(() => explorer.files)
-const item = computed(() => {
-  const file = files.value[explorer.viewer.index]
+const at = (index: number) => {
+  const count = files.value.length
+  const file = files.value[(index + count) % count]
   return file?.kind === 'file' ? file : null
-})
+}
+const item = computed(() => at(explorer.viewer.index))
+/** The current file and its neighbours, side by side, so swiping shows the next one coming. */
+const slides = computed(() =>
+  files.value.length > 1
+    ? ([-1, 0, 1] as const).map((position) => ({
+        position,
+        file: at(explorer.viewer.index + position),
+      }))
+    : [{ position: 0 as const, file: item.value }],
+)
 
 function step(delta: number) {
   const count = files.value.length
@@ -24,23 +36,30 @@ function onKey(event: KeyboardEvent) {
   if (event.key === 'ArrowLeft') step(-1)
 }
 
-// Swipe left/right on touch screens.
-const swipeStart = ref<number | null>(null)
-function onPointerDown(event: PointerEvent) {
-  if (event.pointerType === 'touch') swipeStart.value = event.clientX
-}
-function onPointerUp(event: PointerEvent) {
-  if (swipeStart.value === null) return
-  const distance = event.clientX - swipeStart.value
-  swipeStart.value = null
-  if (Math.abs(distance) > 50) step(distance < 0 ? 1 : -1)
-}
+const stage = ref<HTMLElement | null>(null)
+// Set by a function ref: a plain ref inside v-for would collect an array.
+let picture: HTMLElement | null = null
+const setPicture = (el: unknown) => (picture = el instanceof HTMLElement ? el : null)
+const gestures = useViewerGestures({
+  stage,
+  picture: () => (item.value?.media.is_image ? picture : null),
+  count: () => files.value.length,
+  step,
+  close: () => (explorer.viewer.open = false),
+})
+watch(
+  () => [explorer.viewer.index, explorer.viewer.open],
+  () => gestures.reset(),
+)
 
 function editCaption() {
   if (!item.value) return
   explorer.viewer.open = false
   explorer.requestRename(item.value)
 }
+
+const button =
+  'flex size-9 items-center justify-center rounded-full hover:bg-paper/10 pointer-coarse:size-11'
 </script>
 
 <template>
@@ -48,10 +67,17 @@ function editCaption() {
     <DialogContent
       v-if="item"
       :show-close-button="false"
-      class="flex h-dvh max-h-none w-screen max-w-none flex-col gap-0 rounded-none border-0 bg-stage p-0 text-paper sm:max-w-none"
+      class="flex h-dvh max-h-none w-screen max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 bg-transparent p-0 text-paper sm:max-w-none"
       @keydown="onKey"
     >
-      <header class="flex items-center gap-2 px-3 py-2">
+      <div
+        class="absolute inset-0 -z-10 bg-stage"
+        :style="{ opacity: gestures.backdropOpacity.value }"
+      />
+      <header
+        class="flex items-center gap-2 px-3 py-2 transition-opacity"
+        :class="gestures.barsHidden.value && 'pointer-events-none opacity-0'"
+      >
         <div class="min-w-0 flex-1">
           <DialogTitle class="truncate text-base font-semibold">{{ item.name }}</DialogTitle>
           <DialogDescription class="text-xs text-paper/70">
@@ -62,7 +88,7 @@ function editCaption() {
         <button
           v-if="item.editable"
           type="button"
-          class="flex size-9 items-center justify-center rounded-full hover:bg-paper/10"
+          :class="button"
           aria-label="Edit caption"
           @click="editCaption"
         >
@@ -71,14 +97,14 @@ function editCaption() {
         <a
           :href="item.media.file"
           :download="item.media.original_filename"
-          class="flex size-9 items-center justify-center rounded-full hover:bg-paper/10"
+          :class="button"
           aria-label="Download"
         >
           <DownloadIcon class="size-4" />
         </a>
         <button
           type="button"
-          class="flex size-9 items-center justify-center rounded-full hover:bg-paper/10"
+          :class="button"
           aria-label="Close"
           @click="explorer.viewer.open = false"
         >
@@ -86,34 +112,57 @@ function editCaption() {
         </button>
       </header>
 
+      <!-- touch-none: the viewer handles every touch itself (swipe, pinch, double-tap). -->
       <div
-        class="relative flex min-h-0 flex-1 touch-pan-y items-center justify-center px-2 select-none"
+        ref="stage"
+        class="relative min-h-0 flex-1 touch-none overflow-hidden select-none"
         data-testid="viewer-stage"
-        @pointerdown="onPointerDown"
-        @pointerup="onPointerUp"
+        v-on="gestures.handlers"
       >
-        <img
-          v-if="item.media.is_image"
-          :key="item.id"
-          :src="item.media.file"
-          :alt="item.media.caption || item.name"
-          class="max-h-full max-w-full object-contain"
-          draggable="false"
-        />
-        <video
-          v-else
-          :key="item.id"
-          :src="item.media.file"
-          controls
-          autoplay
-          playsinline
-          class="max-h-full max-w-full"
-        />
+        <div class="absolute inset-0" :style="gestures.stripStyle.value">
+          <div
+            v-for="slide in slides"
+            :key="slide.position"
+            class="absolute inset-0 flex items-center justify-center px-2"
+            :style="{ transform: `translateX(${slide.position * 100}%)` }"
+            :aria-hidden="slide.position !== 0"
+          >
+            <template v-if="slide.file && slide.position === 0">
+              <img
+                v-if="slide.file.media.is_image"
+                :ref="setPicture"
+                :key="slide.file.id"
+                :src="slide.file.media.file"
+                :alt="slide.file.media.caption || slide.file.name"
+                class="max-h-full max-w-full object-contain will-change-transform"
+                :style="gestures.pictureStyle.value"
+                draggable="false"
+              />
+              <video
+                v-else
+                :key="slide.file.id"
+                :src="slide.file.media.file"
+                controls
+                autoplay
+                playsinline
+                class="max-h-full max-w-full"
+              />
+            </template>
+            <!-- Neighbours: the picture itself (it is next anyway), for videos their still. -->
+            <img
+              v-else-if="slide.file?.media.is_image || slide.file?.media.thumbnail"
+              :src="slide.file.media.is_image ? slide.file.media.file : slide.file.media.thumbnail!"
+              alt=""
+              class="max-h-full max-w-full object-contain"
+              draggable="false"
+            />
+          </div>
+        </div>
 
         <template v-if="files.length > 1">
           <button
             type="button"
-            class="absolute left-2 flex size-11 items-center justify-center rounded-full bg-paper/10 hover:bg-paper/20 max-sm:hidden"
+            class="absolute top-1/2 left-2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-paper/10 hover:bg-paper/20 pointer-coarse:hidden"
             aria-label="Previous"
             @click="step(-1)"
           >
@@ -121,7 +170,7 @@ function editCaption() {
           </button>
           <button
             type="button"
-            class="absolute right-2 flex size-11 items-center justify-center rounded-full bg-paper/10 hover:bg-paper/20 max-sm:hidden"
+            class="absolute top-1/2 right-2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-paper/10 hover:bg-paper/20 pointer-coarse:hidden"
             aria-label="Next"
             @click="step(1)"
           >
@@ -130,15 +179,23 @@ function editCaption() {
         </template>
       </div>
 
-      <p
-        v-if="item.media.caption"
-        class="px-4 pt-2 pb-4 text-center text-sm whitespace-pre-line text-paper/90"
+      <div
+        class="transition-opacity"
+        :class="gestures.barsHidden.value && 'pointer-events-none opacity-0'"
       >
-        {{ item.media.caption }}
-      </p>
-      <p v-else-if="files.length > 1" class="px-4 pb-4 text-center text-xs text-paper/50 sm:hidden">
-        Swipe for the next one
-      </p>
+        <p
+          v-if="item.media.caption"
+          class="px-4 pt-2 pb-4 text-center text-sm whitespace-pre-line text-paper/90"
+        >
+          {{ item.media.caption }}
+        </p>
+        <p
+          v-else-if="files.length > 1"
+          class="hidden px-4 pb-4 text-center text-xs text-paper/50 pointer-coarse:block"
+        >
+          Swipe for the next one · pinch to zoom · swipe down to close
+        </p>
+      </div>
     </DialogContent>
   </Dialog>
 </template>

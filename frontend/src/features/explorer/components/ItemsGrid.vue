@@ -13,7 +13,7 @@ import OwnBadge from './OwnBadge.vue'
 
 const props = defineProps<{ variant: 'content' | 'small' | 'large' }>()
 const explorer = useExplorer()
-const { onClick, onDoubleClick } = useItemPointer()
+const { onPointerDown, onClick, onDoubleClick } = useItemPointer()
 
 /** Second line: what's inside a folder; a file's caption, else who added it. */
 function subtitle(item: ExplorerItem): string {
@@ -43,6 +43,7 @@ const layout = computed(
         :title="item.name"
         class="group relative cursor-default rounded-lg border border-transparent outline-none select-none hover:bg-muted/70 aria-selected:border-selection-border aria-selected:bg-selection"
         :class="variant === 'content' ? 'flex items-center gap-3 p-2' : 'flex flex-col p-1.5'"
+        @pointerdown="onPointerDown"
         @click="onClick(item, $event)"
         @dblclick="onDoubleClick(item)"
       >

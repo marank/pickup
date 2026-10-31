@@ -7,9 +7,17 @@ import { useExplorer } from './useExplorer'
  */
 export function useItemPointer() {
   const explorer = useExplorer()
+  // Safari (and so every browser on iOS) fires `click` as a plain MouseEvent without
+  // pointerType; the pointerdown before it says whether a finger did it.
+  let pointerType = ''
+
+  function onPointerDown(event: PointerEvent) {
+    pointerType = event.pointerType
+  }
 
   function onClick(item: ExplorerItem, event: MouseEvent) {
-    const touch = (event as PointerEvent).pointerType === 'touch'
+    const touch = ((event as PointerEvent).pointerType || pointerType) === 'touch'
+    pointerType = ''
     if (touch && !event.ctrlKey && !event.metaKey && !event.shiftKey) {
       explorer.openItem(item)
       return
@@ -24,5 +32,5 @@ export function useItemPointer() {
     explorer.openItem(item)
   }
 
-  return { onClick, onDoubleClick }
+  return { onPointerDown, onClick, onDoubleClick }
 }

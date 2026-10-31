@@ -12,7 +12,7 @@ import ItemThumb from './ItemThumb.vue'
 import OwnBadge from './OwnBadge.vue'
 
 const explorer = useExplorer()
-const { onClick, onDoubleClick } = useItemPointer()
+const { onPointerDown, onClick, onDoubleClick } = useItemPointer()
 
 const columns: { key: SortKey; label: string; class: string }[] = [
   { key: 'name', label: 'Name', class: 'w-full' },
@@ -66,6 +66,7 @@ const columns: { key: SortKey; label: string; class: string }[] = [
           :aria-selected="explorer.selection.isSelected(item.id)"
           :data-item="item.id"
           class="group cursor-default border-b border-border/60 select-none hover:bg-muted/70 aria-selected:bg-selection"
+          @pointerdown="onPointerDown"
           @click="onClick(item, $event)"
           @dblclick="onDoubleClick(item)"
         >

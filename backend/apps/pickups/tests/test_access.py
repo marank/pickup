@@ -436,6 +436,35 @@ def test_the_creator_can_copy_a_members_lost_link(creator: Client) -> None:
     assert creator.get(f"/api/pickups/{other}/members/{alice_id}/link/").status_code == 404
 
 
+def test_the_creator_can_add_an_address_for_someone_without_one(creator: Client) -> None:
+    pickup_id = new_pickup(creator, creator_name="Anna")
+    alice = Client()
+    join(alice, pickup_id, "Alice")
+    join(Client(), pickup_id, "Bob", email="bob@example.com")
+    alice_id = Member.objects.get(user_name="Alice").id
+    url = f"/api/pickups/{pickup_id}/members/{alice_id}/email/"
+    assert post(alice, url, {"email": "alice@example.com"}).status_code == 403
+    taken = post(creator, url, {"email": "BOB@example.com"})
+    assert taken.status_code == 400
+    assert taken.json()["error"] == "Someone in the pickup already has this address."
+
+    mail.outbox.clear()
+    assert post(creator, url, {"email": "alice@example.com"}).status_code == 200
+    stored = Member.objects.get(id=alice_id)
+    assert (stored.email, stored.email_hash) == ("", email_hash("alice@example.com"))  # privacy mode
+    [message] = mail.outbox
+    assert message.to == ["alice@example.com"]
+    assert message.from_email.startswith("Anna via Pickup <")
+    assert "Anna added this address for you" in message.body
+    assert personal_link_from(message).endswith(stored.personal_path)
+
+    # Now she can get her link herself; changing the address stays hers.
+    post(Client(), f"/api/pickups/{pickup_id}/link-request/", {"email": "alice@example.com"})
+    assert len(mail.outbox) == 1  # cooldown: just sent
+    again = post(creator, url, {"email": "new@example.com"})
+    assert again.json()["error"] == "They already have an address; only they can change it."
+
+
 def test_removing_a_member_deletes_their_folder_and_files(creator: Client) -> None:
     pickup_id = new_pickup(creator)
     alice = Client()

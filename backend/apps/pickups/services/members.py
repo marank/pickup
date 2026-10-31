@@ -299,6 +299,21 @@ def invite(request: HttpRequest, pickup: Pickup, inviter: Member, email: str, na
     return member
 
 
+def add_email(request: HttpRequest, member: Member, creator: Member, email: str) -> None:
+    """
+    The creator stores the address of a participant who has none yet, so they can have their
+    link mailed later on their own. It goes to them right away, so a wrong address shows.
+    An address a participant already has only they can change (set_email).
+    """
+    if member.email_hash:
+        raise MembershipError("They already have an address; only they can change it.")
+    if Member.objects.filter(pickup=member.pickup, email_hash=email_hash(email)).exists():
+        raise MembershipError("Someone in the pickup already has this address.")
+    remember_email(member, email)
+    member.save(update_fields=["email", "email_hash"])
+    send_personal_link(member, email, request, "added", inviter=creator)
+
+
 def resend_invite(request: HttpRequest, member: Member, inviter: Member) -> None:
     """Without privacy mode the address is known, so the creator can resend with one click."""
     if not member.email:

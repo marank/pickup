@@ -21,7 +21,7 @@ from ..models import Member
 
 logger = logging.getLogger(__name__)
 
-Reason = Literal["created", "joined", "requested", "invited", "confirm"]
+Reason = Literal["created", "joined", "requested", "invited", "added", "confirm"]
 
 _TEXT: dict[Reason, tuple[str, str]] = {
     "created": (
@@ -45,6 +45,13 @@ _TEXT: dict[Reason, tuple[str, str]] = {
         "Hello{greeting},\n\n{inviter} invites you to add your photos and videos to “{title}”. "
         "Open your personal link to join — no account needed:\n\n{link}\n\nThe link is just for you; "
         "please don't forward it.",
+    ),
+    "added": (
+        "Your link to “{title}”",
+        "Hello {name},\n\n{inviter} added this address for you to “{title}”. With your personal link "
+        "you can log in on any device:\n\n{link}\n\nIf you lose it, you can have it sent to this "
+        "address again. The link is just for you; please don't forward it. If you don't know "
+        "“{title}”, please ignore this mail.",
     ),
     "confirm": (
         "Confirm your new address for “{title}”",
@@ -158,7 +165,7 @@ def send_personal_link(
     subject, body = (part.format(**values) for part in _TEXT[reason])
     sender = settings.DEFAULT_FROM_EMAIL
     reply_to: list[str] = []
-    if reason == "invited":
+    if reason in ("invited", "added"):
         # Sent by Pickup on the inviter's behalf: their address would fail SPF/DKIM as sender.
         sender = formataddr((f"{inviter_name} via Pickup", parseaddr(sender)[1]))
         if inviter and inviter.email:  # only known with the privacy mode off

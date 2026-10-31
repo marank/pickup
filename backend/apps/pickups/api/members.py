@@ -11,13 +11,21 @@ from rest_framework.response import Response
 
 from ..models import Member, Pickup, live
 from ..serializers import (
+    EmailSerializer,
     ErrorSerializer,
     InviteSerializer,
     MemberSerializer,
     MessageSerializer,
     PersonalLinkSerializer,
 )
-from ..services.members import MembershipError, get_member_from_request, invite, remove_member, resend_invite
+from ..services.members import (
+    MembershipError,
+    add_email,
+    get_member_from_request,
+    invite,
+    remove_member,
+    resend_invite,
+)
 
 _PICKUP_ID = OpenApiParameter("pickup_id", OpenApiTypes.UUID, OpenApiParameter.PATH)
 
@@ -101,6 +109,25 @@ class MemberViewSet(mixins.ListModelMixin, viewsets.GenericViewSet[Member]):
         except MembershipError as exc:
             return Response({"error": str(exc)}, status=exc.status)
         return Response({"message": "Invitation sent again."})
+
+    @extend_schema(
+        parameters=[_PICKUP_ID],
+        request=EmailSerializer,
+        responses={200: MessageSerializer, 400: ErrorSerializer, 403: ErrorSerializer},
+    )
+    @action(detail=True, methods=["post"])
+    def email(self, request: Request, *args: Any, **kwargs: Any) -> Response:
+        """Store the address of a participant who has none and mail them their link."""
+        creator = self._creator()
+        if creator is None:
+            return _creator_only()
+        body = EmailSerializer(data=request.data)
+        body.is_valid(raise_exception=True)
+        try:
+            add_email(request, self.get_object(), creator, body.validated_data["email"])
+        except MembershipError as exc:
+            return Response({"error": str(exc)}, status=exc.status)
+        return Response({"message": "Address saved; they got their link by email."})
 
     @extend_schema(parameters=[_PICKUP_ID], responses={200: PersonalLinkSerializer, 403: ErrorSerializer})
     @action(detail=True, methods=["get"])

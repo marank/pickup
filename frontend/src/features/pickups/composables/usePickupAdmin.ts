@@ -52,6 +52,16 @@ export function usePickupAdmin(pickupId: Id, enabled: MaybeRefOrGetter<boolean> 
           }),
         ),
     }),
+    addEmail: useMutation({
+      mutationFn: ({ memberId, email }: { memberId: string; email: string }) =>
+        unwrap(
+          api.POST('/api/pickups/{pickup_id}/members/{id}/email/', {
+            params: memberPath(memberId),
+            body: { email },
+          }),
+        ),
+      onSuccess: refresh,
+    }),
     deletePickup: useMutation({
       mutationFn: () =>
         unwrap(api.DELETE('/api/pickups/{id}/', { params: { path: { id: toValue(pickupId) } } })),

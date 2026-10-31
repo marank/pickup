@@ -39,10 +39,11 @@ ${REAL_IP_CONFIG}
 
 ${ADMIN_LOCATION}
 
-    # Mails go out from these (join, link requests, invitations, the start page's pickup
-    # lookup), joining and logging in take a pickup's password, and creating (or checking a
-    # creation code) may take a code: per client, POSTs only.
-    location ~ ^/api/pickups/(([^/]+/(join|link-request|members|session|session/email)|lookup|creation)/)?$ {
+    # Mails go out from these (join, link requests, invitations and their resending, addresses
+    # the creator adds, the start page's pickup lookup), joining and logging in take a pickup's
+    # password, and creating (or checking a creation code) may take a code: per client, POSTs
+    # only.
+    location ~ ^/api/pickups/(([^/]+/(join|link-request|members|members/[^/]+/(resend|email)|session|session/email)|lookup|creation)/)?$ {
         limit_req zone=mail burst=5 nodelay;
         include /etc/nginx/django_proxy.conf;
     }

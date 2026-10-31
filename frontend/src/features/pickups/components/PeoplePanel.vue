@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LinkIcon, MailIcon, Trash2Icon } from '@lucide/vue'
+import { LinkIcon, MailIcon, MailPlusIcon, Trash2Icon } from '@lucide/vue'
 import { computed, reactive, ref } from 'vue'
 import { toast } from 'vue-sonner'
 
@@ -14,6 +14,7 @@ import { formatRelativeDate } from '@/lib/format'
 import { ownerColor } from '@/lib/ownerColor'
 
 import { usePickupAdmin } from '../composables/usePickupAdmin'
+import MemberEmailDialog from './MemberEmailDialog.vue'
 import SettingsCard from './SettingsCard.vue'
 
 const props = defineProps<{ pickup: Pickup }>()
@@ -23,6 +24,13 @@ const members = computed(() => admin.members.data.value ?? [])
 const form = reactive({ email: '', name: '' })
 const removing = ref<Member | null>(null)
 const confirmOpen = ref(false)
+const addingEmail = ref<Member | null>(null)
+const emailOpen = ref(false)
+
+function askEmail(member: Member) {
+  addingEmail.value = member
+  emailOpen.value = true
+}
 
 const status = (member: Member) =>
   member.is_creator
@@ -173,6 +181,16 @@ async function remove() {
             <LinkIcon />
           </Button>
           <Button
+            v-if="!member.has_email && !member.is_you"
+            variant="ghost"
+            size="icon-sm"
+            :aria-label="`Add an email for ${member.user_name}`"
+            title="Add their email and send them their link"
+            @click="askEmail(member)"
+          >
+            <MailPlusIcon />
+          </Button>
+          <Button
             v-if="member.email && !member.is_creator"
             variant="ghost"
             size="icon-sm"
@@ -196,6 +214,8 @@ async function remove() {
       </ul>
     </SettingsCard>
   </div>
+
+  <MemberEmailDialog v-model:open="emailOpen" :pickup="pickup" :member="addingEmail" />
 
   <ConfirmDialog
     v-model:open="confirmOpen"

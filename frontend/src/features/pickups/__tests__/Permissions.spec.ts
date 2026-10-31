@@ -346,6 +346,44 @@ describe('creator tools', () => {
     expect(success).toHaveBeenCalledWith('Bob removed')
   })
 
+  it('adds an address for someone without one', async () => {
+    on('GET', '/api/pickups/:p/members/', {
+      body: [
+        member({ id: 'm-anna', user_name: 'Anna', is_creator: true, is_you: true }),
+        member({ id: 'm-bob', has_email: true }),
+        member({ id: 'm-lena', user_name: 'Lena', has_email: false }),
+      ],
+    })
+    on('POST', '/api/pickups/:p/members/:m/email/', {
+      status: 400,
+      body: { error: 'Someone in the pickup already has this address.' },
+    })
+    const success = vi.spyOn(toast, 'success')
+    const error = vi.spyOn(toast, 'error')
+    await renderAsCreator()
+    findButton('People').click()
+    await settle()
+    expect(document.body.querySelector('button[aria-label="Add an email for Bob"]')).toBeNull()
+    expect(document.body.querySelector('button[aria-label="Add an email for Anna"]')).toBeNull()
+
+    findButton('Add an email for Lena').click()
+    await settle()
+    expect(pageText()).toContain('Only they can change it later')
+    await type('#member-email', 'bob@example.com')
+    await submit('#member-email')
+    expect(error).toHaveBeenCalledWith('Someone in the pickup already has this address.')
+
+    on('POST', '/api/pickups/:p/members/:m/email/', {
+      body: { message: 'Address saved; they got their link by email.' },
+    })
+    await type('#member-email', 'lena@example.com')
+    await submit('#member-email')
+    expect(lastRequest('POST', '/members/m-lena/email/')?.body).toEqual({
+      email: 'lena@example.com',
+    })
+    expect(success).toHaveBeenCalledWith('Address saved; they got their link by email.')
+  })
+
   it('reports failed invitations', async () => {
     on('GET', '/api/pickups/:p/members/', { body: [member({ email: 'bob@example.com' })] })
     on('POST', '/api/pickups/:p/members/', { status: 400, body: { email: ['Invalid.'] } })

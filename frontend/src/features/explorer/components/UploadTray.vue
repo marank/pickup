@@ -6,6 +6,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { Progress } from '@/components/ui/progress'
 
 import { useExplorer } from '../composables/useExplorer'
+import { UPLOAD_LIST_HIDE_MS } from '../composables/useUploadQueue'
 import UploadQueueList from './UploadQueueList.vue'
 
 const explorer = useExplorer()
@@ -32,11 +33,28 @@ useResizeObserver(tray, ([entry]) => setHeight(entry ? entry.contentRect.height 
 watch(tray, (el) => el || setHeight(0))
 onBeforeUnmount(() => setHeight(0))
 
-const title = computed(() =>
-  queue.value.busy
-    ? `Uploading ${queue.value.finished + 1} of ${total.value}`
-    : `${queue.value.finished} of ${total.value} uploaded`,
+const failed = computed(() => queue.value.items.filter((item) => item.status === 'error').length)
+const title = computed(() => {
+  if (queue.value.busy) return `Uploading ${queue.value.finished + 1} of ${total.value}`
+  if (failed.value === total.value)
+    return failed.value === 1 ? '1 upload failed' : `${failed.value} uploads failed`
+  return `${queue.value.finished} of ${total.value} uploaded`
+})
+
+// A finished batch says so for a moment, then the list goes away by itself. Failed uploads
+// stay (to retry or dismiss); while the list is open, it waits until it is closed.
+let hideTimer: ReturnType<typeof setTimeout> | undefined
+watch(
+  () => [queue.value.busy, open.value, total.value - failed.value] as const,
+  ([busy, isOpen, settled]) => {
+    clearTimeout(hideTimer)
+    if (!busy && !isOpen && settled > 0)
+      hideTimer = setTimeout(() => queue.value.clearDone(), UPLOAD_LIST_HIDE_MS)
+  },
 )
+onBeforeUnmount(() => clearTimeout(hideTimer))
+// Every new batch starts collapsed again.
+watch(total, (count) => count || (open.value = false))
 </script>
 
 <template>

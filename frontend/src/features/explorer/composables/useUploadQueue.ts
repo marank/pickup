@@ -13,6 +13,8 @@ export const DIRECT_UPLOAD_MAX_SIZE = 20 * 1024 * 1024
 const MAX_CHUNK_ATTEMPTS = 3
 // While more files wait, the pickup is refreshed at most this often (not after every file).
 export const REFRESH_INTERVAL_MS = 3000
+/** How long the upload list stays after a batch is through. */
+export const UPLOAD_LIST_HIDE_MS = 4000
 
 type UploadStatus = 'pending' | 'uploading' | 'done' | 'error' | 'cancelled'
 
@@ -171,7 +173,14 @@ export function useUploadQueue(
     )
   }
 
+  /** Leaves only what still needs attention: uploads running, waiting or failed. */
+  function clearDone() {
+    items.value = items.value.filter(
+      (item) => item.status !== 'done' && item.status !== 'cancelled',
+    )
+  }
+
   const finished = computed(() => items.value.filter((item) => item.status === 'done').length)
 
-  return { items, busy, finished, add, retry, cancel, clearFinished }
+  return { items, busy, finished, add, retry, cancel, clearFinished, clearDone }
 }

@@ -2,6 +2,7 @@ import { DOMWrapper, flushPromises } from '@vue/test-utils'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { toast } from 'vue-sonner'
 
+import { UPLOAD_LIST_HIDE_MS } from '@/features/explorer/composables/useUploadQueue'
 import { on, requests } from '@/test/fakeApi'
 import { ALICE, BEACH, BOB, DRONE, explorerPath, serveExplorer } from '@/test/explorerData'
 import { media, PICKUP_ID } from '@/test/factories'
@@ -618,6 +619,58 @@ describe('explorer: owner actions', () => {
     expect($('[aria-label="Uploads"]')).toBeNull()
     // the phone's upload button goes back down to the corner
     expect(document.documentElement.style.getPropertyValue('--upload-tray-height')).toBe('0px')
+  })
+
+  it('hides the upload list a moment after a batch, but keeps failed uploads', async () => {
+    let uploads = 0 // the second file (bad.jpg) fails
+    on('POST', '/api/pickups/:p/folders/:f/media/', () =>
+      ++uploads === 2
+        ? { status: 400, body: { file: ['Broken file'] } }
+        : { status: 201, body: media() },
+    )
+    await render(ALICE)
+    const input = $<HTMLInputElement>('[data-testid="file-input"]')!
+    const pick = async (names: string[]) => {
+      Object.defineProperty(input, 'files', {
+        value: names.map((name) => new File(['x'], name, { type: 'image/jpeg' })),
+        configurable: true,
+      })
+      input.dispatchEvent(new Event('change'))
+      await settle()
+    }
+    const tray = () => $('[aria-label="Uploads"]')
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+    try {
+      await pick(['a.jpg', 'bad.jpg'])
+      expect(tray()!.textContent).toContain('1 of 2 uploaded')
+      vi.advanceTimersByTime(UPLOAD_LIST_HIDE_MS)
+      await flushPromises()
+      expect(tray()!.textContent).toContain('1 upload failed') // only the failed one is left
+
+      await pick(['b.jpg'])
+      // open, the list waits until it is closed again
+      $<HTMLButtonElement>('[aria-label="Uploads"] button[aria-expanded="false"]')!.click()
+      await flushPromises()
+      vi.advanceTimersByTime(UPLOAD_LIST_HIDE_MS)
+      await flushPromises()
+      expect(tray()!.textContent).toContain('b.jpg')
+      $<HTMLButtonElement>('[aria-label="Uploads"] button[aria-expanded="true"]')!.click()
+      await flushPromises()
+      vi.advanceTimersByTime(UPLOAD_LIST_HIDE_MS)
+      await flushPromises()
+      expect(tray()!.textContent).toContain('1 upload failed')
+
+      $<HTMLButtonElement>('[aria-label="Uploads"] button[aria-expanded="false"]')!.click()
+      await flushPromises()
+      findButton('Clear finished').click()
+      await settle()
+      await pick(['c.jpg'])
+      vi.advanceTimersByTime(UPLOAD_LIST_HIDE_MS)
+      await flushPromises()
+      expect(tray()).toBeNull() // all fine: gone by itself
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('reports failed actions', async () => {

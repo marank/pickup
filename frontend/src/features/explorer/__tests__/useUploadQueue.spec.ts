@@ -7,6 +7,7 @@ import { toast } from 'vue-sonner'
 import {
   CHUNK_SIZE,
   DIRECT_UPLOAD_MAX_SIZE,
+  REFRESH_INTERVAL_MS,
   useUploadQueue,
 } from '@/features/explorer/composables/useUploadQueue'
 import { queryClient } from '@/lib/queryClient'
@@ -60,6 +61,22 @@ describe('useUploadQueue', () => {
     expect(requests.at(-1)?.csrf).toBe('test-token')
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['pickup', PICKUP_ID] })
     expect(queue.busy.value).toBe(false)
+  })
+
+  it('refreshes the pickup once for a batch, and in between only every few seconds', async () => {
+    on('POST', '/api/pickups/:p/folders/:f/media/', { status: 201, body: media() })
+    const invalidate = vi.spyOn(queryClient, 'invalidateQueries')
+    const now = vi.spyOn(Date, 'now').mockReturnValue(REFRESH_INTERVAL_MS)
+    const queue = setup()
+
+    const files = [1, 2, 3].map(() => queue.add(small(), FOLDER_ID))
+    await files[0]
+    expect(invalidate).toHaveBeenCalledTimes(1) // the first file shows up right away
+    now.mockReturnValue(REFRESH_INTERVAL_MS + 10)
+    await files[1]
+    expect(invalidate).toHaveBeenCalledTimes(1) // too soon, more files waiting
+    await files[2]
+    expect(invalidate).toHaveBeenCalledTimes(2) // queue empty
   })
 
   it('uploads large files in chunks and finalizes them', async () => {

@@ -11,6 +11,8 @@ export const CHUNK_SIZE = 5 * 1024 * 1024
 // Above this, files go up in chunks; must stay below nginx client_max_body_size (25m).
 export const DIRECT_UPLOAD_MAX_SIZE = 20 * 1024 * 1024
 const MAX_CHUNK_ATTEMPTS = 3
+// While more files wait, the pickup is refreshed at most this often (not after every file).
+export const REFRESH_INTERVAL_MS = 3000
 
 type UploadStatus = 'pending' | 'uploading' | 'done' | 'error' | 'cancelled'
 
@@ -42,6 +44,8 @@ export function useUploadQueue(
   const items = ref<UploadItem[]>([])
   let nextId = 1
   let queue = Promise.resolve()
+  let stale = false
+  let refreshedAt = 0
 
   const busy = computed(() =>
     items.value.some((item) => item.status === 'pending' || item.status === 'uploading'),
@@ -112,7 +116,7 @@ export function useUploadQueue(
         ? uploadChunked(item, controller.signal)
         : uploadDirect(item, controller.signal))
       Object.assign(item, { status: 'done', progress: 100 })
-      await client.invalidateQueries({ queryKey: pickupKeys.all(toValue(pickupId)) })
+      stale = true
     } catch (err) {
       if (controller.signal.aborted) {
         item.status = 'cancelled'
@@ -123,8 +127,17 @@ export function useUploadQueue(
     }
   }
 
+  /** Shows new files: once the queue is empty, and in between every few seconds. */
+  async function refresh() {
+    const waiting = items.value.some((item) => item.status === 'pending')
+    if (!stale || (waiting && Date.now() - refreshedAt < REFRESH_INTERVAL_MS)) return
+    stale = false
+    refreshedAt = Date.now()
+    await client.invalidateQueries({ queryKey: pickupKeys.all(toValue(pickupId)) })
+  }
+
   function enqueue(item: UploadItem) {
-    queue = queue.then(() => upload(item))
+    queue = queue.then(() => upload(item)).then(refresh)
     return queue
   }
 

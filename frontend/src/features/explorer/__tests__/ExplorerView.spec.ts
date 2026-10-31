@@ -294,15 +294,20 @@ describe('explorer: browsing', () => {
     expect($('[data-testid="viewer-stage"]')).not.toBeNull()
   })
 
-  it('opens on tap in Safari, whose click carries no pointer type', async () => {
+  it('opens on tap in Safari, whose click says nothing about the finger', async () => {
     const { router } = await render()
     touch(item('Alice'), 'pointerdown', 10)
-    await click(item('Alice')) // a plain MouseEvent, as WebKit sends it
+    const safariClick = new MouseEvent('click', { bubbles: true })
+    Object.defineProperty(safariClick, 'pointerType', { value: 'mouse' }) // newer WebKit
+    item('Alice').dispatchEvent(safariClick)
     await settle()
     expect(router.currentRoute.value.params.folderId).toBe(ALICE)
-    await click(item('apple.jpg')) // and after a tap, a mouse click selects again
+    await click(item('apple.jpg')) // after a tap, a mouse click selects again
     expect($('[data-testid="viewer-stage"]')).toBeNull()
     expect(item('apple.jpg').getAttribute('aria-selected')).toBe('true')
+    touch(item('apple.jpg'), 'pointerdown', 10)
+    await click(item('apple.jpg')) // a plain MouseEvent, as older WebKit sends it
+    expect($('[data-testid="viewer-stage"]')).not.toBeNull()
   })
 
   it('handles the viewer by touch: swipe down to close, tap for the bars, zoom', async () => {

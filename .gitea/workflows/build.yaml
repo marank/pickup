@@ -71,7 +71,8 @@ jobs:
         working-directory: /
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends git ca-certificates
+          # ffmpeg: the image builds a small one itself; tests take Debian's.
+          apt-get install -y --no-install-recommends git ca-certificates ffmpeg
 
       - uses: builtin:checkout
 

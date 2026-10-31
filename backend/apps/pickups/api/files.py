@@ -2,6 +2,7 @@ import mimetypes
 from urllib.parse import quote
 
 from django.conf import settings
+from django.db.models.fields.files import FieldFile
 from django.http import FileResponse, HttpResponse, HttpResponseBase
 from django.shortcuts import get_object_or_404
 from drf_spectacular.types import OpenApiTypes
@@ -23,23 +24,41 @@ class MediaFileView(APIView):
 
     @extend_schema(responses={(200, "application/octet-stream"): OpenApiTypes.BINARY, 404: None})
     def get(self, request: Request, media_id: str) -> HttpResponseBase:
-        media = get_object_or_404(
-            Media.objects.select_related("folder__pickup").filter(live("folder__pickup__")), id=media_id
-        )
-        pickup = media.folder.pickup
-        if not can_view(pickup, get_member_from_request(request, pickup)):
-            # Same answer as for a file that doesn't exist.
+        media = _viewable_media(request, media_id)
+        if media is None:
             return HttpResponse(status=404)
-
         content_type = mimetypes.guess_type(media.original_filename)[0] or "application/octet-stream"
-        response: HttpResponseBase
-        if settings.MEDIA_ACCEL_REDIRECT:
-            response = HttpResponse(content_type=content_type)
-            response["X-Accel-Redirect"] = f"/protected-media/{quote(media.file.name or '')}"
-            response["Content-Disposition"] = f"inline; filename*=UTF-8''{quote(media.original_filename)}"
-        else:
-            response = FileResponse(
-                media.file.open("rb"), content_type=content_type, filename=media.original_filename
-            )
-        response["Cache-Control"] = "private, max-age=3600"
-        return response
+        return _send(media.file, content_type, media.original_filename)
+
+
+class MediaThumbnailView(APIView):
+    """The small JPEG preview of a media file, after the same access check."""
+
+    @extend_schema(responses={(200, "image/jpeg"): OpenApiTypes.BINARY, 404: None})
+    def get(self, request: Request, media_id: str) -> HttpResponseBase:
+        media = _viewable_media(request, media_id)
+        if media is None or not media.thumbnail:
+            return HttpResponse(status=404)
+        return _send(media.thumbnail, "image/jpeg", "preview.jpg")
+
+
+def _viewable_media(request: Request, media_id: str) -> Media | None:
+    media = get_object_or_404(
+        Media.objects.select_related("folder__pickup").filter(live("folder__pickup__")), id=media_id
+    )
+    pickup = media.folder.pickup
+    if not can_view(pickup, get_member_from_request(request, pickup)):
+        return None  # same answer as for a file that doesn't exist
+    return media
+
+
+def _send(file: FieldFile, content_type: str, filename: str) -> HttpResponseBase:
+    response: HttpResponseBase
+    if settings.MEDIA_ACCEL_REDIRECT:
+        response = HttpResponse(content_type=content_type)
+        response["X-Accel-Redirect"] = f"/protected-media/{quote(file.name or '')}"
+        response["Content-Disposition"] = f"inline; filename*=UTF-8''{quote(filename)}"
+    else:
+        response = FileResponse(file.open("rb"), content_type=content_type, filename=filename)
+    response["Cache-Control"] = "private, max-age=3600"
+    return response

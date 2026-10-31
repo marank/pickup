@@ -10,7 +10,39 @@ RUN pnpm install --frozen-lockfile
 COPY frontend/ ./
 RUN pnpm run build
 
-# --- 2. Runtime: supervisord → nginx + gunicorn/Django -----------------------------
+# --- 2. ffmpeg for video stills, only what that needs -------------------------------
+# Debian's ffmpeg package pulls in ~440 MB (Mesa, LLVM, codecs for encoding). This builds
+# Debian's own ffmpeg source (signed, with its security patches; rebuild to pick up new
+# ones; Trivy can't see this binary) with nothing but: reading the containers and video codecs uploads may have, scaling
+# and turning frames upright, writing one PNG. No network, no devices, no GPL parts (LGPL).
+# AV1 through Debian's libdav1d. Keep the formats in step with VIDEO_FORMATS in
+# backend/apps/pickups/services/thumbnails.py.
+FROM python:3.14-slim AS ffmpeg
+WORKDIR /src
+RUN sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/debian.sources \
+ && apt-get update \
+ && apt-get install -y --no-install-recommends \
+      build-essential dpkg-dev nasm pkg-config libdav1d-dev zlib1g-dev \
+ && apt-get source ffmpeg \
+ && rm -rf /var/lib/apt/lists/*
+RUN cd ffmpeg-*/ \
+ && ./configure --prefix=/opt/ffmpeg \
+      --disable-everything --disable-autodetect --disable-network --disable-doc \
+      --disable-debug --disable-ffplay --disable-ffprobe --disable-avdevice \
+      --enable-zlib --enable-libdav1d \
+      --enable-protocol=file,pipe \
+      --enable-demuxer=mov,matroska,avi,asf,flv \
+      --enable-parser=h264,hevc,vp8,vp9,av1,mpeg4video,mpegvideo,h263,mjpeg,vc1 \
+      --enable-decoder=h264,hevc,vp8,vp9,libdav1d,mpeg4,h263,flv,mpeg1video,mpeg2video,mjpeg \
+      --enable-decoder=msmpeg4v1,msmpeg4v2,msmpeg4v3,wmv1,wmv2,wmv3,vc1,prores \
+      --enable-filter=scale,transpose,hflip,vflip,rotate,format,null \
+      --enable-encoder=png --enable-muxer=image2pipe \
+ && make -j"$(nproc)" \
+ && make install \
+ && strip /opt/ffmpeg/bin/ffmpeg \
+ && /opt/ffmpeg/bin/ffmpeg -hide_banner -L | grep -q "GNU Lesser General Public"
+
+# --- 3. Runtime: supervisord → nginx + gunicorn/Django -----------------------------
 FROM python:3.14-slim AS runtime
 COPY --from=ghcr.io/astral-sh/uv:0.12.20 /uv /usr/local/bin/uv
 
@@ -23,7 +55,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     DATA_DIR=/data
 
 RUN apt-get update \
- && apt-get install -y --no-install-recommends nginx gettext-base \
+ # libdav1d7: AV1 decoder for the ffmpeg built above.
+ && apt-get install -y --no-install-recommends nginx gettext-base libdav1d7 \
  && rm -rf /var/lib/apt/lists/* /etc/nginx/sites-enabled /etc/nginx/conf.d \
  # supervisord lives outside the app's venv; it's infrastructure, not an app dependency.
  # pip itself is removed afterwards: not needed at runtime, and it vendors its own
@@ -46,6 +79,8 @@ RUN SECRET_KEY="build-only-$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n'
     DATA_DIR=/tmp/build-data python manage.py collectstatic --noinput
 
 COPY --from=frontend /frontend/dist /srv/spa
+# Video stills (services/thumbnails.py), run as its own program.
+COPY --from=ffmpeg /opt/ffmpeg/bin/ffmpeg /usr/local/bin/ffmpeg
 COPY docker/nginx.conf docker/django_proxy.conf docker/security_headers.conf /etc/nginx/
 COPY docker/app.conf.template /etc/nginx/app.conf.template
 COPY docker/supervisord.conf /etc/supervisord.conf

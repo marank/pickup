@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from ..models import Folder, Media, MediaChunk, UploadSession
 from ..models.media import media_type_for, stored_name
+from .thumbnails import create_thumbnail
 
 
 def create_upload_session(folder: Folder, data: dict[str, Any]) -> UploadSession:
@@ -77,4 +78,5 @@ def finalize_upload(session: UploadSession) -> Media:
     session.completed_at = timezone.now()
     session.save(update_fields=["status", "completed_at"])
     session.cleanup_chunks()
+    create_thumbnail(media)
     return media

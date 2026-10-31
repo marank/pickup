@@ -57,6 +57,7 @@ export function media(overrides: Partial<Media> = {}): Media {
     id: '33333333-3333-4333-8333-333333333333',
     folder: FOLDER_ID,
     file: '/media/2026/10/27/abc.jpg',
+    thumbnail: null,
     original_filename: 'beach.jpg',
     media_type: 'image',
     file_size: 2048,

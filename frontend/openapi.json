@@ -64,6 +64,48 @@
                 }
             }
         },
+        "/api/files/{media_id}/thumbnail/": {
+            "get": {
+                "operationId": "files_thumbnail_retrieve",
+                "description": "The small JPEG preview of a media file, after the same access check.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "media_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "files"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "image/jpeg": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
         "/api/health": {
             "get": {
                 "operationId": "health_retrieve",
@@ -2905,6 +2947,12 @@
                         "description": "Files are served through an access check (private pickups), never straight from disk.",
                         "readOnly": true
                     },
+                    "thumbnail": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "Small preview for tiles; null while there is none (videos, files it failed for).",
+                        "readOnly": true
+                    },
                     "original_filename": {
                         "type": "string",
                         "description": "Original filename of the uploaded file",
@@ -2972,6 +3020,7 @@
                     "media_type",
                     "original_filename",
                     "owner_name",
+                    "thumbnail",
                     "uploaded_at"
                 ]
             },

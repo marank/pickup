@@ -21,6 +21,7 @@ from ..services.access import can_delete_folder, can_edit, can_view
 from ..services.folders import FolderError, create_subfolder, delete_subfolder, rename_folder
 from ..services.members import get_member_from_request
 from ..services.storage import StorageError, check_room
+from ..services.thumbnails import create_thumbnail
 
 
 class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
@@ -95,6 +96,7 @@ class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
         except StorageError as exc:
             return Response({"error": str(exc)}, status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
         media = Media.objects.create(folder=folder, **upload.validated_data)
+        create_thumbnail(media)
         return Response(
             MediaSerializer(media, context={"member": member}).data, status=status.HTTP_201_CREATED
         )
@@ -113,7 +115,7 @@ class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
 
         media_count = folder.media.count()
         for media in folder.media.all():
-            media.file.delete(save=False)
+            media.delete_files()
         folder.media.all().delete()
         return Response({"message": f"Deleted {media_count} media files."})
 

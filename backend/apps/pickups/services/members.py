@@ -314,7 +314,7 @@ def remove_member(member: Member) -> int:
     deleted = 0
     if member.folder is not None:
         for item in Media.objects.filter(folder_id__in=subtree_ids(member.folder)):
-            item.file.delete(save=False)
+            item.delete_files()
             deleted += 1
         member.folder.delete()  # cascades to the member (OneToOne) and everything inside
     if Member.objects.filter(id=member.id).exists():
@@ -328,12 +328,11 @@ def delete_pickup(pickup: Pickup) -> int:
     media = list(Media.objects.filter(folder__pickup=pickup))
     for session in UploadSession.objects.filter(folder__pickup=pickup):
         session.cleanup_chunks()
-    files = [item.file for item in media]
     pickup.delete()  # cascades to members, folders, media and upload sessions
 
     def delete_files() -> None:
-        for file in files:
-            file.delete(save=False)
+        for item in media:
+            item.delete_files()
 
     transaction.on_commit(delete_files)  # only once the rows are really gone
-    return len(files)
+    return len(media)

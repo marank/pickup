@@ -64,7 +64,7 @@ def delete_subfolder(folder: Folder) -> int:
     media = Media.objects.filter(folder_id__in=subtree_ids(folder))
     count = 0
     for item in media:
-        item.file.delete(save=False)
+        item.delete_files()
         count += 1
     folder.delete()  # cascades to subfolders and their media rows
     return count

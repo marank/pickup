@@ -1,7 +1,7 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .files import MediaFileView
+from .files import MediaFileView, MediaThumbnailView
 from .folders import FolderViewSet
 from .media import MediaViewSet
 from .members import MemberViewSet
@@ -23,6 +23,7 @@ router.register(r"pickups/(?P<pickup_id>[^/.]+)/members", MemberViewSet, basenam
 
 urlpatterns = [
     path("api/files/<uuid:media_id>/", MediaFileView.as_view(), name="media-file"),
+    path("api/files/<uuid:media_id>/thumbnail/", MediaThumbnailView.as_view(), name="media-thumbnail"),
     path(
         "api/upload-sessions/",
         include(

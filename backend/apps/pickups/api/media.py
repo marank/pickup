@@ -69,7 +69,7 @@ class MediaViewSet(mixins.RetrieveModelMixin, mixins.DestroyModelMixin, viewsets
                 {"error": "You do not have permission to delete this media."},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        media.file.delete(save=False)
+        media.delete_files()
         media.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 

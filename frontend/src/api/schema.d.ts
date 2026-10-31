@@ -42,6 +42,23 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/files/{media_id}/thumbnail/': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** @description The small JPEG preview of a media file, after the same access check. */
+    get: operations['files_thumbnail_retrieve']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/health': {
     parameters: {
       query?: never
@@ -727,6 +744,8 @@ export interface components {
       folder: string
       /** @description Files are served through an access check (private pickups), never straight from disk. */
       readonly file: string
+      /** @description Small preview for tiles; null while there is none (videos, files it failed for). */
+      readonly thumbnail: string | null
       /** @description Original filename of the uploaded file */
       original_filename: string
       /**
@@ -1026,6 +1045,34 @@ export interface operations {
         }
         content: {
           'application/octet-stream': string
+        }
+      }
+      /** @description No response body */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
+  files_thumbnail_retrieve: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        media_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'image/jpeg': string
         }
       }
       /** @description No response body */

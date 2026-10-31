@@ -31,6 +31,10 @@ def media_upload_to(instance: object, filename: str) -> str:
     return timezone.now().strftime("%Y/%m/%d/") + stored_name(filename)
 
 
+def thumbnail_upload_to(instance: object, filename: str) -> str:
+    return timezone.now().strftime("%Y/%m/%d/") + stored_name("thumbnail.jpg")
+
+
 class Media(UUIDModel):
     """
     Represents a media file (image or video) uploaded to a folder.
@@ -58,6 +62,12 @@ class Media(UUIDModel):
         max_length=10, choices=MEDIA_TYPE_CHOICES, help_text="Type of media (image or video)"
     )
     file_size = models.BigIntegerField(help_text="File size in bytes")
+    thumbnail = models.FileField(
+        upload_to=thumbnail_upload_to,
+        max_length=255,
+        blank=True,
+        help_text="Small JPEG preview (services/thumbnails.py); tiles load it instead of the file",
+    )
     uploaded_at = models.DateTimeField(default=timezone.now)
 
     # Optional metadata
@@ -84,6 +94,12 @@ class Media(UUIDModel):
         if not self.original_filename:
             self.original_filename = name
         super().save(*args, **kwargs)
+
+    def delete_files(self) -> None:
+        """Remove the file and its preview from disk (the row stays)."""
+        self.file.delete(save=False)
+        if self.thumbnail:
+            self.thumbnail.delete(save=False)
 
     @property
     def is_image(self) -> bool:

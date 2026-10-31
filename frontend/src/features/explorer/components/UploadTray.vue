@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ChevronDownIcon, ChevronUpIcon, UploadIcon } from '@lucide/vue'
 import { useResizeObserver } from '@vueuse/core'
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 
 import { Progress } from '@/components/ui/progress'
 
@@ -28,6 +28,8 @@ const tray = ref<HTMLElement | null>(null)
 const setHeight = (px: number) =>
   document.documentElement.style.setProperty('--upload-tray-height', `${px}px`)
 useResizeObserver(tray, ([entry]) => setHeight(entry ? entry.contentRect.height + 12 : 0))
+// The observer says nothing when the list goes away (cleared): the button would stay up high.
+watch(tray, (el) => el || setHeight(0))
 onBeforeUnmount(() => setHeight(0))
 
 const title = computed(() =>

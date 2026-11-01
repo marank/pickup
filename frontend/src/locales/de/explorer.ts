@@ -87,7 +87,6 @@ const explorer: Messages = {
   '{n} items selected': '{n} Elemente ausgewählt',
   '{size} in files': '{size} in Dateien',
   Contains: 'Enthält',
-  '{folders} folders, {files} files': '{folders} Ordner, {files} Dateien',
   'No caption': 'Keine Bildunterschrift',
   Files: 'Dateien',
   Started: 'Begonnen',

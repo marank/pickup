@@ -263,9 +263,10 @@ const ownFolder = computed(() => explorer.ownFolder)
         </template>
       </div>
 
+      <!-- pl-2: the dots stick out left of the line; the scrolling rail would cut them off. -->
       <nav
         v-if="days.length > 1"
-        class="sticky top-0 hidden max-h-[80vh] w-32 shrink-0 self-start overflow-y-auto pt-24 lg:block"
+        class="sticky top-0 hidden max-h-[80vh] w-36 shrink-0 self-start overflow-y-auto pt-24 pl-2 lg:block"
         :aria-label="t('Days')"
       >
         <ol class="space-y-0.5 border-l pl-3 text-xs">

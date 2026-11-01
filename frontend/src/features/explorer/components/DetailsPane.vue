@@ -4,7 +4,7 @@ import { computed } from 'vue'
 
 import { Button } from '@/components/ui/button'
 import { formatFileSize } from '@/lib/format'
-import { locale, t } from '@/lib/i18n'
+import { locale, plural, t } from '@/lib/i18n'
 import { ownerColor } from '@/lib/ownerColor'
 
 import { useExplorer } from '../composables/useExplorer'
@@ -66,12 +66,8 @@ const people = computed(() => childrenOf(explorer.tree, null).length)
         <template v-else>
           <dt class="text-muted-foreground">{{ t('Contains') }}</dt>
           <dd>
-            {{
-              t('{folders} folders, {files} files', {
-                folders: shown.folder.subfolder_count,
-                files: shown.folder.media_count,
-              })
-            }}
+            {{ plural(shown.folder.subfolder_count, '1 folder', '{n} folders') }},
+            {{ plural(shown.folder.media_count, '1 file', '{n} files') }}
           </dd>
         </template>
       </dl>

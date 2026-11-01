@@ -15,7 +15,10 @@ const claiming = computed(() => props.pickup.is_member && !props.pickup.has_fold
 /** Closed by the creator: nobody else looks, uploads or joins. */
 const closed = computed(() => props.pickup.visibility === 'creator')
 const canJoin = computed(
-  () => !closed.value && (claiming.value || props.pickup.join_policy === 'open'),
+  () =>
+    !closed.value &&
+    !props.pickup.is_read_only &&
+    (claiming.value || props.pickup.join_policy === 'open'),
 )
 const initialName = computed(() =>
   claiming.value && props.pickup.member_name !== 'Creator' ? props.pickup.member_name : '',
@@ -54,6 +57,9 @@ const title = computed(() => props.pickup.title || 'this pickup')
         >
         <template v-else-if="canJoin">
           You get your own folder for uploads and can see everyone else's photos.
+        </template>
+        <template v-else-if="pickup.is_read_only">
+          This pickup is read-only now: nobody joins or adds photos anymore.
         </template>
         <template v-else-if="pickup.join_policy === 'invite'">
           Only invited people can take part. If you were invited, use the link from your invitation.

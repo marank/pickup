@@ -48,6 +48,11 @@ class Pickup(UUIDModel):
         default=False,
         help_text="Store e-mail addresses only as keyed hashes; off: also in plain text (creator sees them)",
     )
+    read_only_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="From then on nobody uploads or changes anything; viewing and downloading go on",
+    )
     expires_at = models.DateTimeField(
         null=True,
         blank=True,
@@ -90,6 +95,10 @@ class Pickup(UUIDModel):
 
     def __str__(self) -> str:
         return f"Pickup {self.id} - {self.title or 'Untitled'}"
+
+    @property
+    def is_read_only(self) -> bool:
+        return self.read_only_at is not None and self.read_only_at <= timezone.now()
 
     @property
     def is_expired(self) -> bool:

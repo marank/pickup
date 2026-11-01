@@ -15,6 +15,9 @@ class FolderSerializer(serializers.ModelSerializer[Folder]):
     media_count = serializers.SerializerMethodField()
     subfolder_count = serializers.SerializerMethodField()
     can_edit = serializers.SerializerMethodField()
+    is_own = serializers.SerializerMethodField(
+        help_text="Your folder or one inside it, also while you can't change it (read-only)"
+    )
     can_delete = serializers.SerializerMethodField()
 
     class Meta:
@@ -30,6 +33,7 @@ class FolderSerializer(serializers.ModelSerializer[Folder]):
             "media_count",
             "subfolder_count",
             "can_edit",
+            "is_own",
             "can_delete",
         ]
         read_only_fields = fields
@@ -44,6 +48,10 @@ class FolderSerializer(serializers.ModelSerializer[Folder]):
         """Check if the current authenticated member owns this folder."""
         member = self.context.get("member")
         return can_edit(member, obj)
+
+    def get_is_own(self, obj: Folder) -> bool:
+        member = self.context.get("member")
+        return bool(member and member.owns(obj))
 
     def get_can_delete(self, obj: Folder) -> bool:
         """Owner or creator (moderation); never a member's top-level folder."""

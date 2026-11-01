@@ -2794,6 +2794,18 @@
                         "readOnly": true,
                         "description": "Store e-mail addresses only as keyed hashes; off: also in plain text (creator sees them)"
                     },
+                    "read_only_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "From then on nobody uploads or changes anything; viewing and downloading go on"
+                    },
+                    "is_read_only": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "description": "read_only_at has passed"
+                    },
                     "expires_at": {
                         "type": "string",
                         "format": "date-time",
@@ -2847,11 +2859,13 @@
                     "intro_seen",
                     "is_creator",
                     "is_member",
+                    "is_read_only",
                     "join_policy",
                     "media_count",
                     "member_name",
                     "member_url",
                     "password_required",
+                    "read_only_at",
                     "share_url",
                     "storage",
                     "visibility"
@@ -2980,6 +2994,11 @@
                         "description": "Check if the current authenticated member owns this folder.",
                         "readOnly": true
                     },
+                    "is_own": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "description": "Your folder or one inside it, also while you can't change it (read-only)"
+                    },
                     "can_delete": {
                         "type": "boolean",
                         "description": "Owner or creator (moderation); never a member's top-level folder.",
@@ -2991,6 +3010,7 @@
                     "can_edit",
                     "created_at",
                     "id",
+                    "is_own",
                     "media_count",
                     "name",
                     "parent",
@@ -3389,6 +3409,12 @@
                         "type": "boolean",
                         "description": "Store e-mail addresses only as keyed hashes; off: also in plain text (creator sees them)"
                     },
+                    "read_only_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true,
+                        "description": "From then on nobody uploads or changes anything; viewing and downloading go on"
+                    },
                     "expires_at": {
                         "type": "string",
                         "format": "date-time",
@@ -3501,6 +3527,18 @@
                         "readOnly": true,
                         "description": "Store e-mail addresses only as keyed hashes; off: also in plain text (creator sees them)"
                     },
+                    "read_only_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "From then on nobody uploads or changes anything; viewing and downloading go on"
+                    },
+                    "is_read_only": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "description": "read_only_at has passed"
+                    },
                     "expires_at": {
                         "type": "string",
                         "format": "date-time",
@@ -3550,10 +3588,12 @@
                     "intro_seen",
                     "is_creator",
                     "is_member",
+                    "is_read_only",
                     "join_policy",
                     "media_count",
                     "member_name",
                     "password_required",
+                    "read_only_at",
                     "share_url",
                     "storage",
                     "visibility"

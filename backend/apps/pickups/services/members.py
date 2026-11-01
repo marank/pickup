@@ -156,6 +156,8 @@ def join_pickup(
         raise MembershipError("You already have a folder in this pickup.")
     if is_closed_for(pickup, current):
         raise MembershipError("This pickup is closed.", status=403)
+    if pickup.is_read_only:
+        raise MembershipError("This pickup is read-only now: nobody adds photos anymore.", status=403)
     if current is None and pickup.join_policy == JoinPolicy.INVITE:
         raise MembershipError("This pickup is invite-only. Ask the creator for an invitation.", status=403)
     if current is None and pickup.join_policy == JoinPolicy.CLOSED:
@@ -203,6 +205,8 @@ def update_member(member: Member, *, user_name: str | None = None, folder_name: 
                 user_name=user_name
             )
     if folder_name is not None:
+        if pickup.is_read_only:
+            raise MembershipError("This pickup is read-only now.", status=403)
         if member.folder is None:
             raise MembershipError("You don't have a folder in this pickup yet.")
         try:

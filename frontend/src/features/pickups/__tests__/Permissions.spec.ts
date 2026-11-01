@@ -224,30 +224,47 @@ describe('creator tools', () => {
     expect(error).toHaveBeenCalledWith('Could not delete the pickup')
   })
 
-  it('sets and clears an expiry date, shown to everyone', async () => {
+  it('sets and clears the read-only and deletion dates, shown to everyone', async () => {
     on('PATCH', '/api/pickups/:id/', { body: pickup() })
-    await renderAsCreator({ expires_at: '2026-12-24T22:59:59Z' })
-    expect($('[title^="Everything is deleted at the end of"]').textContent).toContain('2026')
-    $('[title^="Everything is deleted at the end of"]').click()
+    await renderAsCreator({
+      read_only_at: '2026-12-20T22:59:59Z',
+      expires_at: '2026-12-24T22:59:59Z',
+    })
+    expect($('[title="Then nobody adds or changes anything"]').textContent).toContain(
+      'Uploads until',
+    )
+    expect($('[title="Then everything is deleted"]').textContent).toContain('Deleted after')
+    $('[title="Then everything is deleted"]').click()
     await settle()
+    expect(($('#settings-read-only') as HTMLInputElement).value).toBe('2026-12-20')
     expect(($('#settings-expires') as HTMLInputElement).value).toBe('2026-12-24')
+    expect(($('#settings-expires') as HTMLInputElement).min).toBe('2026-12-20')
+    expect(pageText()).toContain('nobody joins, uploads or changes anything')
     expect(pageText()).toContain('the pickup is deleted with all photos and videos')
 
-    await submit('#settings-title') // unchanged: the date isn't sent again
-    expect(lastRequest('PATCH', `/pickups/${PICKUP_ID}/`)?.body).not.toHaveProperty('expires_at')
+    await submit('#settings-title') // unchanged: the dates aren't sent again
+    const unchanged = lastRequest('PATCH', `/pickups/${PICKUP_ID}/`)?.body
+    expect(unchanged).not.toHaveProperty('expires_at')
+    expect(unchanged).not.toHaveProperty('read_only_at')
 
+    await type('#settings-read-only', '2027-01-15')
     await type('#settings-expires', '2027-01-31')
     await submit('#settings-title')
-    const body = lastRequest('PATCH', `/pickups/${PICKUP_ID}/`)!.body as { expires_at: string }
-    const sent = body.expires_at
-    expect(new Date(sent).getDate()).toBe(31)
-    expect(new Date(sent).getHours()).toBe(23)
+    const body = lastRequest('PATCH', `/pickups/${PICKUP_ID}/`)!.body as Record<string, string>
+    expect(new Date(body.read_only_at!).getDate()).toBe(15)
+    expect(new Date(body.expires_at!).getDate()).toBe(31)
+    expect(new Date(body.expires_at!).getHours()).toBe(23)
 
-    findButton('Never').click()
+    for (const button of document.body.querySelectorAll('button'))
+      if (button.textContent?.trim() === 'Never') button.click()
     await flushPromises()
+    expect(pageText()).toContain('Never: people can add photos until the pickup is deleted.')
     expect(pageText()).toContain('Never: the pickup stays until you delete it.')
     await submit('#settings-title')
-    expect(lastRequest('PATCH', `/pickups/${PICKUP_ID}/`)?.body).toHaveProperty('expires_at', null)
+    expect(lastRequest('PATCH', `/pickups/${PICKUP_ID}/`)?.body).toMatchObject({
+      read_only_at: null,
+      expires_at: null,
+    })
   })
 
   it('shows how much storage the pickup uses', async () => {

@@ -678,6 +678,13 @@ export interface components {
       readonly email_privacy: boolean
       /**
        * Format: date-time
+       * @description From then on nobody uploads or changes anything; viewing and downloading go on
+       */
+      readonly read_only_at: string | null
+      /** @description read_only_at has passed */
+      readonly is_read_only: boolean
+      /**
+       * Format: date-time
        * @description When the pickup is deleted with all files (empty: never)
        */
       readonly expires_at: string | null
@@ -745,6 +752,8 @@ export interface components {
       readonly subfolder_count: number
       /** @description Check if the current authenticated member owns this folder. */
       readonly can_edit: boolean
+      /** @description Your folder or one inside it, also while you can't change it (read-only) */
+      readonly is_own: boolean
       /** @description Owner or creator (moderation); never a member's top-level folder. */
       readonly can_delete: boolean
     }
@@ -904,6 +913,11 @@ export interface components {
       email_privacy?: boolean
       /**
        * Format: date-time
+       * @description From then on nobody uploads or changes anything; viewing and downloading go on
+       */
+      read_only_at?: string | null
+      /**
+       * Format: date-time
        * @description When the pickup is deleted with all files (empty: never)
        */
       expires_at?: string | null
@@ -955,6 +969,13 @@ export interface components {
       readonly join_policy: components['schemas']['JoinPolicyEnum']
       /** @description Store e-mail addresses only as keyed hashes; off: also in plain text (creator sees them) */
       readonly email_privacy: boolean
+      /**
+       * Format: date-time
+       * @description From then on nobody uploads or changes anything; viewing and downloading go on
+       */
+      readonly read_only_at: string | null
+      /** @description read_only_at has passed */
+      readonly is_read_only: boolean
       /**
        * Format: date-time
        * @description When the pickup is deleted with all files (empty: never)

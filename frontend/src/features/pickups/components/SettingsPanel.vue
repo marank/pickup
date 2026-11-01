@@ -25,21 +25,25 @@ const form = reactive({
   visibility: 'members',
   join_policy: 'open',
   email_privacy: false,
+  readOnly: '',
   expires: '',
 })
 type Field = keyof typeof form
 const today = toDateInput(new Date())
+const longDate = (day: string) =>
+  new Date(`${day}T12:00`).toLocaleDateString(undefined, { dateStyle: 'long' })
 const saved = (pickup: Pickup): typeof form => ({
   title: pickup.title ?? '',
   visibility: pickup.visibility,
   join_policy: pickup.join_policy,
   email_privacy: pickup.email_privacy,
+  readOnly: pickup.read_only_at ? toDateInput(new Date(pickup.read_only_at)) : '',
   expires: pickup.expires_at ? toDateInput(new Date(pickup.expires_at)) : '',
 })
 
 /** Each card saves its own fields; the others keep what is typed into them. */
 const cards = {
-  general: ['title', 'expires'],
+  general: ['title', 'readOnly', 'expires'],
   access: ['visibility', 'join_policy'],
   privacy: ['email_privacy'],
 } satisfies Record<string, Field[]>
@@ -120,11 +124,15 @@ async function save(card: Card) {
   const values: Record<string, unknown> = {}
   for (const field of cards[card]) values[field] = form[field]
   if ('title' in values) values.title = form.title.trim()
-  if ('expires' in values) {
-    delete values.expires
-    // Unchanged dates stay as they are (an old one may lie in the past by now).
-    if (form.expires !== saved(props.pickup).expires)
-      values.expires_at = form.expires ? endOfDay(form.expires) : null
+  // Unchanged dates stay as they are (an old one may lie in the past by now).
+  for (const [field, key] of [
+    ['readOnly', 'read_only_at'],
+    ['expires', 'expires_at'],
+  ] as const) {
+    if (!(field in values)) continue
+    delete values[field]
+    if (form[field] !== saved(props.pickup)[field])
+      values[key] = form[field] ? endOfDay(form[field]) : null
   }
   saving.value = card
   try {
@@ -192,13 +200,37 @@ async function removePickup() {
         />
       </div>
       <div class="space-y-1.5">
+        <Label for="settings-read-only">Read-only</Label>
+        <div class="flex gap-2">
+          <Input
+            id="settings-read-only"
+            v-model="form.readOnly"
+            type="date"
+            :min="today"
+            :max="form.expires || undefined"
+            class="w-48"
+            aria-describedby="settings-read-only-hint"
+          />
+          <Button v-if="form.readOnly" type="button" variant="ghost" @click="form.readOnly = ''">
+            Never
+          </Button>
+        </div>
+        <p id="settings-read-only-hint" class="text-sm text-muted-foreground">
+          {{
+            form.readOnly
+              ? `After ${longDate(form.readOnly)} nobody joins, uploads or changes anything; everyone can still look and download. Everyone sees the date.`
+              : 'Never: people can add photos until the pickup is deleted.'
+          }}
+        </p>
+      </div>
+      <div class="space-y-1.5">
         <Label for="settings-expires">Delete automatically</Label>
         <div class="flex gap-2">
           <Input
             id="settings-expires"
             v-model="form.expires"
             type="date"
-            :min="today"
+            :min="form.readOnly || today"
             class="w-48"
             aria-describedby="settings-expires-hint"
           />
@@ -209,7 +241,7 @@ async function removePickup() {
         <p id="settings-expires-hint" class="text-sm text-muted-foreground">
           {{
             form.expires
-              ? `At the end of ${new Date(`${form.expires}T12:00`).toLocaleDateString(undefined, { dateStyle: 'long' })} the pickup is deleted with all photos and videos. Everyone sees the date.`
+              ? `At the end of ${longDate(form.expires)} the pickup is deleted with all photos and videos. Everyone sees the date.`
               : 'Never: the pickup stays until you delete it.'
           }}
         </p>

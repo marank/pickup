@@ -8,6 +8,7 @@ import {
   HourglassIcon,
   LayoutGridIcon,
   ListIcon,
+  LockIcon,
   PencilIcon,
   RefreshCwIcon,
   RowsIcon,
@@ -40,6 +41,7 @@ import { formatFileSize } from '@/lib/format'
 
 import { useExplorer } from '../composables/useExplorer'
 import type { ViewMode } from '../composables/useViewPrefs'
+import { pickupDates } from '../lib/dates'
 import type { SortKey } from '../lib/items'
 import AddressBar from './AddressBar.vue'
 import TreeToggle from './TreeToggle.vue'
@@ -77,6 +79,7 @@ const single = computed(() => (selected.value.length === 1 ? selected.value[0]! 
 const canJoin = computed(
   () =>
     !explorer.isMember &&
+    !explorer.pickup.data?.is_read_only &&
     explorer.folders.isSuccess &&
     (explorer.pickup.data?.is_member || explorer.pickup.data?.join_policy === 'open'),
 )
@@ -90,10 +93,7 @@ const own = computed(() => {
   const used = formatFileSize(storage.own_used)
   return storage.own_limit === null ? used : `${used} of ${formatFileSize(storage.own_limit)}`
 })
-const expires = computed(() => {
-  const at = explorer.pickup.data?.expires_at
-  return at ? new Date(at).toLocaleDateString(undefined, { dateStyle: 'medium' }) : ''
-})
+const dates = computed(() => pickupDates(explorer.pickup.data))
 
 const refresh = () => client.invalidateQueries({ queryKey: pickupKeys.all(explorer.pickupId) })
 const join = () => router.push({ name: 'pickup-join', params: { pickupId: explorer.pickupId } })
@@ -213,9 +213,13 @@ function toggleSearch() {
                 }}<template v-if="own"> · {{ own }}</template>
               </span>
               <span v-else class="block">Viewing only</span>
-              <span v-if="expires" class="flex items-center gap-1">
+              <span v-if="dates.readOnly" class="flex items-center gap-1">
+                <LockIcon class="size-3" />
+                {{ dates.readOnly }}
+              </span>
+              <span v-if="dates.deleted" class="flex items-center gap-1">
                 <HourglassIcon class="size-3" />
-                Deleted after {{ expires }}
+                {{ dates.deleted }}
               </span>
             </DropdownMenuLabel>
           </DropdownMenuContent>

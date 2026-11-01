@@ -55,7 +55,9 @@ const currentView = computed(
 
 /** Signed in without a folder (creator, invited person), or the pickup is open to everyone. */
 const canJoin = computed(
-  () => explorer.pickup.data?.is_member || explorer.pickup.data?.join_policy === 'open',
+  () =>
+    !explorer.pickup.data?.is_read_only &&
+    (explorer.pickup.data?.is_member || explorer.pickup.data?.join_policy === 'open'),
 )
 const selected = computed(() => explorer.selectedItems)
 const single = computed(() => (selected.value.length === 1 ? selected.value[0]! : null))

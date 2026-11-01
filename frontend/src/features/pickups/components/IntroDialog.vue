@@ -34,33 +34,34 @@ import { pickupKeys } from '../queryKeys'
 
 /**
  * What newcomers should know, one topic per page: their folder, their personal link,
- * uploading and downloading, and the expiry date if there is one. Opens by itself once
+ * uploading and downloading, and the pickup's dates if it has any (read-only, deletion). Opens by itself once
  * after joining (`intro_seen`), and again from the account menu.
  */
 const props = defineProps<{ pickup: Pickup }>()
 const open = defineModel<boolean>('open', { required: true })
 
-type Page = 'folder' | 'link' | 'files' | 'expiry'
+type Page = 'folder' | 'link' | 'files' | 'dates'
 const ICONS: Record<Page, LucideIcon> = {
   folder: FolderOpenIcon,
   link: KeyRoundIcon,
   files: UploadIcon,
-  expiry: CalendarClockIcon,
+  dates: CalendarClockIcon,
 }
 
 const pages = computed<Page[]>(() =>
-  props.pickup.expires_at ? ['folder', 'link', 'files', 'expiry'] : ['folder', 'link', 'files'],
+  props.pickup.read_only_at || props.pickup.expires_at
+    ? ['folder', 'link', 'files', 'dates']
+    : ['folder', 'link', 'files'],
 )
 const index = ref(0)
 const page = computed(() => pages.value[index.value] ?? 'folder')
 const last = computed(() => index.value === pages.value.length - 1)
 
 const creator = computed(() => props.pickup.creator_name || 'the creator')
-const expiry = computed(() =>
-  props.pickup.expires_at
-    ? new Date(props.pickup.expires_at).toLocaleDateString(undefined, { dateStyle: 'long' })
-    : '',
-)
+const longDate = (iso: string | null) =>
+  iso ? new Date(iso).toLocaleDateString(undefined, { dateStyle: 'long' }) : ''
+const readOnly = computed(() => longDate(props.pickup.read_only_at))
+const deleted = computed(() => longDate(props.pickup.expires_at))
 
 // Whether an address is stored decides what the link page offers.
 const client = useQueryClient()
@@ -126,8 +127,17 @@ async function sendLink() {
           <DialogDescription>Nothing is compressed, unlike in chat apps.</DialogDescription>
         </template>
         <template v-else>
-          <DialogTitle>Available until {{ expiry }}</DialogTitle>
-          <DialogDescription>Then the pickup is deleted with everything in it.</DialogDescription>
+          <DialogTitle>
+            <template v-if="pickup.is_read_only">Read-only now</template>
+            <template v-else-if="readOnly">Add photos until {{ readOnly }}</template>
+            <template v-else>Available until {{ deleted }}</template>
+          </DialogTitle>
+          <DialogDescription>
+            <template v-if="readOnly"
+              >After that nobody adds or changes anything; looking and downloading go on.</template
+            >
+            <template v-else>Then the pickup is deleted with everything in it.</template>
+          </DialogDescription>
         </template>
       </DialogHeader>
 
@@ -204,7 +214,12 @@ async function sendLink() {
         </template>
 
         <template v-else>
-          <p>Download what you want to keep before then.</p>
+          <p v-if="readOnly && deleted">
+            On {{ deleted }} it is deleted with everything in it. Download what you want to keep
+            before then.
+          </p>
+          <p v-else-if="deleted">Download what you want to keep before then.</p>
+          <p v-else>It stays until {{ creator }} deletes it.</p>
         </template>
       </div>
 

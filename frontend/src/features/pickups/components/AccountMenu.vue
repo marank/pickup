@@ -71,7 +71,7 @@ const openPage = (page: 'settings' | 'people') =>
   router.push({ name: 'explorer-page', params: { pickupId: props.pickupId, page } })
 
 const ownFolder = computed(() =>
-  folders.data.value?.find((folder) => folder.can_edit && folder.parent === null),
+  folders.data.value?.find((folder) => folder.is_own && folder.parent === null),
 )
 const isCreator = computed(() => pickup.data.value?.is_creator ?? false)
 /** This browser is signed in as a member (with a folder, or as the creator). */
@@ -138,7 +138,11 @@ async function confirmLeave() {
       </DropdownMenuLabel>
       <DropdownMenuSeparator />
       <DropdownMenuItem
-        v-if="!ownFolder && (signedIn || pickup.data.value?.join_policy === 'open')"
+        v-if="
+          !ownFolder &&
+          !pickup.data.value?.is_read_only &&
+          (signedIn || pickup.data.value?.join_policy === 'open')
+        "
         @select="router.push({ name: 'pickup-join', params: { pickupId } })"
       >
         <UserPlusIcon />

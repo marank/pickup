@@ -28,8 +28,16 @@ def is_closed_for(pickup: Pickup, member: Member | None) -> bool:
 
 
 def can_edit(member: Member | None, folder: Folder) -> bool:
-    """Owners change their folders and everything inside — unless the pickup is closed."""
-    return member is not None and member.owns(folder) and not is_closed_for(folder.pickup, member)
+    """
+    Owners change their folders and everything inside — unless the pickup is closed, or
+    read-only (`read_only_at` passed; for the creator too, who still moderates).
+    """
+    return (
+        member is not None
+        and member.owns(folder)
+        and not folder.pickup.is_read_only
+        and not is_closed_for(folder.pickup, member)
+    )
 
 
 def can_delete_folder(member: Member | None, folder: Folder) -> bool:

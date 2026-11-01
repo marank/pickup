@@ -32,6 +32,7 @@ class PickupSerializer(serializers.ModelSerializer[Pickup]):
         help_text="The pickup has a password and this browser isn't logged in: nothing else is shown"
     )
     has_password = serializers.SerializerMethodField(help_text="A password is set (only for members)")
+    is_read_only = serializers.SerializerMethodField(help_text="read_only_at has passed")
     creator_name = serializers.SerializerMethodField(
         help_text="The creator's name for members, if they gave one; else empty"
     )
@@ -57,6 +58,8 @@ class PickupSerializer(serializers.ModelSerializer[Pickup]):
             "visibility",
             "join_policy",
             "email_privacy",
+            "read_only_at",
+            "is_read_only",
             "expires_at",
             "storage",
             "password_required",
@@ -78,6 +81,7 @@ class PickupSerializer(serializers.ModelSerializer[Pickup]):
             "visibility",
             "join_policy",
             "email_privacy",
+            "read_only_at",
             "expires_at",
         ]
 
@@ -92,6 +96,9 @@ class PickupSerializer(serializers.ModelSerializer[Pickup]):
 
     def get_password_required(self, obj: Pickup) -> bool:
         return password_required(obj, self._member())
+
+    def get_is_read_only(self, obj: Pickup) -> bool:
+        return obj.is_read_only
 
     def get_has_password(self, obj: Pickup) -> bool:
         return bool(self._member() and obj.password)
@@ -154,7 +161,15 @@ class PickupUpdateSerializer(serializers.ModelSerializer[Pickup]):
 
     class Meta:
         model = Pickup
-        fields = ["title", "visibility", "join_policy", "email_privacy", "expires_at", "password"]
+        fields = [
+            "title",
+            "visibility",
+            "join_policy",
+            "email_privacy",
+            "read_only_at",
+            "expires_at",
+            "password",
+        ]
         extra_kwargs = {
             "password": {
                 "write_only": True,
@@ -173,6 +188,17 @@ class PickupUpdateSerializer(serializers.ModelSerializer[Pickup]):
         if value is not None and value <= timezone.now():
             raise serializers.ValidationError("Choose a date in the future.")
         return value
+
+    def validate_read_only_at(self, value: datetime | None) -> datetime | None:
+        return self.validate_expires_at(value)
+
+    def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
+        """Read-only comes before deletion (each date is optional)."""
+        read_only_at = attrs.get("read_only_at", self.instance.read_only_at if self.instance else None)
+        expires_at = attrs.get("expires_at", self.instance.expires_at if self.instance else None)
+        if read_only_at and expires_at and read_only_at > expires_at:
+            raise serializers.ValidationError({"read_only_at": "Choose a day before the pickup is deleted."})
+        return attrs
 
 
 class CreatePickupSerializer(serializers.Serializer[Any]):

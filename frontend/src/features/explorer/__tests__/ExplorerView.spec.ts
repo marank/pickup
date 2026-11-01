@@ -838,6 +838,22 @@ describe('explorer: owner actions', () => {
   })
 })
 
+describe('explorer: read-only', () => {
+  it('keeps your folder yours but offers no uploading or joining', async () => {
+    await render(ALICE, {
+      readOnly: true,
+      pickupOverrides: { read_only_at: '2026-10-30T22:59:59Z' },
+    })
+    expect(pageText()).toContain('Your folder: Alice')
+    expect(pageText()).toContain('Read-only')
+    const labels = Array.from(document.body.querySelectorAll('button')).map((b) =>
+      b.textContent?.trim(),
+    )
+    expect(labels).not.toContain('Upload')
+    expect(labels).not.toContain('Join')
+  })
+})
+
 describe('explorer: QR code', () => {
   /** A 2D context that records what is drawn; text is 20 px per character. */
   function fakeContext() {

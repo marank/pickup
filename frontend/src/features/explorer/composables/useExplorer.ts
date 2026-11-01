@@ -53,7 +53,7 @@ function createExplorer(
   })
   const path = computed(() => pathTo(tree.value, folderId()))
   const ownFolder = computed(
-    () => childrenOf(tree.value, null).find((folder) => folder.can_edit) ?? null,
+    () => childrenOf(tree.value, null).find((folder) => folder.is_own) ?? null,
   )
   const isMember = computed(() => ownFolder.value !== null)
   const canEditHere = computed(() => current.value?.can_edit ?? false)

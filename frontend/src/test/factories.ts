@@ -23,6 +23,8 @@ export function pickup(overrides: Partial<Pickup> = {}): Pickup {
     visibility: 'members',
     join_policy: 'open',
     email_privacy: true,
+    read_only_at: null,
+    is_read_only: false,
     expires_at: null,
     storage: { used: 0, limit: null, own_used: null, own_limit: null },
     password_required: false,
@@ -49,6 +51,7 @@ export function folder(overrides: Partial<Folder> = {}): Folder {
     media_count: 1,
     subfolder_count: 0,
     can_edit: false,
+    is_own: false,
     can_delete: false,
     ...overrides,
   }

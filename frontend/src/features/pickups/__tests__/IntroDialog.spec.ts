@@ -101,6 +101,32 @@ describe('intro for newcomers', () => {
     expect(intro()).toHaveLength(1)
   })
 
+  it('names both dates, or that it is read-only already', async () => {
+    on('GET', '/api/pickups/:id/session/link/', { body: { member_url: '/x', has_email: true } })
+    await renderApp({
+      pickupOverrides: {
+        intro_seen: false,
+        read_only_at: '2026-12-01T22:59:59Z',
+        expires_at: '2026-12-15T22:59:59Z',
+      },
+    })
+    for (let i = 0; i < 3; i++) await next()
+    expect(pageText()).toMatch(/Add photos until .*2026/)
+    expect(pageText()).toContain('looking and downloading go on')
+    expect(pageText()).toContain('Download what you want to keep before then')
+  })
+
+  it('says so when it is read-only already and nothing is deleted', async () => {
+    on('GET', '/api/pickups/:id/session/link/', { body: { member_url: '/x', has_email: true } })
+    await renderApp({
+      readOnly: true,
+      pickupOverrides: { intro_seen: false, read_only_at: '2026-10-30T22:59:59Z' },
+    })
+    for (let i = 0; i < 3; i++) await next()
+    expect(pageText()).toContain('Read-only now')
+    expect(pageText()).toContain('It stays until the creator deletes it')
+  })
+
   it('opens for the creator only from the account menu', async () => {
     on('GET', '/api/pickups/:id/session/link/', { body: { member_url: '/x', has_email: true } })
     await renderApp({ member: false, creator: true, pickupOverrides: { intro_seen: false } })

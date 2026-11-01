@@ -10,7 +10,7 @@ A web application for sharing images and videos without user accounts. Users cre
 - 🔗 **Easy Sharing** - One share link per pickup (also as a designed QR card to print), one personal link per participant
 - 💾 **Storage limits** - Per pickup and per participant from `.env`, adjustable per pickup by an admin
 - 🗜️ **ZIP download** - Everything, a folder or a selection as one ZIP, streamed while it is packed
-- ⏳ **Expiry date** - Optional: the pickup deletes itself with all files after a chosen day
+- ⏳ **Read-only and expiry dates** - Optional: uploads stop after one day (looking and downloading go on), the pickup deletes itself with all files after another
 - 🔒 **Private by default** - Only participants see the photos; the creator decides who may look (participants, anyone with the link, or nobody: closed), who may join (anyone with the link, invited people only, nobody new), can remove people and content, and can delete the whole pickup
 - ✉️ **Invitations** - The creator invites by email; everyone can have their personal link mailed again
 - 🕶️ **Privacy mode** - Email addresses are stored only as a keyed hash (switchable per pickup, off by default)
@@ -155,6 +155,7 @@ docker compose start app
 4. **Settings** (bottom of the folder tree) decides:
    - *Who can see the photos?* Only participants (default), anyone with the link, or nobody (closed: only the creator still sees the contents; nobody else can look, upload or join until it is opened again).
    - *Who can join and upload?* Anyone with the link (with a new, unused name), only invited people, or nobody new.
+   - *Read-only*: a day after which nobody joins, uploads or changes anything; everyone can still look and download, and the creator can still remove files. Shown next to the title.
    - *Delete automatically*: a day after which the pickup is deleted with all files. Everyone sees the date next to the title. Expired pickups disappear at once; an hourly job in the container (`delete_expired_pickups`) frees the space.
    - *Delete this pickup*: removes it with all folders and files for everyone, after a warning. It cannot be undone.
    - *Privacy mode* (default off): addresses are kept only as an HMAC fingerprint. Mails still work, because they are sent when someone types their address; the creator sees no addresses and must type an address again to resend. Turning it on deletes stored addresses.
@@ -183,7 +184,7 @@ Membership is a session: the personal link's access key is exchanged once (`POST
 | GET | `/api/csrf` | Sets the CSRF cookie |
 | POST | `/api/pickups/` | Create a pickup (returns the creator's personal link) |
 | GET | `/api/pickups/{id}/` | Pickup details, your role and what you may do (`can_view`, `is_member`, …) |
-| PATCH | `/api/pickups/{id}/` | Title, `visibility` (`members` / `link` / `creator`), `join_policy`, `email_privacy`, `expires_at` (creator) |
+| PATCH | `/api/pickups/{id}/` | Title, `visibility` (`members` / `link` / `creator`), `join_policy`, `email_privacy`, `read_only_at`, `expires_at` (creator) |
 | DELETE | `/api/pickups/{id}/` | Delete the pickup with all folders and files (creator) |
 | GET | `/api/pickups/{id}/download/?folders=…&media=…` | ZIP of the selected folders/files (comma-separated ids); without both: the whole pickup |
 | POST / DELETE | `/api/pickups/{id}/session/` | Log in with `{access_key}` / leave |

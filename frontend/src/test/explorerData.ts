@@ -82,15 +82,22 @@ export const aliceMedia = [
 export function serveExplorer({
   member = true,
   creator = false,
+  readOnly = false,
   pickupOverrides = {} as Partial<Pickup>,
 } = {}) {
   const ownsFolder = (f: Folder) => member && f.user_name === 'Alice'
   const list = folders.map((f) => ({
     ...f,
-    can_edit: ownsFolder(f),
-    can_delete: f.parent !== null && (ownsFolder(f) || creator),
+    can_edit: ownsFolder(f) && !readOnly,
+    is_own: ownsFolder(f),
+    can_delete: f.parent !== null && ((ownsFolder(f) && !readOnly) || creator),
   }))
-  const files = aliceMedia.map((m) => ({ ...m, can_edit: member, can_delete: member || creator }))
+  const editable = member && !readOnly
+  const files = aliceMedia.map((m) => ({
+    ...m,
+    can_edit: editable,
+    can_delete: editable || creator,
+  }))
   const signedIn = member || creator
   on('GET', '/api/pickups/:id/', {
     body: pickup({
@@ -101,6 +108,7 @@ export function serveExplorer({
       member_name: member ? 'Alice' : creator ? 'Creator' : '',
       folder_count: 4,
       media_count: 4,
+      is_read_only: readOnly,
       ...pickupOverrides,
     }),
   })

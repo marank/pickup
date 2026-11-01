@@ -1,146 +1,71 @@
-# Pickup - Image and Video Sharing Platform
+# Pickup
 
-A web application for sharing images and videos without user accounts. Users create or join "Pickups" (shared spaces), upload media to their personal folder and see what everyone else uploaded.
+After a party, a wedding or a holiday, everyone has photos on their phone and nobody has all of them. Pickup is a small self-hosted app to collect them: you create a pickup, send one link around, and everyone uploads into a folder of their own. Nobody needs an account.
 
-## Features
+<p align="center">
+  <img src="docs/screenshots/explorer.webp" alt="A pickup in the browser: folder tree, photos, details" width="74%">
+  &nbsp;
+  <img src="docs/screenshots/timeline-phone.webp" alt="The timeline on a phone" width="22%">
+</p>
 
-- 🚀 **No Account Required** - Start sharing immediately
-- 📁 **Personal Folders** - Each participant gets their own folder with any number of subfolders; only they can change it
-- 🗂️ **File explorer** - Folder tree, address bar you can type into, details/content/small/large views, sorting, search, keyboard shortcuts, right-click menus; works on the phone too
-- 🔗 **Easy Sharing** - One share link per pickup (also as a designed QR card to print), one personal link per participant
-- 💾 **Storage limits** - Per pickup and per participant from `.env`, adjustable per pickup by an admin
-- 🕰️ **Timeline** - Everyone's photos and videos in the order they were taken (from the photos' own data), by day and moment, filterable per person
-- 🗜️ **ZIP download** - Everything, a folder or a selection as one ZIP, streamed while it is packed
-- ⏳ **Read-only and expiry dates** - Optional: uploads stop after one day (looking and downloading go on), the pickup deletes itself with all files after another
-- 🔒 **Private by default** - Only participants see the photos; the creator decides who may look (participants, anyone with the link, or nobody: closed), who may join (anyone with the link, invited people only, nobody new), can remove people and content, and can delete the whole pickup
-- ✉️ **Invitations** - The creator invites by email; everyone can have their personal link mailed again
-- 🕶️ **Privacy mode** - Email addresses are stored only as a keyed hash (switchable per pickup, off by default)
-- 📦 **Large Files** - Files above 20 MB are uploaded in resumable 5 MB chunks
-- 🖼️ **Previews** - Small JPEG previews of photos and video stills, made on the server; iPhone photos (HEIC) are accepted and get a JPEG for viewing in every browser, large photos a lighter one for the viewer (the original stays for downloading)
-- 📱 **Responsive Design** - Works on all devices
+## What it does
 
-## Tech Stack
+- Everyone who joins gets their own folder (with subfolders if they like). Only they can change it; everyone else can look and download.
+- The pickup page works like a file manager: folder tree, address bar, several views, sorting, search, right-click menus and keyboard shortcuts. On a phone it has its own layout, and a tap opens a folder or photo.
+- The timeline shows all photos and videos of all folders in the order they were taken, grouped by day and moment, with a filter per person.
+- Photos and videos keep their full quality. The server makes small previews, a lighter copy for viewing large photos and stills of videos; iPhone photos (HEIC) work in every browser. Large files are uploaded in chunks, so multi-GB videos are fine, and the same file twice is skipped.
+- Everything, a folder or a selection can be downloaded as one ZIP.
+- Instead of an account, each participant has a personal link. It can be mailed to them, and the creator can pass it on if someone loses it.
+- The creator decides who may look and who may join, can invite people by email, set a password, remove people or files, make the pickup read-only from a certain day and have it deleted on another.
+- English and German, following the browser.
 
-- **Backend:** Python 3.14, Django 6.1, Django REST Framework, drf-spectacular (OpenAPI), PostgreSQL in production (SQLite for development), managed with [uv](https://docs.astral.sh/uv/)
-- **Frontend:** Vue 3, TypeScript, Vue Router, TanStack Query, openapi-fetch (types generated from the API schema), Tailwind CSS, shadcn-vue, Vite, managed with pnpm
-- **Runtime:** one hardened container (supervisord → nginx + gunicorn + a Procrastinate job worker, its queue in Postgres), Postgres, nightly backups
-- **CI:** Gitea Actions, Renovate
+## Running it
 
-## Project Structure
-
-```
-pickup/
-├── backend/                  Django (uv)
-│   ├── config/               settings, env helpers (env.py), URL roots
-│   ├── apps/
-│   │   ├── core/             UUID base models, system checks, /api/health, /api/csrf, commands
-│   │   ├── accounts/         custom User (admin login)
-│   │   └── pickups/          models/, serializers/, api/, services/, admin/, tests/
-│   ├── scripts/              license check
-│   └── data/                 runtime data: uploaded media (DATA_DIR, not in git)
-├── frontend/                 Vue 3 + Vite (pnpm)
-│   ├── src/
-│   │   ├── api/              typed client (openapi-fetch + CSRF), generated schema.d.ts
-│   │   ├── features/         home/, pickups/ (join), explorer/ (the pickup page) — components/, composables/, views/
-│   │   ├── components/       shared components; ui/ = shadcn-vue (vendored)
-│   │   ├── router/           routes per feature
-│   │   └── test/             fake API and helpers for the Vitest component tests
-│   ├── openapi.json          API schema (generated, checked by CI)
-│   └── scripts/              license check
-├── docker/                   nginx, supervisord, healthcheck, backup script
-├── Dockerfile, compose.yml   production-like stack; compose.dev.yml: Postgres for development
-├── .gitea/workflows/         CI (build.yaml) and Renovate (renovate.yaml)
-├── .vscode/tasks.json        dev servers, checks (same as CI), migrations, Docker
-└── .env.example              all configuration, documented
-```
-
-## Getting Started (native development)
-
-### Prerequisites
-- [uv](https://docs.astral.sh/uv/) (installs Python 3.14 itself)
-- Node.js 24 (LTS) and pnpm (`npm install -g pnpm`; the version in `package.json` is picked automatically)
-- Docker, for the production-like stack and for Postgres in development (optional)
-
-### First setup
-
-All settings come from one `.env` in the repository root; every variable is explained in `.env.example`.
+Pickup runs as one container next to Postgres. You need Docker with Compose.
 
 ```bash
-cp .env.example .env
-cd backend
-uv sync
-uv run python manage.py migrate
-uv run python manage.py ensure_admin      # admin user from ADMIN_* in .env
-cd ../frontend
-pnpm install
-```
-
-### Daily commands
-
-In VS Code, run the task **dev** (Terminal → Run Task). Without VS Code:
-
-| What | Command |
-|---|---|
-| Backend dev server (:8000) | `cd backend && uv run python manage.py runserver` |
-| Frontend dev server (:5173) | `cd frontend && pnpm dev` |
-| All checks CI runs | VS Code task **check** (runs `check: backend`, `check: deploy settings`, `check: frontend`) |
-| Backend checks only | `cd backend && uv run ruff check . && uv run mypy . && uv run pytest` |
-| Frontend checks only | `cd frontend && pnpm check` |
-| After model changes | `uv run python manage.py makemigrations` (task **django: makemigrations**) |
-| After API changes | task **api: types** (`frontend/openapi.json` → `src/api/schema.d.ts`; commit both, CI compares them) |
-| Postgres instead of SQLite | task **db: start dev postgres**, then `DB_TYPE=postgres`, `DB_HOST=localhost` in `.env` |
-
-Open http://localhost:5173. Vite proxies `/api`, `/admin` and `/django-static` to Django, so both share one origin (no CORS). The admin is at http://localhost:5173/admin/.
-
-Pre-commit hooks (ruff, Prettier, oxlint and basic file checks) once per clone: `uv tool run pre-commit install`.
-
-Conventions for contributors and coding agents (structure, access-control rules, frontend patterns) are in [AGENTS.md](AGENTS.md).
-
-End-to-end tests use Cypress, whose binary is not downloaded on install: run `pnpm exec cypress install` once, then `pnpm test:e2e`.
-
-## Docker (production-like)
-
-```bash
-cp .env.example .env    # then set SECRET_KEY, DB_PASSWORD, ADMIN_PASSWORD, APP_URLS
+cp .env.example .env    # set SECRET_KEY, EMAIL_HASH_KEY, DB_PASSWORD, ADMIN_PASSWORD, APP_URLS
 docker compose up -d --build
 ```
 
-The app runs at http://localhost:8080 (`APP_PORT`). Compose starts three services:
+The app is then at http://localhost:8080 (`APP_PORT`). Compose starts three services:
 
-- **db** - PostgreSQL 18, data in the `db-data` volume.
-- **app** - nginx serves the SPA and static files, delivers uploaded files only after Django's access check, and proxies `/api` to gunicorn/Django. Migrations and the first admin user run on every start. The container is hardened: read-only root filesystem, no capabilities, unprivileged user; only `/data` (volume `app-data`, uploaded media) and `/tmp` are writable.
-- **backup** - nightly backup, see below.
+- `db`: PostgreSQL 18, data in the `db-data` volume.
+- `app`: nginx, gunicorn and a job worker under supervisord. nginx serves the app and hands out uploaded files only after Django has checked access; the worker sends mails (and retries them), deletes expired pickups and catches up on previews. Migrations run on every start. The container's root filesystem is read-only, it has no capabilities and runs as an unprivileged user; only `/data` (volume `app-data`) and `/tmp` are writable.
+- `backup`: a nightly backup, see below.
 
-`/admin` is closed in Docker unless `ADMIN_ENABLED=true`. Change the admin password with `docker compose exec app python manage.py set_password admin`.
+Every setting is described in `.env.example`. The ones you will most likely touch:
 
-Behind a TLS reverse proxy: set `APP_URLS=https://your.domain` and `TRUSTED_PROXIES` to the proxy's address. Django then uses secure cookies and redirects to HTTPS; HSTS is up to the proxy.
+- `APP_URLS` and `TRUSTED_PROXIES`: behind a TLS reverse proxy, set `APP_URLS=https://your.domain` and `TRUSTED_PROXIES` to the proxy's address. Django then uses secure cookies and redirects to HTTPS. HSTS is up to the proxy.
+- `EMAIL_HOST` and friends: without a mail server Pickup works, but personal links can't be mailed.
+- `PICKUP_STORAGE_LIMIT`, `MEMBER_STORAGE_LIMIT`: how much a pickup and one participant may upload (`0` is unlimited).
+- `PICKUP_CREATION`: `everyone` may create pickups, only people with one of the `PICKUP_CREATION_CODES` (`code`), or nobody (`none`).
+- `ADMIN_ENABLED`: the Django admin at `/admin` is closed unless this is `true`.
 
-Upload limits: nginx accepts request bodies up to 25 MB. The SPA sends files up to 20 MB in one request and larger files in 5 MB chunks, so files of many GB work. Finalizing a chunked upload copies the file once; `GUNICORN_TIMEOUT` (default 300 s) must cover that.
+Uploads: nginx accepts request bodies up to 25 MB; the app sends larger files in 5 MB chunks. Assembling a chunked upload copies the file once, so `GUNICORN_TIMEOUT` (default 300 s) has to cover the largest file on your disk.
 
-## Backups
+### Backups
 
-The **backup** service writes into the `backups` volume every night at `BACKUP_TIME` and keeps `BACKUP_KEEP_DAYS` days:
+The `backup` service writes into the `backups` volume every night at `BACKUP_TIME` and keeps `BACKUP_KEEP_DAYS` days of:
 
-- `db/pickup-<time>.dump` - PostgreSQL dump (custom format)
-- `media/<time>/` - snapshot of all uploaded media. Uploaded files never change, so unchanged files are hard links to the previous snapshot: every snapshot is complete, but only new files take space.
+- `db/pickup-<time>.dump`, a PostgreSQL dump (custom format), and
+- `media/<time>/`, a snapshot of all uploaded files. Files never change once uploaded, so unchanged ones are hard links to the previous snapshot: every snapshot is complete, but only new files take space.
 
-Backup now: `docker compose exec backup sh /backup.sh now`
-
-**Copy backups off the host** - a backup on the same disk does not protect against losing the host:
+Run one right away with `docker compose exec backup sh /backup.sh now`. A backup on the same disk doesn't help when the disk dies, so copy them somewhere else:
 
 ```bash
 docker compose cp backup:/var/lib/postgresql/backups ./backups
 ```
 
-(`docker compose cp` copies hard-linked snapshots as separate files. For large media, point your host backup at the `pickup_backups` volume instead, e.g. with `rsync -aH`.)
+(`docker compose cp` turns the hard links into copies. For a lot of media, point your host's backup at the `pickup_backups` volume instead, for example with `rsync -aH`.)
 
-**Restore** (stop the app first: `docker compose stop app`):
+To restore, stop the app first (`docker compose stop app`), then:
 
 ```bash
-# Database, into the running db service
+# the database
 docker compose exec -T backup sh -c 'pg_restore --clean --if-exists -d "$PGDATABASE"' < backups/db/pickup-<time>.dump
 
-# Media, from a snapshot inside the backups volume
+# the files, from a snapshot in the backups volume
 docker compose run --rm --no-deps --user 10001:10001 --entrypoint sh \
   -v pickup_app-data:/restore backup -c \
   'mkdir -p /restore/media && cp -R /var/lib/postgresql/backups/media/<time>/. /restore/media/'
@@ -148,121 +73,78 @@ docker compose run --rm --no-deps --user 10001:10001 --entrypoint sh \
 docker compose start app
 ```
 
-## Usage
-
-### Creating a Pickup
-1. Visit the home page and click "Start a pickup" (`/create`). Give it a name; optionally add your name (you get a folder with that name right away, and invitations show it), your email (you get your personal link by mail) and who can join. Nothing is created before you click "Create pickup".
-2. The second step shows the share link (with the QR card) and your **personal link**, which logs you back in as the creator; "Open the pickup" takes you there. The account menu copies your personal link again anytime ("Copy my personal link").
-3. Send the **share link** to others, or invite people by email under **People** (bottom of the folder tree).
-4. **Settings** (bottom of the folder tree) decides:
-   - *Who can see the photos?* Only participants (default), anyone with the link, or nobody (closed: only the creator still sees the contents; nobody else can look, upload or join until it is opened again).
-   - *Who can join and upload?* Anyone with the link (with a new, unused name), only invited people, or nobody new.
-   - *Read-only*: a day after which nobody joins, uploads or changes anything; everyone can still look and download, and the creator can still remove files. Shown next to the title.
-   - *Delete automatically*: a day after which the pickup is deleted with all files. Everyone sees the date next to the title. Expired pickups disappear at once; an hourly job of the container's worker (`delete_expired`) frees the space.
-   - *Delete this pickup*: removes it with all folders and files for everyone, after a warning. It cannot be undone.
-   - *Privacy mode* (default off): addresses are kept only as an HMAC fingerprint. Mails still work, because they are sent when someone types their address; the creator sees no addresses and must type an address again to resend. Turning it on deletes stored addresses.
-
-### Joining a Pickup
-1. Open the share link (or your personal invitation link).
-2. Enter your name and a folder name; optionally an email address for your personal link. Names are unique per pickup, so nobody can pose as someone else.
-3. Upload media. Your browser stays logged in; the personal link logs you in from another browser. Lost it? Enter your address on the pickup page ("Already part of it on another device?") and it is mailed to you again.
-
-### Uploading and organising
-1. Open your folder (tree on the left, or the folder button on the phone).
-2. Drag and drop photos and videos onto the folder, or use **Upload** (JPG, PNG, GIF, WebP, BMP, MP4, MOV, AVI, WMV, FLV, WebM, MKV; no SVG). Uploads keep running while you browse.
-3. **New folder** creates subfolders; rename with F2, delete with Del, add captions in the details pane or the viewer.
-4. Switch views (Details, Content, Small/Large icons) and sorting in the toolbar; the choice is remembered.
-5. **Download**: one file as it is; several items or folders as a ZIP. Without a selection, **Download folder** / **Download all** packs the current folder or the whole pickup.
-
-## API Endpoints
-
-The full schema is `frontend/openapi.json`; with `DEBUG=true` there is a browsable version at `/api/docs/`.
-
-Membership is a session: the personal link's access key is exchanged once (`POST .../session/`), after that the session cookie identifies the member. Every unsafe request needs the CSRF token (cookie from `GET /api/csrf`, sent as `X-CSRFToken`).
-
-| Method | Path | Purpose |
-|---|---|---|
-| GET | `/api/health` | Health check |
-| GET | `/api/csrf` | Sets the CSRF cookie |
-| POST | `/api/pickups/` | Create a pickup (returns the creator's personal link) |
-| GET | `/api/pickups/{id}/` | Pickup details, your role and what you may do (`can_view`, `is_member`, …) |
-| PATCH | `/api/pickups/{id}/` | Title, `visibility` (`members` / `link` / `creator`), `join_policy`, `email_privacy`, `read_only_at`, `expires_at` (creator) |
-| DELETE | `/api/pickups/{id}/` | Delete the pickup with all folders and files (creator) |
-| GET | `/api/pickups/{id}/download/?folders=…&media=…` | ZIP of the selected folders/files (comma-separated ids); without both: the whole pickup |
-| POST / DELETE | `/api/pickups/{id}/session/` | Log in with `{access_key}` / leave |
-| GET | `/api/pickups/{id}/session/link/` | Your own personal link (only to yourself) |
-| POST | `/api/pickups/{id}/session/email/` | Store your address and mail your personal link |
-| POST | `/api/pickups/{id}/link-request/` | Mail the personal link to a known address (always 202) |
-| POST | `/api/pickups/{id}/join/` | Join: create folder and member, log in (or claim a folder after an invitation) |
-| GET / POST | `/api/pickups/{id}/members/` | People / invite by email (creator) |
-| POST | `/api/pickups/{id}/members/{member_id}/resend/` | Send the invitation again (creator) |
-| DELETE | `/api/pickups/{id}/members/{member_id}/` | Remove a person with their folder and files (creator) |
-| GET | `/api/files/{media_id}/` | The file itself, only for people who may see the pickup |
-| GET | `/api/pickups/{id}/folders/` | All folders (flat; `parent` builds the tree) |
-| GET | `/api/pickups/{id}/media/` | All media |
-| GET | `/api/pickups/{id}/folders/{folder_id}/` | Folder details |
-| PATCH / DELETE | `/api/pickups/{id}/folders/{folder_id}/` | Rename a folder / delete a subfolder with its contents (owner, or creator) |
-| POST | `/api/pickups/{id}/folders/{folder_id}/subfolders/` | Create a subfolder (owner) |
-| GET / POST | `/api/pickups/{id}/folders/{folder_id}/media/` | Folder media / upload (owner) |
-| DELETE | `/api/pickups/{id}/folders/{folder_id}/clear/` | Delete all media of a folder (owner) |
-| GET / DELETE | `/api/pickups/{id}/folders/{folder_id}/media/{media_id}/` | Media / delete (owner, or creator) |
-| PATCH | `/api/pickups/{id}/folders/{folder_id}/media/{media_id}/caption/` | Edit caption (owner) |
-| POST | `/api/pickups/{id}/folders/{folder_id}/upload-sessions/` | Start a chunked upload (owner) |
-| GET | `/api/upload-sessions/{session_id}/` | Upload progress, missing chunks (owner) |
-| POST | `/api/upload-sessions/{session_id}/chunks/` | Upload one chunk (owner) |
-| POST | `/api/upload-sessions/{session_id}/finalize/` | Assemble the file (owner) |
-
-## Storage limits
-
-`PICKUP_STORAGE_LIMIT` (default 20GB) and `MEMBER_STORAGE_LIMIT` (default 5GB) in `.env` cap all files of a pickup and one participant's folders; `0` means unlimited. Uploads that would go over a limit are refused with a message (the SPA checks before uploading, the server again at the start and end of every upload). Participants see their usage in the status bar, the creator the pickup's in Settings.
-
-An admin can override the limits for one pickup:
+### Admin commands
 
 ```bash
-# Show usage and limits
-uv run python manage.py storage_limits <pickup id>
-# Change them: sizes like 50GB, "unlimited", or "default" (back to the .env values)
-uv run python manage.py storage_limits <pickup id> --pickup 50GB --member unlimited
-# In Docker
-docker compose exec app python manage.py storage_limits <pickup id> --member 10GB
-```
+# storage of one pickup: show it, or change its limits (sizes like 50GB, "unlimited", "default")
+docker compose exec app python manage.py storage_limits <pickup id>
+docker compose exec app python manage.py storage_limits <pickup id> --pickup 50GB --member unlimited
 
-## Who may create pickups
-
-`PICKUP_CREATION` in `.env` decides: `everyone` (default), `code` or `none`. With `code`, "Start a pickup" asks for one of the comma-separated `PICKUP_CREATION_CODES` (e.g. `1234-5678-9012`) every time; opening `/create` directly asks too, and Cancel goes back to the start page. With `none` the start page has no create button and the API refuses new pickups.
-
-## Pickup passwords
-
-The creator can protect a pickup with a password (Settings → Password). Without a login, people then need it to join or to log in with their personal link; setting or changing it logs everyone else out. If the creator forgets it, an admin removes it, and the creator sets a new one after logging in with their personal link:
-
-```bash
-uv run python manage.py pickup_password <pickup id>            # has it one?
-uv run python manage.py pickup_password <pickup id> --remove
+# a creator forgot their pickup's password: remove it, they set a new one
 docker compose exec app python manage.py pickup_password <pickup id> --remove
+
+# the admin user's password
+docker compose exec app python manage.py set_password admin
 ```
+
+## Development
+
+You need [uv](https://docs.astral.sh/uv/) (it brings Python 3.14), Node.js 24 with pnpm, and optionally Docker for Postgres.
+
+```bash
+cp .env.example .env
+cd backend && uv sync && uv run python manage.py migrate && uv run python manage.py ensure_admin
+cd ../frontend && pnpm install
+```
+
+The VS Code tasks in `.vscode/tasks.json` hold the everyday commands; **dev** starts Django on :8000 and Vite on :5173. Without VS Code:
+
+| What | Command |
+|---|---|
+| Backend | `cd backend && uv run python manage.py runserver` |
+| Frontend | `cd frontend && pnpm dev`, then open http://localhost:5173 |
+| Everything CI checks | task **check** |
+| Backend tests | `cd backend && uv run pytest` |
+| Frontend checks | `cd frontend && pnpm check` |
+| After model changes | `uv run python manage.py makemigrations` |
+| After API changes | task **api: types** (regenerates `frontend/openapi.json` and `src/api/schema.d.ts`) |
+| After changing server texts | task **django: messages**, then translate the new entries in `backend/locale/de` |
+| Postgres instead of SQLite | task **db: start dev postgres**, then `DB_TYPE=postgres` and `DB_HOST=localhost` in `.env`; the task **django: worker** runs background jobs |
+
+Vite proxies `/api`, `/admin` and `/django-static` to Django, so both share one origin. With SQLite there is no job worker: jobs such as mails run right away.
+
+Install the pre-commit hooks once per clone with `uv tool run pre-commit install`. End-to-end tests use Cypress: `pnpm exec cypress install` once, then `pnpm test:e2e`.
+
+How the code is organised, the access rules and the frontend conventions are written down in [AGENTS.md](AGENTS.md). Read it before changing structure; it is meant for people and coding agents alike.
+
+### How it is built
+
+- Backend: Django 6.1 with Django REST Framework, drf-spectacular for the OpenAPI schema, Procrastinate for background jobs, PostgreSQL (SQLite in development). Code in `backend/apps/pickups`, split into `models/`, `api/`, `serializers/`, `services/` and `tests/`.
+- Frontend: Vue 3 with TypeScript, TanStack Query, a client generated from the API schema, Tailwind and shadcn-vue, built with Vite. The pickup page is in `frontend/src/features/explorer`.
+- The API is described completely in `frontend/openapi.json` (browsable at `/api/docs/` with `DEBUG=true`). Members log in by trading their personal link's key for a session; every unsafe request carries a CSRF token.
 
 ## Security
 
-- Personal links carry a secret access key that is exchanged for a session; member ids are never credentials. Pickup ids (the share link) are random UUIDv4.
-- CSRF protection on every unsafe request, also for anonymous members.
-- Uploads are restricted to image and video types (no SVG) and stored under random names. Files are never public: `/api/files/{id}/` checks access, then nginx delivers the file from an internal location (`X-Accel-Redirect`) with a sandboxing Content-Security-Policy and `nosniff`.
-- Email addresses: keyed hashes (`EMAIL_HASH_KEY`) in privacy mode; the plain address only when the creator turns privacy mode off. Never change `EMAIL_HASH_KEY` once in use, or stored addresses stop matching.
-- nginx sets CSP and security headers for the SPA and rate-limits the admin login and every endpoint that sends mail; personal links can be re-sent at most every two minutes.
-- The container runs read-only, unprivileged and without capabilities.
+- Personal links carry a random key that is traded for a session; member ids are never credentials. A pickup's id, which is its share link, is a random UUID.
+- Uploads are limited to images and videos (no SVG) and stored under random names. Files are never public: every request goes through Django's access check, then nginx delivers the file from an internal location with a sandboxing Content-Security-Policy.
+- Email addresses can be stored as keyed hashes only (privacy mode, per pickup). Never change `EMAIL_HASH_KEY` once in use, or stored addresses stop matching.
+- nginx sets a strict CSP and the usual security headers, and limits the admin login and every request that sends mail or checks a password.
+- CSRF protection on every unsafe request, also for people without an account.
+
+If you find a security problem, please report it privately to the maintainer instead of opening a public issue.
 
 ## License
 
-Pickup is free software under the [GNU Affero General Public License v3.0 or later](LICENSE): you may use, change and share it, also run it as a service for others, as long as you publish the source of your version under the same license.
+Pickup is free software under the [GNU Affero General Public License v3.0 or later](LICENSE). You may use, change and share it, also run it as a service for others, as long as you publish the source of your version under the same license.
 
-The Docker image also contains other free software under its own license, among it [FFmpeg](https://ffmpeg.org/) (LGPL 2.1 or later, built from Debian's source package in the `ffmpeg` stage of the `Dockerfile`, which lists the enabled parts), libheif and libde265 (LGPL, via `pi-heif`), nginx, Python and Postgres client libraries. The Python and npm dependencies' licenses are checked in CI (`backend/scripts/check_licenses.py`, `frontend/scripts/check-licenses.mjs`).
+The Docker image contains other free software under its own license, among it [FFmpeg](https://ffmpeg.org/) (LGPL 2.1 or later; built from Debian's source package in the `ffmpeg` stage of the `Dockerfile`, which lists the enabled parts), libheif and libde265 (LGPL, via `pi-heif`), nginx, Python and the Postgres client libraries. The licenses of all Python and npm dependencies are checked in CI.
 
-## Gitea Setup
+## CI
 
-1. **Branch protection on `main` with required status checks** `backend`, `frontend`, `repository` and `image` (workflow `build`). Do this first: Renovate merges minor and patch updates once checks pass, and without required checks Gitea would merge them right away.
-2. Enable Actions for the repository; the runner needs Docker (the image job runs `docker build` / `docker run`).
-3. Repository secrets:
-   - `REGISTRY_USER`, `REGISTRY_TOKEN` (scope `write:package`) - push the image to this Gitea's container registry.
-   - `RENOVATE_TOKEN` - token of the user that opens Renovate PRs (`write:repository`, `write:issue`, `read:organization`, `read:user`, `read:package`).
-   - `GH_COM_TOKEN` (optional) - read-only github.com token for release notes and higher rate limits.
+`.gitea/workflows/build.yaml` runs on a Gitea instance: the backend checks (ruff, mypy, deptry, licenses, migrations, translations, Django and deploy checks, the OpenAPI schema, pytest with at least 90 % coverage), the frontend checks (Prettier, oxlint, ESLint, knip, type-check, Vitest with coverage, build, bundle size, licenses, audit) and a Trivy scan. Then it builds the image, starts it hardened against Postgres, scans it and pushes it to the Gitea registry on `main` and on version tags (`v1.2.3`). The task **check** runs the same checks locally.
 
-CI (`.gitea/workflows/build.yaml`) runs the backend checks (ruff, mypy strict, deptry, licenses, migrations, Django and deploy checks, OpenAPI schema, pytest with ≥ 90 % coverage), the frontend checks (prettier, oxlint, ESLint, knip, type-check, Vitest with coverage, build, bundle size, licenses, audit) and a Trivy scan of the repository; then it builds the image, smoke-tests it hardened against Postgres, scans it and pushes it on `main` and on version tags (`v1.2.3`). The VS Code task **check** runs the same checks locally.
+To set it up on your own Gitea:
+
+1. Protect `main` with the required status checks `backend`, `frontend`, `repository` and `image`. Do this first: Renovate merges minor and patch updates once the checks pass.
+2. Enable Actions for the repository. The runner needs Docker.
+3. Add the secrets `REGISTRY_USER` and `REGISTRY_TOKEN` (scope `write:package`) for the image, `RENOVATE_TOKEN` for the user that opens Renovate's pull requests, and optionally `GH_COM_TOKEN`, a read-only github.com token for release notes.

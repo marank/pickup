@@ -84,7 +84,11 @@ def test_private_by_default_contents_and_files_need_membership(creator: Client) 
         f"/api/pickups/{pickup_id}/folders/{folder_id}/media/",
     ]:
         assert stranger.get(url).status_code == 403, url
-    assert stranger.get(file_url).status_code == 404
+    private = stranger.get(file_url)
+    missing = stranger.get("/api/files/00000000-0000-4000-8000-000000000000/")
+    # Nobody learns whether a file exists: missing and private answer exactly alike.
+    assert (private.status_code, private.content) == (missing.status_code, missing.content) == (404, b"")
+    assert stranger.get("/api/").status_code == 404  # no API root listing the endpoints
 
     assert b"".join(alice.get(file_url).streaming_content) == b"img"  # type: ignore[attr-defined]
     assert creator.get(file_url).status_code == 200

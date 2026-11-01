@@ -1,5 +1,5 @@
 from django.urls import include, path
-from rest_framework.routers import DefaultRouter
+from rest_framework.routers import SimpleRouter
 
 from .files import MediaDisplayView, MediaFileView, MediaThumbnailView
 from .folders import FolderViewSet
@@ -13,7 +13,8 @@ from .uploads import (
     UploadSessionFinalizeView,
 )
 
-router = DefaultRouter()
+# SimpleRouter: no browsable API root listing the endpoints, nothing the SPA needs.
+router = SimpleRouter()
 router.register(r"pickups", PickupViewSet, basename="pickup")
 router.register(r"pickups/(?P<pickup_id>[^/.]+)/folders", FolderViewSet, basename="folder")
 router.register(

@@ -4,7 +4,6 @@ from urllib.parse import quote
 from django.conf import settings
 from django.db.models.fields.files import FieldFile
 from django.http import FileResponse, HttpResponse, HttpResponseBase
-from django.shortcuts import get_object_or_404
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
 from rest_framework.request import Request
@@ -59,9 +58,12 @@ class MediaDisplayView(APIView):
 
 
 def _viewable_media(request: Request, media_id: str) -> Media | None:
-    media = get_object_or_404(
-        Media.objects.select_related("folder__pickup").filter(live("folder__pickup__")), id=media_id
+    """The file if this browser may see it; missing and private look the same (empty 404)."""
+    media = (
+        Media.objects.select_related("folder__pickup").filter(live("folder__pickup__"), id=media_id).first()
     )
+    if media is None:
+        return None
     pickup = media.folder.pickup
     if not can_view(pickup, get_member_from_request(request, pickup)):
         return None  # same answer as for a file that doesn't exist

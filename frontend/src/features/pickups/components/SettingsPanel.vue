@@ -24,7 +24,7 @@ const form = reactive({
   title: '',
   visibility: 'members',
   join_policy: 'open',
-  email_privacy: true,
+  email_privacy: false,
   expires: '',
 })
 type Field = keyof typeof form

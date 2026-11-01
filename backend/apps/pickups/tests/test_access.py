@@ -218,20 +218,20 @@ def test_the_creator_can_get_an_own_folder_and_stays_creator(creator: Client) ->
 # --- e-mail identity ------------------------------------------------------------
 
 
-def test_addresses_are_only_hashed_in_privacy_mode(creator: Client) -> None:
+def test_addresses_are_stored_until_privacy_mode_is_switched_on(creator: Client) -> None:
     pickup_id = new_pickup(creator)
-    join(Client(), pickup_id, "Alice", email=" Alice@Example.com ")
-    alice = Member.objects.get(user_name="Alice")
-    assert alice.email == ""
-    assert alice.email_hash == email_hash("alice@example.com")
-    assert len(alice.email_hash) == 64
+    assert creator.get(f"/api/pickups/{pickup_id}/").json()["email_privacy"] is False  # new: off
+    join(Client(), pickup_id, "Bob", email=" Bob@Example.com ")
+    bob = Member.objects.get(user_name="Bob")
+    assert (bob.email, bob.email_hash) == ("bob@example.com", email_hash("bob@example.com"))
+    assert len(bob.email_hash) == 64
 
-    settings_patch(creator, pickup_id, email_privacy=False)
-    join(Client(), pickup_id, "Bob", email="bob@example.com")
-    assert Member.objects.get(user_name="Bob").email == "bob@example.com"
     settings_patch(creator, pickup_id, email_privacy=True)  # switching on forgets plain addresses
     assert not Member.objects.exclude(email="").exists()
     assert Member.objects.get(user_name="Bob").email_hash == email_hash("bob@example.com")
+    join(Client(), pickup_id, "Alice", email="alice@example.com")
+    alice = Member.objects.get(user_name="Alice")
+    assert (alice.email, alice.email_hash) == ("", email_hash("alice@example.com"))
 
 
 def test_creators_personal_link_is_mailed_when_an_address_is_given(creator: Client) -> None:
@@ -348,7 +348,7 @@ def test_mails_go_out_in_the_background_after_the_commit(
 
 def test_creator_invites_by_email_and_invited_people_join(creator: Client) -> None:
     pickup_id = new_pickup(creator, creator_name="Anna")
-    settings_patch(creator, pickup_id, join_policy="invite")
+    settings_patch(creator, pickup_id, join_policy="invite", email_privacy=True)
     members_url = f"/api/pickups/{pickup_id}/members/"
 
     response = post(creator, members_url, {"email": "mark@example.com", "name": "Mark"})
@@ -385,6 +385,7 @@ def test_creator_invites_by_email_and_invited_people_join(creator: Client) -> No
 
 def test_without_privacy_mode_invites_can_be_resent_and_reply_to_the_creator(creator: Client) -> None:
     pickup_id = new_pickup(creator, creator_name="Anna", creator_email="anna@example.com")
+    settings_patch(creator, pickup_id, email_privacy=True)  # also forgets Anna's address
     members_url = f"/api/pickups/{pickup_id}/members/"
     invited = post(creator, members_url, {"email": "mark@example.com"}).json()
     resend = post(creator, f"{members_url}{invited['id']}/resend/")
@@ -399,7 +400,7 @@ def test_without_privacy_mode_invites_can_be_resent_and_reply_to_the_creator(cre
     listed = {m["id"]: m for m in creator.get(members_url).json()}
     assert listed[invited["id"]]["email"] == "mark@example.com"
     assert mail.outbox[-1].to == ["mark@example.com"]
-    assert mail.outbox[-1].reply_to == []  # the creator's own address was entered in privacy mode
+    assert mail.outbox[-1].reply_to == []  # the creator's own address was forgotten in privacy mode
 
 
 def test_member_management_is_for_the_creator_only(creator: Client) -> None:
@@ -438,6 +439,7 @@ def test_the_creator_can_copy_a_members_lost_link(creator: Client) -> None:
 
 def test_the_creator_can_add_an_address_for_someone_without_one(creator: Client) -> None:
     pickup_id = new_pickup(creator, creator_name="Anna")
+    settings_patch(creator, pickup_id, email_privacy=True)
     alice = Client()
     join(alice, pickup_id, "Alice")
     join(Client(), pickup_id, "Bob", email="bob@example.com")

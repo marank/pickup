@@ -45,7 +45,7 @@ class Pickup(UUIDModel):
         help_text="Who can see folders and files",
     )
     email_privacy = models.BooleanField(
-        default=True,
+        default=False,
         help_text="Store e-mail addresses only as keyed hashes; off: also in plain text (creator sees them)",
     )
     expires_at = models.DateTimeField(

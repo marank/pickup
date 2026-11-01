@@ -13,7 +13,7 @@ A web application for sharing images and videos without user accounts. Users cre
 - ⏳ **Expiry date** - Optional: the pickup deletes itself with all files after a chosen day
 - 🔒 **Private by default** - Only participants see the photos; the creator decides who may look (participants, anyone with the link, or nobody: closed), who may join (anyone with the link, invited people only, nobody new), can remove people and content, and can delete the whole pickup
 - ✉️ **Invitations** - The creator invites by email; everyone can have their personal link mailed again
-- 🕶️ **Privacy mode** - Email addresses are stored only as a keyed hash (default, switchable per pickup)
+- 🕶️ **Privacy mode** - Email addresses are stored only as a keyed hash (switchable per pickup, off by default)
 - 📦 **Large Files** - Files above 20 MB are uploaded in resumable 5 MB chunks
 - 📱 **Responsive Design** - Works on all devices
 
@@ -157,7 +157,7 @@ docker compose start app
    - *Who can join and upload?* Anyone with the link (with a new, unused name), only invited people, or nobody new.
    - *Delete automatically*: a day after which the pickup is deleted with all files. Everyone sees the date next to the title. Expired pickups disappear at once; an hourly job in the container (`delete_expired_pickups`) frees the space.
    - *Delete this pickup*: removes it with all folders and files for everyone, after a warning. It cannot be undone.
-   - *Privacy mode* (default on): addresses are kept only as an HMAC fingerprint. Mails still work, because they are sent when someone types their address; the creator sees no addresses and must type an address again to resend. Turning it on deletes stored addresses.
+   - *Privacy mode* (default off): addresses are kept only as an HMAC fingerprint. Mails still work, because they are sent when someone types their address; the creator sees no addresses and must type an address again to resend. Turning it on deletes stored addresses.
 
 ### Joining a Pickup
 1. Open the share link (or your personal invitation link).

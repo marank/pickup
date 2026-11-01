@@ -9,8 +9,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Pickup</title>
     <meta name="description" content="Everyone’s photos and videos from one event in one place. One link, no accounts." />
-    <!-- Pickup links are private: no search engines. Link previews (WhatsApp, Signal, …) only
-         get this generic text, never a pickup's title (it may have a password). -->
+    <!-- Pickup links are private: no search engines. For a pickup's pages, Django fills in its
+         title and creator for link previews (WhatsApp, Signal, …; services/link_preview.py),
+         keep these tags as they are. -->
     <meta name="robots" content="noindex, nofollow" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Pickup" />

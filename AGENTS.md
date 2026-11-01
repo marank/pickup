@@ -60,6 +60,6 @@ Members have no accounts. Keep these properties; tests in `apps/pickups/tests/` 
 ## Docker / runtime
 
 - The app container runs read-only, without capabilities, as an unprivileged user. Only `/data` (`DATA_DIR`, uploads) and `/tmp` are writable — new features must write there, not loosen the hardening.
-- supervisord runs gunicorn, nginx and the hourly `expiry` cleanup; nginx serves the SPA, delivers uploaded files from the internal `/protected-media/` location after Django's check, and proxies `/api` and `/admin`.
+- supervisord runs gunicorn, nginx and the hourly `expiry` cleanup; nginx serves the SPA (a pickup's pages, `/pickup/{id}…`, come from Django: the built `index.html` with the pickup's title and creator in the link-preview tags, `services/link_preview.py`, none with a password), delivers uploaded files from the internal `/protected-media/` location after Django's check, and proxies `/api` and `/admin`.
 - `/admin` is closed in Docker unless `ADMIN_ENABLED=true`.
 - Backups (`docker/backup.sh`): nightly database dump plus hard-linked media snapshot. Anything new under `/data` that must survive belongs in that script too.

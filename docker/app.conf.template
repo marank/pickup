@@ -75,6 +75,18 @@ ${ADMIN_LOCATION}
         try_files $uri =404;
     }
 
+    # A pickup's pages: the SPA's index.html from Django, with the pickup's title and creator
+    # in the link preview (WhatsApp & co.). The page gets the SPA's headers, not Django's.
+    location ~ "^/pickup/[0-9a-fA-F-]{36}(/.*)?$" {
+        include /etc/nginx/django_proxy.conf;
+        proxy_hide_header Content-Security-Policy;
+        proxy_hide_header X-Content-Type-Options;
+        proxy_hide_header X-Frame-Options;
+        proxy_hide_header Referrer-Policy;
+        proxy_hide_header Cross-Origin-Opener-Policy;
+        include /etc/nginx/security_headers.conf;
+    }
+
     # SPA: unknown paths fall back to index.html, which must never be cached.
     location / {
         try_files $uri $uri/ /index.html;

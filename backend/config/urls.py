@@ -19,9 +19,17 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import path
 
+from apps.pickups.views import pickup_page
+
 from .api import urlpatterns as api_urlpatterns  # everything under /api/
 
-urlpatterns = [*api_urlpatterns]
+urlpatterns = [
+    *api_urlpatterns,
+    # The SPA's pages of a pickup, with its link preview (nginx sends them here; docker/).
+    path("pickup/<uuid:pickup_id>", pickup_page),
+    path("pickup/<uuid:pickup_id>/", pickup_page),
+    path("pickup/<uuid:pickup_id>/<path:rest>", pickup_page),
+]
 
 # Defense in depth: nginx also answers /admin with 404 when ADMIN_ENABLED is false.
 if settings.ADMIN_ENABLED:

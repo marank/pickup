@@ -213,6 +213,10 @@ USE_TZ = True
 STATIC_URL = "/django-static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+# The built SPA's index.html (Dockerfile); pickup pages are served from it with their
+# link preview filled in. Natively, Vite serves the pages and this isn't used.
+SPA_INDEX = Path("/srv/spa/index.html")
+
 # The only writable location in the container (read_only rootfs). Natively: backend/data.
 DATA_DIR = Path(env_str("DATA_DIR", str(BASE_DIR / "data")))
 MEDIA_ROOT = DATA_DIR / "media"

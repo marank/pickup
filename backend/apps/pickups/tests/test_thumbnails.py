@@ -15,7 +15,7 @@ from PIL import Image
 from apps.pickups.management.commands import create_thumbnails
 from apps.pickups.models import Media, Member, Pickup
 from apps.pickups.services.members import delete_pickup, remove_member
-from apps.pickups.services.thumbnails import THUMBNAIL_SIZE, create_thumbnail, video_still
+from apps.pickups.services.thumbnails import DISPLAY_SIZE, THUMBNAIL_SIZE, create_thumbnail, video_still
 
 from .test_api import join, joined
 
@@ -255,3 +255,51 @@ def test_ffmpeg_retries_only_for_clips_shorter_than_the_seek(
     with pytest.raises(ValueError, match="no frame"):
         video_still("/data/clip.mp4")
     assert len(calls) == attempts  # 255: an error or SIGTERM (container stopping)
+
+
+HEIC = (Path(__file__).parent / "files" / "photo.heic").read_bytes()  # 3000 × 2000
+
+
+def test_iphone_photos_get_a_preview_and_a_jpeg_to_view(client: Client, joined: tuple[str, str]) -> None:
+    media = upload(client, *joined, "IMG_0001.HEIC", HEIC)
+    assert media["media_type"] == "image"
+    assert thumbnail_of(client, media).size == (THUMBNAIL_SIZE, 427)
+    assert media["display"] == f"/api/files/{media['id']}/display/"
+    response = client.get(media["display"])
+    assert response["Content-Type"] == "image/jpeg"
+    assert "IMG_0001.jpg" in response["Content-Disposition"]
+    display = Image.open(io.BytesIO(b"".join(response.streaming_content)))  # type: ignore[attr-defined]
+    assert display.size == (DISPLAY_SIZE, 1707)
+    original = client.get(media["file"])  # downloads stay the original
+    assert original["Content-Type"] == "image/heic"
+    assert Client().get(media["display"]).status_code == 404  # same access check
+
+
+def test_other_images_need_no_display_copy(client: Client, joined: tuple[str, str]) -> None:
+    media = upload(client, *joined, "photo.jpg", image_bytes((20, 20)))
+    assert media["display"] is None
+    assert client.get(f"/api/files/{media['id']}/display/").status_code == 404
+
+
+def test_backfill_and_deletion_cover_the_display_copy(client: Client, joined: tuple[str, str]) -> None:
+    pickup_id, folder_id = joined
+    media = upload(client, pickup_id, folder_id, "IMG_0001.heic", HEIC)
+    stored = Media.objects.get()
+    stored.display.delete(save=True)
+    call_command("create_thumbnails", stdout=io.StringIO())
+    stored.refresh_from_db()
+    paths = [Path(stored.file.path), Path(stored.thumbnail.path), Path(stored.display.path)]
+    assert all(path.exists() for path in paths)
+    client.delete(f"/api/pickups/{pickup_id}/folders/{folder_id}/media/{media['id']}/")
+    assert not any(path.exists() for path in paths)
+
+
+def test_unsupported_files_are_refused_with_a_clear_reason(client: Client, joined: tuple[str, str]) -> None:
+    pickup_id, folder_id = joined
+    response = client.post(
+        f"/api/pickups/{pickup_id}/folders/{folder_id}/media/",
+        {"file": SimpleUploadedFile("notes.pdf", b"%PDF")},
+    )
+    assert response.json() == {
+        "file": ["Only photos and videos can be uploaded; “pdf” files aren't supported."]
+    }

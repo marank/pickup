@@ -9,6 +9,7 @@ dependencies = [
     "djangorestframework>=3.18.3",
     "drf-spectacular>=0.30.0",
     "gunicorn>=26.2.0",
+    "pi-heif>=1.4.0",
     "pillow>=13.0.0",
     "psycopg[binary]>=3.3.6",
 ]
@@ -45,6 +46,11 @@ exclude = ["/migrations/"]
 [[tool.mypy.overrides]]
 module = ["*.migrations.*"]
 ignore_errors = true
+
+# Ships no type information; only register_heif_opener() is used.
+[[tool.mypy.overrides]]
+module = ["pi_heif"]
+ignore_missing_imports = true
 
 [tool.django-stubs]
 django_settings_module = "config.settings"

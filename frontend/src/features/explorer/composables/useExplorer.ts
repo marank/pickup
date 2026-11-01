@@ -158,7 +158,11 @@ function createExplorer(
     }
     let free = freeSpace()
     const accepted = list.filter((file) => {
-      const ok = file.type.startsWith('image/') || file.type.startsWith('video/')
+      // iPhone photos (HEIC) come without a type in some browsers.
+      const ok =
+        file.type.startsWith('image/') ||
+        file.type.startsWith('video/') ||
+        /\.(heic|heif)$/i.test(file.name)
       if (!ok) toast.error(`${file.name} is not a photo or video`)
       else if (free !== null && file.size > free) {
         toast.error(

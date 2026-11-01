@@ -3,6 +3,7 @@ from types import FrameType
 from typing import Any
 
 from django.core.management.base import BaseCommand
+from django.db.models import Q
 
 from apps.pickups.models import Media, live
 from apps.pickups.services.thumbnails import create_thumbnail
@@ -31,7 +32,11 @@ class Command(BaseCommand):
 
     def create_missing(self) -> int:
         created = 0
-        missing = Media.objects.filter(live("folder__pickup__"), thumbnail="").order_by("uploaded_at")
+        # No preview yet, or a HEIC photo without the viewer's JPEG.
+        heic = Q(file__iendswith=".heic") | Q(file__iendswith=".heif")
+        missing = Media.objects.filter(
+            Q(thumbnail="") | (Q(display="") & heic), live("folder__pickup__")
+        ).order_by("uploaded_at")
         for media in missing.iterator():
             if self.stopping:
                 break

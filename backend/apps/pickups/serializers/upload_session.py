@@ -61,7 +61,7 @@ class CreateUploadSessionSerializer(serializers.Serializer[Any]):
         """Same file types as direct uploads; the extension ends up in the stored file name."""
         if file_extension(value) not in ALLOWED_EXTENSIONS:
             raise serializers.ValidationError(
-                "File type not supported. Please upload an image or video file."
+                f"Only photos and videos can be uploaded; “{file_extension(value)}” files aren't supported."
             )
         return value
 

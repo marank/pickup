@@ -787,16 +787,18 @@ describe('explorer: owner actions', () => {
     await pick([
       new File(['x'], 'a.jpg', { type: 'image/jpeg' }),
       new File(['x'], 'notes.txt', { type: 'text/plain' }),
+      new File(['x'], 'IMG_0001.HEIC', { type: '' }), // no type in some browsers
     ])
     expect(error).toHaveBeenCalledWith('notes.txt is not a photo or video')
     expect(requests.filter((r) => r.method === 'POST').map((r) => r.path)).toEqual([
       `/api/pickups/${PICKUP_ID}/folders/${ALICE}/media/`,
+      `/api/pickups/${PICKUP_ID}/folders/${ALICE}/media/`,
     ])
     expect(router.currentRoute.value.params.folderId).toBe(ALICE)
-    expect($('[aria-label="Uploads"]')!.textContent).toContain('1 of 1 uploaded')
+    expect($('[aria-label="Uploads"]')!.textContent).toContain('2 of 2 uploaded')
     expect($('[aria-label="Uploads"]')!.textContent).not.toContain('Clear finished') // collapsed
 
-    findButton(/1 of 1 uploaded/).click()
+    findButton(/2 of 2 uploaded/).click()
     await flushPromises()
     expect($('[aria-label="Uploads"]')!.textContent).toContain('Clear finished')
   })

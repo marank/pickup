@@ -42,6 +42,23 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/files/{media_id}/display/': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    /** @description The JPEG to view a file browsers can't show (HEIC), after the same access check. */
+    get: operations['files_display_retrieve']
+    put?: never
+    post?: never
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/files/{media_id}/thumbnail/': {
     parameters: {
       query?: never
@@ -810,6 +827,8 @@ export interface components {
       readonly file: string
       /** @description Small preview for tiles; null while there is none (videos, files it failed for). */
       readonly thumbnail: string | null
+      /** @description A JPEG for the viewer when browsers can't show the file (HEIC); else null. */
+      readonly display: string | null
       /** @description Original filename of the uploaded file */
       original_filename: string
       /**
@@ -1125,6 +1144,34 @@ export interface operations {
         }
         content: {
           'application/octet-stream': string
+        }
+      }
+      /** @description No response body */
+      404: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+    }
+  }
+  files_display_retrieve: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        media_id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'image/jpeg': string
         }
       }
       /** @description No response body */

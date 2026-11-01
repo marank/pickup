@@ -14,6 +14,10 @@ from ..models import Media, live
 from ..services.access import can_view
 from ..services.members import get_member_from_request
 
+# Not in every system's mime.types; downloads should still say what they are.
+mimetypes.add_type("image/heic", ".heic")
+mimetypes.add_type("image/heif", ".heif")
+
 
 class MediaFileView(APIView):
     """
@@ -40,6 +44,18 @@ class MediaThumbnailView(APIView):
         if media is None or not media.thumbnail:
             return HttpResponse(status=404)
         return _send(media.thumbnail, "image/jpeg", "preview.jpg")
+
+
+class MediaDisplayView(APIView):
+    """The JPEG to view a file browsers can't show (HEIC), after the same access check."""
+
+    @extend_schema(responses={(200, "image/jpeg"): OpenApiTypes.BINARY, 404: None})
+    def get(self, request: Request, media_id: str) -> HttpResponseBase:
+        media = _viewable_media(request, media_id)
+        if media is None or not media.display:
+            return HttpResponse(status=404)
+        stem = media.original_filename.rsplit(".", 1)[0]
+        return _send(media.display, "image/jpeg", f"{stem}.jpg")
 
 
 def _viewable_media(request: Request, media_id: str) -> Media | None:

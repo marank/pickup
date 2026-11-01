@@ -64,6 +64,48 @@
                 }
             }
         },
+        "/api/files/{media_id}/display/": {
+            "get": {
+                "operationId": "files_display_retrieve",
+                "description": "The JPEG to view a file browsers can't show (HEIC), after the same access check.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "media_id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "files"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "image/jpeg": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "404": {
+                        "description": "No response body"
+                    }
+                }
+            }
+        },
         "/api/files/{media_id}/thumbnail/": {
             "get": {
                 "operationId": "files_thumbnail_retrieve",
@@ -3173,6 +3215,12 @@
                         "description": "Small preview for tiles; null while there is none (videos, files it failed for).",
                         "readOnly": true
                     },
+                    "display": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "A JPEG for the viewer when browsers can't show the file (HEIC); else null.",
+                        "readOnly": true
+                    },
                     "original_filename": {
                         "type": "string",
                         "description": "Original filename of the uploaded file",
@@ -3230,6 +3278,7 @@
                 "required": [
                     "can_delete",
                     "can_edit",
+                    "display",
                     "file",
                     "file_size",
                     "file_size_display",
@@ -3684,7 +3733,7 @@
                         "type": "string",
                         "format": "binary",
                         "description": "The uploaded media file",
-                        "pattern": "(?:avi|bmp|flv|gif|jpeg|jpg|mkv|mov|mp4|png|webm|webp|wmv)$"
+                        "pattern": "(?:avi|bmp|flv|gif|heic|heif|jpeg|jpg|mkv|mov|mp4|png|webm|webp|wmv)$"
                     },
                     "caption": {
                         "type": "string",

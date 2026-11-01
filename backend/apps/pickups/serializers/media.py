@@ -12,6 +12,7 @@ class MediaSerializer(serializers.ModelSerializer[Media]):
     file_size_display = serializers.SerializerMethodField()
     file = serializers.SerializerMethodField()
     thumbnail = serializers.SerializerMethodField()
+    display = serializers.SerializerMethodField()
     can_edit = serializers.SerializerMethodField()
     can_delete = serializers.SerializerMethodField()
     owner_name = serializers.CharField(source="folder.user_name", read_only=True)
@@ -25,6 +26,7 @@ class MediaSerializer(serializers.ModelSerializer[Media]):
             "folder",
             "file",
             "thumbnail",
+            "display",
             "original_filename",
             "media_type",
             "file_size",
@@ -54,6 +56,10 @@ class MediaSerializer(serializers.ModelSerializer[Media]):
     def get_thumbnail(self, obj: Media) -> str | None:
         """Small preview for tiles; null while there is none (videos, files it failed for)."""
         return f"/api/files/{obj.id}/thumbnail/" if obj.thumbnail else None
+
+    def get_display(self, obj: Media) -> str | None:
+        """A JPEG for the viewer when browsers can't show the file (HEIC); else null."""
+        return f"/api/files/{obj.id}/display/" if obj.display else None
 
     def get_can_delete(self, obj: Media) -> bool:
         """Owner or creator (moderation)."""

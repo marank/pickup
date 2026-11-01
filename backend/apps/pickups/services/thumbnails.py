@@ -4,18 +4,27 @@ import io
 import logging
 import shutil
 import subprocess
+from collections.abc import Callable
 from typing import IO
 
 from django.core.files.base import ContentFile
+from django.db.models.fields.files import FieldFile
+from pi_heif import register_heif_opener
 from PIL import Image, ImageOps
 
 from ..models import Media
 
 logger = logging.getLogger(__name__)
 
+# Pillow reads HEIC/HEIF (iPhone photos) through libheif: decoding only, no GPL encoder.
+register_heif_opener()
+
 # Longest side in pixels: sharp in the largest tiles on a phone with a 3x screen.
 THUMBNAIL_SIZE = 640
 THUMBNAIL_QUALITY = 80
+# The viewer's JPEG for files browsers can't show (HEIC): sharp on large screens.
+DISPLAY_SIZE = 2560
+DISPLAY_QUALITY = 85
 
 # Video stills come from ffmpeg (built small in the Dockerfile, run as its own program).
 # Only real video containers: playlists and concat lists could make it read other files.
@@ -28,16 +37,18 @@ VIDEO_SCALE = (
 )
 
 
-def render_thumbnail(source: IO[bytes]) -> bytes:
+def render_thumbnail(
+    source: IO[bytes], size: int = THUMBNAIL_SIZE, quality: int = THUMBNAIL_QUALITY
+) -> bytes:
     """
-    A JPEG at most THUMBNAIL_SIZE pixels wide and high, turned upright (EXIF orientation),
+    A JPEG at most `size` pixels wide and high, turned upright (EXIF orientation),
     transparency on white, first frame of animations. Pillow refuses decompression bombs.
     """
     with Image.open(source) as image:
         # JPEGs decode straight at a fraction of their size: fast and light on memory.
-        image.draft("RGB", (THUMBNAIL_SIZE, THUMBNAIL_SIZE))
+        image.draft("RGB", (size, size))
         upright = ImageOps.exif_transpose(image)
-        upright.thumbnail((THUMBNAIL_SIZE, THUMBNAIL_SIZE))
+        upright.thumbnail((size, size))
         if upright.mode in ("RGBA", "LA", "P", "PA"):
             rgba = upright.convert("RGBA")
             flat = Image.new("RGB", rgba.size, "white")
@@ -45,7 +56,7 @@ def render_thumbnail(source: IO[bytes]) -> bytes:
         else:
             flat = upright.convert("RGB")
         out = io.BytesIO()
-        flat.save(out, "JPEG", quality=THUMBNAIL_QUALITY, optimize=True)
+        flat.save(out, "JPEG", quality=quality, optimize=True)
         return out.getvalue()
 
 
@@ -84,22 +95,41 @@ def video_still(path: str) -> bytes:
 
 
 def create_thumbnail(media: Media) -> bool:
-    """Store a preview; False if there already is one or the file can't be read."""
-    if media.thumbnail:
-        return False
+    """
+    Store a preview, and for HEIC also the viewer's JPEG; False if there was nothing to do or
+    the file can't be read.
+    """
+    created = False
+    if not media.thumbnail:
+        created = _store(media, "thumbnail", _thumbnail_of)
+    if media.needs_display and not media.display:
+        created = _store(media, "display", _display_of) or created
+    return created
+
+
+def _thumbnail_of(media: Media) -> bytes:
+    if media.is_video:
+        return video_still(media.file.path)
+    with media.file.open("rb") as source:
+        return render_thumbnail(source)
+
+
+def _display_of(media: Media) -> bytes:
+    with media.file.open("rb") as source:
+        return render_thumbnail(source, DISPLAY_SIZE, DISPLAY_QUALITY)
+
+
+def _store(media: Media, field: str, render: Callable[[Media], bytes]) -> bool:
     try:
-        if media.is_video:
-            data = video_still(media.file.path)
-        else:
-            with media.file.open("rb") as source:
-                data = render_thumbnail(source)
+        data = render(media)
     except Exception:  # any unreadable or hostile file: the tile falls back to the file itself
-        logger.warning("No thumbnail for media %s", media.id, exc_info=True)
+        logger.warning("No %s for media %s", field, media.id, exc_info=True)
         return False
-    media.thumbnail.save("thumbnail.jpg", ContentFile(data), save=False)
+    preview: FieldFile = getattr(media, field)
+    preview.save("preview.jpg", ContentFile(data), save=False)
     # Only if nobody else stored one meanwhile (an upload and the backfill at the same time).
-    if not Media.objects.filter(id=media.id, thumbnail="").update(thumbnail=media.thumbnail.name):
-        media.thumbnail.delete(save=False)
-        media.refresh_from_db(fields=["thumbnail"])
+    if not Media.objects.filter(id=media.id, **{field: ""}).update(**{field: preview.name}):
+        preview.delete(save=False)
+        media.refresh_from_db(fields=[field])
         return False
     return True

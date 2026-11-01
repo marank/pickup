@@ -132,7 +132,7 @@ const button =
                 v-if="slide.file.media.is_image"
                 :ref="setPicture"
                 :key="slide.file.id"
-                :src="slide.file.media.file"
+                :src="slide.file.media.display ?? slide.file.media.file"
                 :alt="slide.file.media.caption || slide.file.name"
                 class="max-h-full max-w-full object-contain will-change-transform"
                 :style="gestures.pictureStyle.value"
@@ -151,7 +151,11 @@ const button =
             <!-- Neighbours: the picture itself (it is next anyway), for videos their still. -->
             <img
               v-else-if="slide.file?.media.is_image || slide.file?.media.thumbnail"
-              :src="slide.file.media.is_image ? slide.file.media.file : slide.file.media.thumbnail!"
+              :src="
+                slide.file.media.is_image
+                  ? (slide.file.media.display ?? slide.file.media.file)
+                  : slide.file.media.thumbnail!
+              "
               alt=""
               class="max-h-full max-w-full object-contain"
               draggable="false"

@@ -9,7 +9,9 @@ from django.utils import timezone
 from apps.core.models import UUIDModel
 
 # No SVG: it can carry script and would run on our origin when opened directly.
-IMAGE_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "webp", "bmp"}
+IMAGE_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "webp", "bmp", "heic", "heif"}
+# iPhone photos (HEIC) show only in Safari: they get a JPEG to view (Media.display).
+NEEDS_DISPLAY = {"heic", "heif"}
 VIDEO_EXTENSIONS = {"mp4", "avi", "mov", "wmv", "flv", "webm", "mkv"}
 ALLOWED_EXTENSIONS = IMAGE_EXTENSIONS | VIDEO_EXTENSIONS
 
@@ -32,7 +34,8 @@ def media_upload_to(instance: object, filename: str) -> str:
 
 
 def thumbnail_upload_to(instance: object, filename: str) -> str:
-    return timezone.now().strftime("%Y/%m/%d/") + stored_name("thumbnail.jpg")
+    """Previews and display copies: random JPEG names next to the files."""
+    return timezone.now().strftime("%Y/%m/%d/") + stored_name("preview.jpg")
 
 
 class Media(UUIDModel):
@@ -54,7 +57,12 @@ class Media(UUIDModel):
     file = models.FileField(
         upload_to=media_upload_to,
         max_length=255,
-        validators=[FileExtensionValidator(allowed_extensions=sorted(ALLOWED_EXTENSIONS))],
+        validators=[
+            FileExtensionValidator(
+                allowed_extensions=sorted(ALLOWED_EXTENSIONS),
+                message="Only photos and videos can be uploaded; “%(extension)s” files aren't supported.",
+            )
+        ],
         help_text="The uploaded media file",
     )
     original_filename = models.CharField(max_length=255, help_text="Original filename of the uploaded file")
@@ -67,6 +75,12 @@ class Media(UUIDModel):
         max_length=255,
         blank=True,
         help_text="Small JPEG preview (services/thumbnails.py); tiles load it instead of the file",
+    )
+    display = models.FileField(
+        upload_to=thumbnail_upload_to,
+        max_length=255,
+        blank=True,
+        help_text="Large JPEG for the viewer, for formats browsers can't show (HEIC)",
     )
     uploaded_at = models.DateTimeField(default=timezone.now)
 
@@ -98,8 +112,14 @@ class Media(UUIDModel):
     def delete_files(self) -> None:
         """Remove the file and its preview from disk (the row stays)."""
         self.file.delete(save=False)
-        if self.thumbnail:
-            self.thumbnail.delete(save=False)
+        for preview in (self.thumbnail, self.display):
+            if preview:
+                preview.delete(save=False)
+
+    @property
+    def needs_display(self) -> bool:
+        """Browsers (except Safari) can't show the file itself: the viewer gets a JPEG."""
+        return file_extension(self.file.name or "") in NEEDS_DISPLAY
 
     @property
     def is_image(self) -> bool:

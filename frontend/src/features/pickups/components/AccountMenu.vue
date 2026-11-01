@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import {
   ChevronDownIcon,
+  CircleHelpIcon,
   CopyIcon,
   CrownIcon,
   LogOutIcon,
@@ -11,7 +12,7 @@ import {
   UsersIcon,
 } from '@lucide/vue'
 import { useQueryClient } from '@tanstack/vue-query'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 
@@ -38,6 +39,7 @@ import {
   usePickupFolders,
 } from '../composables/usePickup'
 import EmailLinkDialog from './EmailLinkDialog.vue'
+import IntroDialog from './IntroDialog.vue'
 import MemberDetailsDialog from './MemberDetailsDialog.vue'
 
 const props = defineProps<{ pickupId: string }>()
@@ -53,6 +55,18 @@ const leave = useLeavePickup(() => props.pickupId)
 const detailsOpen = ref(false)
 const confirmOpen = ref(false)
 const emailOpen = ref(false)
+const introOpen = ref(false)
+// Newcomers get the intro once, right after joining; the creator only from the menu.
+let introShown = false
+watch(
+  () => pickup.data.value,
+  (data) => {
+    if (introShown || !data?.has_folder || data.is_creator || data.intro_seen) return
+    introShown = true
+    introOpen.value = true
+  },
+  { immediate: true },
+)
 const openPage = (page: 'settings' | 'people') =>
   router.push({ name: 'explorer-page', params: { pickupId: props.pickupId, page } })
 
@@ -142,6 +156,10 @@ async function confirmLeave() {
         <MailIcon />
         Email me my personal link
       </DropdownMenuItem>
+      <DropdownMenuItem v-if="signedIn" @select="introOpen = true">
+        <CircleHelpIcon />
+        How Pickup works
+      </DropdownMenuItem>
       <template v-if="isCreator">
         <DropdownMenuSeparator />
         <DropdownMenuItem @select="openPage('people')">
@@ -169,6 +187,12 @@ async function confirmLeave() {
   </DropdownMenu>
 
   <EmailLinkDialog v-if="pickup.data.value" v-model:open="emailOpen" :pickup="pickup.data.value" />
+
+  <IntroDialog
+    v-if="pickup.data.value && signedIn"
+    v-model:open="introOpen"
+    :pickup="pickup.data.value"
+  />
 
   <MemberDetailsDialog
     v-if="pickup.data.value && signedIn"

@@ -27,6 +27,8 @@ export function pickup(overrides: Partial<Pickup> = {}): Pickup {
     storage: { used: 0, limit: null, own_used: null, own_limit: null },
     password_required: false,
     has_password: false,
+    creator_name: '',
+    intro_seen: true,
     ...overrides,
   }
 }

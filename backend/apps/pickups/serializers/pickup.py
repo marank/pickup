@@ -31,7 +31,13 @@ class PickupSerializer(serializers.ModelSerializer[Pickup]):
     password_required = serializers.SerializerMethodField(
         help_text="The pickup has a password and this browser isn't logged in: nothing else is shown"
     )
-    has_password = serializers.SerializerMethodField(help_text="A password is set (only for the creator)")
+    has_password = serializers.SerializerMethodField(help_text="A password is set (only for members)")
+    creator_name = serializers.SerializerMethodField(
+        help_text="The creator's name for members, if they gave one; else empty"
+    )
+    intro_seen = serializers.SerializerMethodField(
+        help_text="This member has closed the intro (always true for everyone else)"
+    )
 
     class Meta:
         model = Pickup
@@ -55,6 +61,8 @@ class PickupSerializer(serializers.ModelSerializer[Pickup]):
             "storage",
             "password_required",
             "has_password",
+            "creator_name",
+            "intro_seen",
         ]
         read_only_fields = [
             "id",
@@ -86,8 +94,17 @@ class PickupSerializer(serializers.ModelSerializer[Pickup]):
         return password_required(obj, self._member())
 
     def get_has_password(self, obj: Pickup) -> bool:
+        return bool(self._member() and obj.password)
+
+    def get_creator_name(self, obj: Pickup) -> str:
+        if self._member() is None:
+            return ""
+        creator = obj.members.filter(is_creator=True).order_by("created_at").first()
+        return creator.user_name if creator and creator.user_name != "Creator" else ""
+
+    def get_intro_seen(self, obj: Pickup) -> bool:
         member = self._member()
-        return bool(member and member.is_creator and obj.password)
+        return member is None or member.intro_seen_at is not None
 
     def get_can_view(self, obj: Pickup) -> bool:
         return can_view(obj, self._member())

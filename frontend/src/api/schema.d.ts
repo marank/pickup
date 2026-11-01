@@ -262,6 +262,23 @@ export interface paths {
     patch?: never
     trace?: never
   }
+  '/api/pickups/{id}/session/intro/': {
+    parameters: {
+      query?: never
+      header?: never
+      path?: never
+      cookie?: never
+    }
+    get?: never
+    put?: never
+    /** @description The signed-in member has closed the intro, so it doesn't open by itself again. */
+    post: operations['pickups_session_intro_create']
+    delete?: never
+    options?: never
+    head?: never
+    patch?: never
+    trace?: never
+  }
   '/api/pickups/{id}/session/link/': {
     parameters: {
       query?: never
@@ -667,8 +684,12 @@ export interface components {
       readonly storage: components['schemas']['Storage']
       /** @description The pickup has a password and this browser isn't logged in: nothing else is shown */
       readonly password_required: boolean
-      /** @description A password is set (only for the creator) */
+      /** @description A password is set (only for members) */
       readonly has_password: boolean
+      /** @description The creator's name for members, if they gave one; else empty */
+      readonly creator_name: string
+      /** @description This member has closed the intro (always true for everyone else) */
+      readonly intro_seen: boolean
       readonly member_url: string
     }
     /** @description Who may create pickups on this server (PICKUP_CREATION). */
@@ -942,8 +963,12 @@ export interface components {
       readonly storage: components['schemas']['Storage']
       /** @description The pickup has a password and this browser isn't logged in: nothing else is shown */
       readonly password_required: boolean
-      /** @description A password is set (only for the creator) */
+      /** @description A password is set (only for members) */
       readonly has_password: boolean
+      /** @description The creator's name for members, if they gave one; else empty */
+      readonly creator_name: string
+      /** @description This member has closed the intro (always true for everyone else) */
+      readonly intro_seen: boolean
     }
     SessionRequest: {
       access_key: string
@@ -1604,6 +1629,35 @@ export interface operations {
         }
       }
       400: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+    }
+  }
+  pickups_session_intro_create: {
+    parameters: {
+      query?: never
+      header?: never
+      path: {
+        /** @description A UUID string identifying this pickup. */
+        id: string
+      }
+      cookie?: never
+    }
+    requestBody?: never
+    responses: {
+      /** @description No response body */
+      204: {
+        headers: {
+          [name: string]: unknown
+        }
+        content?: never
+      }
+      403: {
         headers: {
           [name: string]: unknown
         }

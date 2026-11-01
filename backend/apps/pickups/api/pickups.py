@@ -46,6 +46,7 @@ from ..services.members import (
     join_pickup,
     login_member,
     logout_member,
+    mark_intro_seen,
     member_for_key,
     request_link,
     request_pickup_list,
@@ -316,6 +317,16 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
         response = Response(PersonalLinkSerializer(data).data)
         response["Cache-Control"] = "private, no-store"
         return response
+
+    @extend_schema(request=None, responses={204: None, 403: ErrorSerializer})
+    @action(detail=True, methods=["post"], url_path="session/intro")
+    def session_intro(self, request: Request, id: str | None = None) -> Response:
+        """The signed-in member has closed the intro, so it doesn't open by itself again."""
+        member = self._member()
+        if member is None:
+            return Response({"error": "Join the pickup first."}, status=status.HTTP_403_FORBIDDEN)
+        mark_intro_seen(member)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
     @extend_schema(
         request=EmailSerializer,

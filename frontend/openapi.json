@@ -972,6 +972,48 @@
                 }
             }
         },
+        "/api/pickups/{id}/session/intro/": {
+            "post": {
+                "operationId": "pickups_session_intro_create",
+                "description": "The signed-in member has closed the intro, so it doesn't open by itself again.",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "id",
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "description": "A UUID string identifying this pickup.",
+                        "required": true
+                    }
+                ],
+                "tags": [
+                    "pickups"
+                ],
+                "security": [
+                    {
+                        "cookieAuth": []
+                    },
+                    {}
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No response body"
+                    },
+                    "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                }
+            }
+        },
         "/api/pickups/{id}/session/link/": {
             "get": {
                 "operationId": "pickups_session_link_retrieve",
@@ -2775,7 +2817,17 @@
                     "has_password": {
                         "type": "boolean",
                         "readOnly": true,
-                        "description": "A password is set (only for the creator)"
+                        "description": "A password is set (only for members)"
+                    },
+                    "creator_name": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "The creator's name for members, if they gave one; else empty"
+                    },
+                    "intro_seen": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "description": "This member has closed the intro (always true for everyone else)"
                     },
                     "member_url": {
                         "type": "string",
@@ -2785,12 +2837,14 @@
                 "required": [
                     "can_view",
                     "created_at",
+                    "creator_name",
                     "email_privacy",
                     "expires_at",
                     "folder_count",
                     "has_folder",
                     "has_password",
                     "id",
+                    "intro_seen",
                     "is_creator",
                     "is_member",
                     "join_policy",
@@ -3470,18 +3524,30 @@
                     "has_password": {
                         "type": "boolean",
                         "readOnly": true,
-                        "description": "A password is set (only for the creator)"
+                        "description": "A password is set (only for members)"
+                    },
+                    "creator_name": {
+                        "type": "string",
+                        "readOnly": true,
+                        "description": "The creator's name for members, if they gave one; else empty"
+                    },
+                    "intro_seen": {
+                        "type": "boolean",
+                        "readOnly": true,
+                        "description": "This member has closed the intro (always true for everyone else)"
                     }
                 },
                 "required": [
                     "can_view",
                     "created_at",
+                    "creator_name",
                     "email_privacy",
                     "expires_at",
                     "folder_count",
                     "has_folder",
                     "has_password",
                     "id",
+                    "intro_seen",
                     "is_creator",
                     "is_member",
                     "join_policy",

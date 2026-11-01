@@ -11,7 +11,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.test import Client
 from django.utils import timezone
 
-from apps.pickups.models import Folder, Member
+from apps.pickups.models import Folder, Member, Pickup
 from apps.pickups.services.identity import email_hash
 
 from .test_access import join, new_pickup, post, settings_patch
@@ -207,3 +207,22 @@ def test_using_a_pickup_restarts_the_session_at_most_once_a_day() -> None:
     response = creator.get(f"/api/pickups/{pickup_id}/")
     assert days_left() == 27  # 28 days from now (minus the seconds this test takes)
     assert "sessionid" in response.cookies  # the browser gets the longer cookie too
+
+
+def test_the_intro_opens_once_per_member_not_per_device() -> None:
+    pickup_id = new_pickup(Client(), creator_name="Anna")
+    url = f"/api/pickups/{pickup_id}/"
+    bob = Client()
+    join(bob, pickup_id, "Bob")
+    Pickup.objects.update(password="pbkdf2_sha256$x")  # Bob typed it when joining
+    detail = bob.get(url).json()
+    assert (detail["intro_seen"], detail["creator_name"], detail["has_password"]) == (False, "Anna", True)
+    outsider = Client().get(url).json()
+    assert (outsider["intro_seen"], outsider["creator_name"], outsider["has_password"]) == (True, "", False)
+
+    assert Client().post(f"{url}session/intro/").status_code == 403
+    assert bob.post(f"{url}session/intro/").status_code == 204
+    assert bob.get(url).json()["intro_seen"] is True  # stored on the server: every device
+    seen = Member.objects.get(user_name="Bob").intro_seen_at
+    assert bob.post(f"{url}session/intro/").status_code == 204  # again: nothing changes
+    assert Member.objects.get(user_name="Bob").intro_seen_at == seen

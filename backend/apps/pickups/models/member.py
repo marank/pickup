@@ -51,6 +51,9 @@ class Member(UUIDModel):
     invited_at = models.DateTimeField(
         null=True, blank=True, help_text="Set when the creator invited by e-mail"
     )
+    intro_seen_at = models.DateTimeField(
+        null=True, blank=True, help_text="When the member closed the intro shown after joining"
+    )
     link_sent_at = models.DateTimeField(
         null=True, blank=True, help_text="Last personal-link mail, to throttle repeated requests"
     )

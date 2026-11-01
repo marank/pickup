@@ -107,3 +107,17 @@ export async function enterPickup(
   await queryClient.invalidateQueries({ queryKey: pickupKeys.all(pickupId) })
   queryClient.setQueryData(pickupKeys.detail(pickupId), pickup)
 }
+
+/** The intro after joining was closed: it doesn't open by itself again. */
+export function useMarkIntroSeen(pickupId: MaybeRefOrGetter<string>) {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: () =>
+      unwrap(
+        api.POST('/api/pickups/{id}/session/intro/', {
+          params: { path: { id: toValue(pickupId) } },
+        }),
+      ),
+    onSuccess: () => client.invalidateQueries({ queryKey: pickupKeys.detail(toValue(pickupId)) }),
+  })
+}

@@ -299,6 +299,13 @@ def invite(request: HttpRequest, pickup: Pickup, inviter: Member, email: str, na
     return member
 
 
+def mark_intro_seen(member: Member) -> None:
+    """The intro after joining is closed; it doesn't open by itself again, on any device."""
+    if member.intro_seen_at is None:
+        member.intro_seen_at = timezone.now()
+        member.save(update_fields=["intro_seen_at"])
+
+
 def add_email(request: HttpRequest, member: Member, creator: Member, email: str) -> None:
     """
     The creator stores the address of a participant who has none yet, so they can have their

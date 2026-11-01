@@ -1,4 +1,5 @@
 from django.core.files.uploadedfile import UploadedFile
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 
 from ..models import Media
@@ -92,7 +93,7 @@ class UploadMediaSerializer(serializers.ModelSerializer[Media]):
         """Validate file size and type."""
         if file_extension(value.name or "") not in ALLOWED_EXTENSIONS:
             raise serializers.ValidationError(
-                "File type not supported. Please upload an image or video file."
+                _("File type not supported. Please upload an image or video file.")
             )
 
         return value

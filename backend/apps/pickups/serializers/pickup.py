@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Any
 
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
@@ -181,12 +182,12 @@ class PickupUpdateSerializer(serializers.ModelSerializer[Pickup]):
 
     def validate_password(self, value: str) -> str:
         if value and len(value) < 4:
-            raise serializers.ValidationError("Use at least 4 characters.")
+            raise serializers.ValidationError(_("Use at least 4 characters."))
         return value
 
     def validate_expires_at(self, value: datetime | None) -> datetime | None:
         if value is not None and value <= timezone.now():
-            raise serializers.ValidationError("Choose a date in the future.")
+            raise serializers.ValidationError(_("Choose a date in the future."))
         return value
 
     def validate_read_only_at(self, value: datetime | None) -> datetime | None:
@@ -197,7 +198,9 @@ class PickupUpdateSerializer(serializers.ModelSerializer[Pickup]):
         read_only_at = attrs.get("read_only_at", self.instance.read_only_at if self.instance else None)
         expires_at = attrs.get("expires_at", self.instance.expires_at if self.instance else None)
         if read_only_at and expires_at and read_only_at > expires_at:
-            raise serializers.ValidationError({"read_only_at": "Choose a day before the pickup is deleted."})
+            raise serializers.ValidationError(
+                {"read_only_at": _("Choose a day before the pickup is deleted.")}
+            )
         return attrs
 
 
@@ -214,5 +217,5 @@ class CreatePickupSerializer(serializers.Serializer[Any]):
 
     def validate_join_policy(self, value: str) -> str:
         if value == JoinPolicy.CLOSED:
-            raise serializers.ValidationError("A new pickup can't start closed.")
+            raise serializers.ValidationError(_("A new pickup can't start closed."))
         return value

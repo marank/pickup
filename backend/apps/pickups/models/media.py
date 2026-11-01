@@ -5,6 +5,7 @@ from typing import Any
 from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from apps.core.models import UUIDModel
 
@@ -60,7 +61,7 @@ class Media(UUIDModel):
         validators=[
             FileExtensionValidator(
                 allowed_extensions=sorted(ALLOWED_EXTENSIONS),
-                message="Only photos and videos can be uploaded; “%(extension)s” files aren't supported.",
+                message=_("Only photos and videos can be uploaded; “%(extension)s” files aren't supported."),
             )
         ],
         help_text="The uploaded media file",

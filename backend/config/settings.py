@@ -122,6 +122,8 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.middleware.csp.ContentSecurityPolicyMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    # Error messages and mails in the language the SPA sends (Accept-Language).
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -201,6 +203,9 @@ LANGUAGE_CODE = env_str("LANGUAGE_CODE", "en-us")
 TIME_ZONE = env_str("TIME_ZONE", "UTC")
 
 USE_I18N = True
+# The SPA's languages; German texts live in locale/de (makemessages / compilemessages).
+LANGUAGES = [("en", "English"), ("de", "Deutsch")]
+LOCALE_PATHS = [BASE_DIR / "locale"]
 
 USE_TZ = True
 

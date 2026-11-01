@@ -72,7 +72,8 @@ jobs:
         run: |
           apt-get update
           # ffmpeg: the image builds a small one itself; tests take Debian's.
-          apt-get install -y --no-install-recommends git ca-certificates ffmpeg
+          # gettext: makemessages/compilemessages for the translations check.
+          apt-get install -y --no-install-recommends git ca-certificates ffmpeg gettext
 
       - uses: builtin:checkout
 
@@ -106,6 +107,10 @@ jobs:
 
       - name: Check for missing migrations
         run: uv run python manage.py makemigrations --check --dry-run
+
+      # Every text has a German entry, and django.mo is compiled from django.po.
+      - name: Translations up to date
+        run: uv run python scripts/check_messages.py
 
       - name: Django system checks
         run: uv run python manage.py check --fail-level WARNING

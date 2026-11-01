@@ -3,6 +3,7 @@
 import uuid
 
 from django.db import transaction
+from django.utils.translation import gettext as _
 
 from ..models import Folder, Media
 
@@ -20,7 +21,7 @@ def _name_taken(parent: Folder, name: str, exclude: Folder | None = None) -> boo
 
 def create_subfolder(parent: Folder, name: str) -> Folder:
     if _name_taken(parent, name):
-        raise FolderError(f"“{name}” already exists in this folder.")
+        raise FolderError(_("“{name}” already exists in this folder.").format(name=name))
     return Folder.objects.create(
         pickup_id=parent.pickup_id,
         parent=parent,
@@ -40,7 +41,7 @@ def rename_folder(folder: Folder, name: str) -> Folder:
     else:
         taken = _name_taken(folder.parent, name, exclude=folder)
     if taken:
-        raise FolderError(f"“{name}” already exists here.")
+        raise FolderError(_("“{name}” already exists here.").format(name=name))
     folder.name = name
     folder.save(update_fields=["name"])
     return folder
@@ -60,7 +61,7 @@ def subtree_ids(folder: Folder) -> list[uuid.UUID]:
 def delete_subfolder(folder: Folder) -> int:
     """Delete a subfolder with everything in it; returns the number of deleted files."""
     if folder.parent_id is None:
-        raise FolderError("Your own top-level folder cannot be deleted.")
+        raise FolderError(_("Your own top-level folder cannot be deleted."))
     media = Media.objects.filter(folder_id__in=subtree_ids(folder))
     count = 0
     for item in media:

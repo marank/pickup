@@ -39,6 +39,7 @@ Members have no accounts. Keep these properties; tests in `apps/pickups/tests/` 
 - **Every model inherits `apps.core.models.UUIDModel` or `TimeStampedModel`** (UUID primary key). `manage.py check` fails (`core.E001`) otherwise. Order queries explicitly.
 - Business logic goes in `services/`, not in API views or models' `save()`.
 - API: under `/api/`, paths end in `/` (DRF router default; keep it consistent), session auth + CSRF, UUIDs in paths. `/api/health` stays unauthenticated and exactly at that path. Annotate views with `extend_schema` so the OpenAPI schema stays warning-free (CI runs `spectacular --fail-on-warn`).
+- German and English: every text a user sees (API errors, validation messages, mails, link previews) goes through gettext (`_()`; `gettext_noop` in tables, translated when used). `LocaleMiddleware` picks the language from `Accept-Language`, which the SPA sets to the language it shows; mails go out in the language of the request that sends them. German lives in `locale/de/LC_MESSAGES/django.po` (task `django: messages`, translate the empty entries) and the compiled `django.mo`, both committed; `scripts/check_messages.py` (in `check` and CI) fails when either is out of date.
 - Configuration only via environment variables read through `config/env.py`; every new variable gets a commented entry in `.env.example`.
 - mypy runs in strict mode; type all new code. Coverage must stay ≥ 90 %.
 - No GPL/AGPL/SSPL dependencies (CI license check).
@@ -58,6 +59,7 @@ Members have no accounts. Keep these properties; tests in `apps/pickups/tests/` 
 - Tailwind for styling. No inline `<script>`, no remote scripts, fonts or styles: the CSP only allows our own origin (fonts are self-hosted via `@fontsource-variable`).
 - Tests: Vitest + @vue/test-utils; `src/test/fakeApi.ts` replaces `fetch` with a route table. Coverage ≥ 90 % over `src/` (without `components/ui`).
 - Never edit `src/api/schema.d.ts` by hand.
+- German and English (`lib/i18n.ts`): every visible text goes through `t('English text', { placeholder })` or `plural(n, one, other)`; the English text is the key. Never build keys from template literals, and translate when shown (computed, functions), not at module load. German lives in `src/locales/de/<area>.ts` (informal "du", „…“ quotes, "die Pickup"); `src/locales/__tests__/de.spec.ts` fails for missing or unused entries. Dates go through `formatDate()`. The language follows the browser unless chosen in the menus.
 
 ## Docker / runtime
 

@@ -1,0 +1,434 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-01 03:21+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "This pickup is private."
+msgstr "Diese Pickup ist privat."
+
+msgid "You do not have permission to upload to this folder."
+msgstr "Du darfst in diesen Ordner nichts hochladen."
+
+msgid "You do not have permission to clear this folder."
+msgstr "Du darfst diesen Ordner nicht leeren."
+
+#, python-brace-format
+msgid "Deleted {count} media files."
+msgstr "{count} Dateien gelöscht."
+
+msgid "Only the owner can change this folder."
+msgstr "Nur die Person, der der Ordner gehört, kann ihn ändern."
+
+msgid "You do not have permission to delete this media."
+msgstr "Du darfst diese Datei nicht löschen."
+
+msgid "You do not have permission to edit this media."
+msgstr "Du darfst diese Datei nicht bearbeiten."
+
+msgid "Invitation sent again."
+msgstr "Einladung erneut gesendet."
+
+msgid "Address saved; they got their link by email."
+msgstr "Adresse gespeichert; der Link ist per E-Mail unterwegs."
+
+msgid "Only the creator can manage participants."
+msgstr "Nur die Ersteller:in kann Teilnehmende verwalten."
+
+msgid "This pickup is private. Join it or open your personal link."
+msgstr ""
+"Diese Pickup ist privat. Tritt bei oder öffne deinen persönlichen Link."
+
+msgid "Only the creator can change the pickup."
+msgstr "Nur die Ersteller:in kann die Pickup ändern."
+
+msgid "Only the creator can delete the pickup."
+msgstr "Nur die Ersteller:in kann die Pickup löschen."
+
+msgid "Invalid id."
+msgstr "Ungültige ID."
+
+msgid "Nothing to download."
+msgstr "Nichts zum Herunterladen."
+
+msgid "Wrong password."
+msgstr "Falsches Passwort."
+
+msgid "This personal link is not valid."
+msgstr "Dieser persönliche Link ist ungültig."
+
+msgid "Join the pickup first."
+msgstr "Tritt zuerst der Pickup bei."
+
+msgid "We sent a confirmation link to the new address."
+msgstr "Wir haben einen Bestätigungslink an die neue Adresse geschickt."
+
+msgid "We sent you your personal link."
+msgstr "Wir haben dir deinen persönlichen Link geschickt."
+
+msgid "Your new address is confirmed."
+msgstr "Deine neue Adresse ist bestätigt."
+
+msgid "If this address belongs to any pickups, we sent you a list."
+msgstr ""
+"Falls diese Adresse zu Pickups gehört, haben wir dir eine Liste geschickt."
+
+msgid ""
+"If this address belongs to someone in this pickup, their link is on its way."
+msgstr ""
+"Falls diese Adresse zu jemandem in dieser Pickup gehört, ist der Link "
+"unterwegs."
+
+#, python-brace-format
+msgid "Upload session is {status}"
+msgstr "Upload-Sitzung ist {status}"
+
+msgid "Chunk index out of range"
+msgstr "Teil-Nummer außerhalb des Bereichs"
+
+#, python-brace-format
+msgid "Missing {count} chunks"
+msgstr "{count} Teile fehlen"
+
+#, python-brace-format
+msgid "Failed to finalize upload: {error}"
+msgstr "Upload konnte nicht abgeschlossen werden: {error}"
+
+msgid "Folder names cannot contain / or \\."
+msgstr "Ordnernamen dürfen kein / oder \\ enthalten."
+
+msgid "Please enter a folder name."
+msgstr "Bitte gib einen Ordnernamen ein."
+
+#, python-format
+msgid ""
+"Only photos and videos can be uploaded; “%(extension)s” files aren't "
+"supported."
+msgstr ""
+"Nur Fotos und Videos können hochgeladen werden; „%(extension)s“-Dateien "
+"werden nicht unterstützt."
+
+msgid ""
+"This name is already taken in this pickup. If it is yours, open your "
+"personal link."
+msgstr ""
+"Dieser Name ist in dieser Pickup schon vergeben. Wenn es deiner ist, öffne "
+"deinen persönlichen Link."
+
+msgid "A folder with this name already exists in this pickup."
+msgstr "In dieser Pickup gibt es schon einen Ordner mit diesem Namen."
+
+msgid "File type not supported. Please upload an image or video file."
+msgstr "Dateityp nicht unterstützt. Bitte lade ein Foto oder Video hoch."
+
+msgid "Use at least 4 characters."
+msgstr "Verwende mindestens 4 Zeichen."
+
+msgid "Choose a date in the future."
+msgstr "Wähle ein Datum in der Zukunft."
+
+msgid "Choose a day before the pickup is deleted."
+msgstr "Wähle einen Tag, bevor die Pickup gelöscht wird."
+
+msgid "A new pickup can't start closed."
+msgstr "Eine neue Pickup kann nicht pausiert starten."
+
+#, python-brace-format
+msgid ""
+"Only photos and videos can be uploaded; “{extension}” files aren't supported."
+msgstr ""
+"Nur Fotos und Videos können hochgeladen werden; „{extension}“-Dateien werden "
+"nicht unterstützt."
+
+#, python-brace-format
+msgid "Already uploaded: “{file}” in “{folder}”."
+msgstr "Schon hochgeladen: „{file}“ in „{folder}“."
+
+#, python-brace-format
+msgid "“{name}” already exists in this folder."
+msgstr "„{name}“ gibt es in diesem Ordner schon."
+
+#, python-brace-format
+msgid "“{name}” already exists here."
+msgstr "„{name}“ gibt es hier schon."
+
+msgid "Your own top-level folder cannot be deleted."
+msgstr "Deinen eigenen Hauptordner kannst du nicht löschen."
+
+msgid ""
+"Everyone’s photos and videos from one event in one place. One link, no "
+"accounts."
+msgstr ""
+"Die Fotos und Videos aller Gäste eines Fests an einem Ort. Ein Link, keine "
+"Konten."
+
+#, python-brace-format
+msgid ""
+"{name} invites you to add your photos and videos. One link, no accounts."
+msgstr ""
+"{name} lädt dich ein, deine Fotos und Videos beizusteuern. Ein Link, keine "
+"Konten."
+
+msgid "Add your photos and videos. One link, no accounts."
+msgstr "Steuere deine Fotos und Videos bei. Ein Link, keine Konten."
+
+msgid "Untitled pickup"
+msgstr "Pickup ohne Titel"
+
+#, python-brace-format
+msgid "Your new pickup “{title}”"
+msgstr "Deine neue Pickup „{title}“"
+
+#, python-brace-format
+msgid ""
+"Hello {name},\n"
+"\n"
+"your pickup is ready. With this personal link you can log in as the creator "
+"on any device. Keep it safe:\n"
+"\n"
+"{link}\n"
+"\n"
+"Share the pickup with others using its share link inside the pickup."
+msgstr ""
+"Hallo {name},\n"
+"\n"
+"deine Pickup ist bereit. Mit diesem persönlichen Link meldest du dich auf "
+"jedem Gerät als Ersteller:in an. Bewahre ihn gut auf:\n"
+"\n"
+"{link}\n"
+"\n"
+"Teile die Pickup mit anderen über den Teilen-Link in der Pickup."
+
+#, python-brace-format
+msgid "Your link to “{title}”"
+msgstr "Dein Link zu „{title}“"
+
+#, python-brace-format
+msgid ""
+"Hello {name},\n"
+"\n"
+"thanks for joining! With this personal link you can log in on any device:\n"
+"\n"
+"{link}\n"
+"\n"
+"Use it to add, rename or delete your photos later."
+msgstr ""
+"Hallo {name},\n"
+"\n"
+"schön, dass du dabei bist! Mit diesem persönlichen Link meldest du dich auf "
+"jedem Gerät an:\n"
+"\n"
+"{link}\n"
+"\n"
+"Damit kannst du später Fotos hinzufügen, umbenennen oder löschen."
+
+#, python-brace-format
+msgid ""
+"Hello {name},\n"
+"\n"
+"here is your personal link again. With it you can log in on any device:\n"
+"\n"
+"{link}\n"
+"\n"
+"If you didn't ask for this mail, you can ignore it."
+msgstr ""
+"Hallo {name},\n"
+"\n"
+"hier ist noch einmal dein persönlicher Link. Damit meldest du dich auf jedem "
+"Gerät an:\n"
+"\n"
+"{link}\n"
+"\n"
+"Wenn du diese Mail nicht angefordert hast, kannst du sie ignorieren."
+
+#, python-brace-format
+msgid "{inviter} invites you to “{title}”"
+msgstr "{inviter} lädt dich zu „{title}“ ein"
+
+#, python-brace-format
+msgid ""
+"Hello{greeting},\n"
+"\n"
+"{inviter} invites you to add your photos and videos to “{title}”. Open your "
+"personal link to join — no account needed:\n"
+"\n"
+"{link}\n"
+"\n"
+"The link is just for you; please don't forward it."
+msgstr ""
+"Hallo{greeting},\n"
+"\n"
+"{inviter} lädt dich ein, deine Fotos und Videos zu „{title}“ beizusteuern. "
+"Öffne deinen persönlichen Link, um mitzumachen – ganz ohne Konto:\n"
+"\n"
+"{link}\n"
+"\n"
+"Der Link ist nur für dich; bitte leite ihn nicht weiter."
+
+#, python-brace-format
+msgid ""
+"Hello {name},\n"
+"\n"
+"{inviter} added this address for you to “{title}”. With your personal link "
+"you can log in on any device:\n"
+"\n"
+"{link}\n"
+"\n"
+"If you lose it, you can have it sent to this address again. The link is just "
+"for you; please don't forward it. If you don't know “{title}”, please ignore "
+"this mail."
+msgstr ""
+"Hallo {name},\n"
+"\n"
+"{inviter} hat diese Adresse für dich bei „{title}“ hinterlegt. Mit deinem "
+"persönlichen Link meldest du dich auf jedem Gerät an:\n"
+"\n"
+"{link}\n"
+"\n"
+"Wenn du ihn verlierst, kannst du ihn dir an diese Adresse neu schicken "
+"lassen. Der Link ist nur für dich; bitte leite ihn nicht weiter. Wenn du "
+"„{title}“ nicht kennst, ignoriere diese Mail bitte."
+
+#, python-brace-format
+msgid "Confirm your new address for “{title}”"
+msgstr "Bestätige deine neue Adresse für „{title}“"
+
+#, python-brace-format
+msgid ""
+"Hello {name},\n"
+"\n"
+"please confirm that this is your new email address for “{title}”:\n"
+"\n"
+"{link}\n"
+"\n"
+"The link works for 24 hours. If you didn't ask for this, ignore this mail; "
+"nothing changes."
+msgstr ""
+"Hallo {name},\n"
+"\n"
+"bitte bestätige, dass dies deine neue E-Mail-Adresse für „{title}“ ist:\n"
+"\n"
+"{link}\n"
+"\n"
+"Der Link gilt 24 Stunden. Wenn du das nicht angefordert hast, ignoriere "
+"diese Mail; es ändert sich nichts."
+
+msgid "Someone"
+msgstr "Jemand"
+
+msgid "there"
+msgstr "du"
+
+msgid "Confirm address"
+msgstr "Adresse bestätigen"
+
+msgid "Open your link"
+msgstr "Link öffnen"
+
+msgid "Pickups you created"
+msgstr "Pickups, die du erstellt hast"
+
+msgid "Pickups you participate in"
+msgstr "Pickups, bei denen du mitmachst"
+
+msgid ""
+"here is a list of all pickups associated with this email address. Each link "
+"logs you in to that pickup."
+msgstr ""
+"hier ist eine Liste aller Pickups zu dieser E-Mail-Adresse. Jeder Link "
+"meldet dich bei dieser Pickup an."
+
+msgid "If you didn't ask for this mail, you can ignore it."
+msgstr "Wenn du diese Mail nicht angefordert hast, kannst du sie ignorieren."
+
+msgid "Hello,"
+msgstr "Hallo,"
+
+msgid "Your pickups"
+msgstr "Deine Pickups"
+
+msgid "You already have a folder in this pickup."
+msgstr "Du hast in dieser Pickup schon einen Ordner."
+
+msgid "This pickup is closed."
+msgstr "Diese Pickup ist pausiert."
+
+msgid "This pickup is read-only now: nobody adds photos anymore."
+msgstr ""
+"Diese Pickup ist jetzt schreibgeschützt: Niemand fügt mehr Fotos hinzu."
+
+msgid "This pickup is invite-only. Ask the creator for an invitation."
+msgstr ""
+"Bei dieser Pickup macht nur mit, wer eingeladen ist. Frag die Ersteller:in "
+"nach einer Einladung."
+
+msgid "This pickup doesn't take new participants anymore."
+msgstr "Diese Pickup nimmt keine neuen Teilnehmenden mehr auf."
+
+msgid "Enter a name."
+msgstr "Gib einen Namen ein."
+
+msgid "This name is already taken in this pickup."
+msgstr "Dieser Name ist in dieser Pickup schon vergeben."
+
+msgid "This pickup is read-only now."
+msgstr "Diese Pickup ist jetzt schreibgeschützt."
+
+msgid "You don't have a folder in this pickup yet."
+msgstr "Du hast in dieser Pickup noch keinen Ordner."
+
+msgid "We just sent you a mail. Please wait a few minutes."
+msgstr ""
+"Wir haben dir gerade eine Mail geschickt. Bitte warte ein paar Minuten."
+
+msgid "This confirmation link is not valid or has expired."
+msgstr "Dieser Bestätigungslink ist ungültig oder abgelaufen."
+
+msgid "Someone else in this pickup already uses this address."
+msgstr "Jemand anderes in dieser Pickup verwendet diese Adresse schon."
+
+msgid "Someone with this name is already in the pickup."
+msgstr "Jemand mit diesem Namen ist schon in der Pickup."
+
+msgid "They already have an address; only they can change it."
+msgstr "Die Person hat schon eine Adresse; nur sie selbst kann sie ändern."
+
+msgid "Someone in the pickup already has this address."
+msgstr "Jemand in der Pickup hat diese Adresse schon."
+
+msgid "The address isn't stored (privacy mode). Enter it again to resend."
+msgstr ""
+"Die Adresse ist nicht gespeichert (Privatsphäre-Modus). Gib sie zum erneuten "
+"Senden noch einmal ein."
+
+msgid "The creator cannot be removed."
+msgstr "Die Ersteller:in kann nicht entfernt werden."
+
+#, python-brace-format
+msgid ""
+"Not enough space: {free} of {limit} left for your folders, the file has "
+"{size}."
+msgstr ""
+"Nicht genug Platz: Für deine Ordner sind noch {free} von {limit} frei, die "
+"Datei hat {size}."
+
+#, python-brace-format
+msgid ""
+"Not enough space: {free} of {limit} left for this pickup, the file has "
+"{size}."
+msgstr ""
+"Nicht genug Platz: Für diese Pickup sind noch {free} von {limit} frei, die "
+"Datei hat {size}."

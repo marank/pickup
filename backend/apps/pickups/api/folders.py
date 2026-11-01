@@ -2,6 +2,7 @@ from typing import Any
 
 from django.db.models import QuerySet
 from django.shortcuts import get_object_or_404
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
@@ -55,7 +56,7 @@ class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
     def _deny_private(self, folder: Folder) -> Response | None:
         if can_view(folder.pickup, get_member_from_request(self.request, folder.pickup)):
             return None
-        return Response({"error": "This pickup is private."}, status=status.HTTP_403_FORBIDDEN)
+        return Response({"error": _("This pickup is private.")}, status=status.HTTP_403_FORBIDDEN)
 
     @extend_schema(responses={200: FolderSerializer, 403: ErrorSerializer})
     def retrieve(self, request: Request, *args: Any, **kwargs: Any) -> Response:
@@ -90,7 +91,7 @@ class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
 
         if not member or not can_edit(member, folder):
             return Response(
-                {"error": "You do not have permission to upload to this folder."},
+                {"error": _("You do not have permission to upload to this folder.")},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -121,7 +122,7 @@ class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
         member = get_member_from_request(request, folder.pickup)
         if not member or not can_edit(member, folder):
             return Response(
-                {"error": "You do not have permission to clear this folder."},
+                {"error": _("You do not have permission to clear this folder.")},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -129,14 +130,14 @@ class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
         for media in folder.media.all():
             media.delete_files()
         folder.media.all().delete()
-        return Response({"message": f"Deleted {media_count} media files."})
+        return Response({"message": _("Deleted {count} media files.").format(count=media_count)})
 
     def _owned(self, request: Request) -> tuple[Folder, Response | None]:
         folder = self.get_object()
         member = get_member_from_request(request, folder.pickup)
         if not member or not can_edit(member, folder):
             return folder, Response(
-                {"error": "Only the owner can change this folder."}, status=status.HTTP_403_FORBIDDEN
+                {"error": _("Only the owner can change this folder.")}, status=status.HTTP_403_FORBIDDEN
             )
         return folder, None
 
@@ -182,7 +183,7 @@ class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
         member = get_member_from_request(request, folder.pickup)
         if folder.parent_id is not None and not can_delete_folder(member, folder):
             return Response(
-                {"error": "Only the owner can change this folder."}, status=status.HTTP_403_FORBIDDEN
+                {"error": _("Only the owner can change this folder.")}, status=status.HTTP_403_FORBIDDEN
             )
         try:
             delete_subfolder(folder)

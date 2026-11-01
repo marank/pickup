@@ -2,6 +2,7 @@ from typing import Any
 
 from django.db.models import QuerySet
 from django.shortcuts import get_object_or_404
+from django.utils.translation import gettext as _
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import mixins, status, viewsets
@@ -57,7 +58,7 @@ class MediaViewSet(mixins.RetrieveModelMixin, mixins.DestroyModelMixin, viewsets
     def retrieve(self, request: Request, *args: Any, **kwargs: Any) -> Response:
         media = self.get_object()
         if not can_view(media.folder.pickup, get_member_from_request(request, media.folder.pickup)):
-            return Response({"error": "This pickup is private."}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"error": _("This pickup is private.")}, status=status.HTTP_403_FORBIDDEN)
         return super().retrieve(request, *args, **kwargs)
 
     @extend_schema(parameters=[_PICKUP_ID], responses={204: None, 403: ErrorSerializer})
@@ -66,7 +67,7 @@ class MediaViewSet(mixins.RetrieveModelMixin, mixins.DestroyModelMixin, viewsets
         media = self.get_object()
         if not can_delete_media(get_member_from_request(request, media.folder.pickup), media):
             return Response(
-                {"error": "You do not have permission to delete this media."},
+                {"error": _("You do not have permission to delete this media.")},
                 status=status.HTTP_403_FORBIDDEN,
             )
         media.delete_files()
@@ -90,7 +91,7 @@ class MediaViewSet(mixins.RetrieveModelMixin, mixins.DestroyModelMixin, viewsets
         media = self.get_object()
         if not self._member_can_edit(request, media):
             return Response(
-                {"error": "You do not have permission to edit this media."},
+                {"error": _("You do not have permission to edit this media.")},
                 status=status.HTTP_403_FORBIDDEN,
             )
         caption = CaptionSerializer(data=request.data)

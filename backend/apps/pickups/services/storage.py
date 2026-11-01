@@ -5,6 +5,7 @@ from uuid import UUID
 
 from django.conf import settings
 from django.db.models import Q, Sum
+from django.utils.translation import gettext as _
 
 from ..models import Folder, Media, Pickup, UploadSession
 
@@ -66,12 +67,19 @@ def format_size(size: int) -> str:
 
 def check_room(folder: Folder, size: int, exclude_session: UUID | None = None) -> None:
     """Raise StorageError if `size` more bytes in `folder` would exceed a limit."""
-    for usage, whose in [
-        (member_usage(folder, exclude_session), "your folders"),
-        (pickup_usage(folder.pickup, exclude_session), "this pickup"),
+    for usage, message in [
+        (
+            member_usage(folder, exclude_session),
+            _("Not enough space: {free} of {limit} left for your folders, the file has {size}."),
+        ),
+        (
+            pickup_usage(folder.pickup, exclude_session),
+            _("Not enough space: {free} of {limit} left for this pickup, the file has {size}."),
+        ),
     ]:
         if usage.free is not None and size > usage.free:
             raise StorageError(
-                f"Not enough space: {format_size(usage.free)} of {format_size(usage.limit)} "
-                f"left for {whose}, the file has {format_size(size)}."
+                message.format(
+                    free=format_size(usage.free), limit=format_size(usage.limit), size=format_size(size)
+                )
             )

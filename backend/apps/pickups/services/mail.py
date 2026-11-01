@@ -16,6 +16,8 @@ from django.db import transaction
 from django.http import HttpRequest
 from django.utils import timezone
 from django.utils.html import format_html
+from django.utils.translation import gettext as _
+from django.utils.translation import gettext_noop
 
 from ..models import Member
 
@@ -23,40 +25,53 @@ logger = logging.getLogger(__name__)
 
 Reason = Literal["created", "joined", "requested", "invited", "added", "confirm"]
 
+# Marked for translation here, translated when sent: in the language of the request.
 _TEXT: dict[Reason, tuple[str, str]] = {
     "created": (
-        "Your new pickup “{title}”",
-        "Hello {name},\n\nyour pickup is ready. With this personal link you can log in as the creator "
-        "on any device. Keep it safe:\n\n{link}\n\nShare the pickup with others using its share link "
-        "inside the pickup.",
+        gettext_noop("Your new pickup “{title}”"),
+        gettext_noop(
+            "Hello {name},\n\nyour pickup is ready. With this personal link you can log in as the creator "
+            "on any device. Keep it safe:\n\n{link}\n\nShare the pickup with others using its share link "
+            "inside the pickup."
+        ),
     ),
     "joined": (
-        "Your link to “{title}”",
-        "Hello {name},\n\nthanks for joining! With this personal link you can log in on any device:"
-        "\n\n{link}\n\nUse it to add, rename or delete your photos later.",
+        gettext_noop("Your link to “{title}”"),
+        gettext_noop(
+            "Hello {name},\n\nthanks for joining! With this personal link you can log in on any device:"
+            "\n\n{link}\n\nUse it to add, rename or delete your photos later."
+        ),
     ),
     "requested": (
-        "Your link to “{title}”",
-        "Hello {name},\n\nhere is your personal link again. With it you can log in on any device:"
-        "\n\n{link}\n\nIf you didn't ask for this mail, you can ignore it.",
+        gettext_noop("Your link to “{title}”"),
+        gettext_noop(
+            "Hello {name},\n\nhere is your personal link again. With it you can log in on any device:"
+            "\n\n{link}\n\nIf you didn't ask for this mail, you can ignore it."
+        ),
     ),
     "invited": (
-        "{inviter} invites you to “{title}”",
-        "Hello{greeting},\n\n{inviter} invites you to add your photos and videos to “{title}”. "
-        "Open your personal link to join — no account needed:\n\n{link}\n\nThe link is just for you; "
-        "please don't forward it.",
+        gettext_noop("{inviter} invites you to “{title}”"),
+        gettext_noop(
+            "Hello{greeting},\n\n{inviter} invites you to add your photos and videos to “{title}”. "
+            "Open your personal link to join — no account needed:\n\n{link}\n\nThe link is just for you; "
+            "please don't forward it."
+        ),
     ),
     "added": (
-        "Your link to “{title}”",
-        "Hello {name},\n\n{inviter} added this address for you to “{title}”. With your personal link "
-        "you can log in on any device:\n\n{link}\n\nIf you lose it, you can have it sent to this "
-        "address again. The link is just for you; please don't forward it. If you don't know "
-        "“{title}”, please ignore this mail.",
+        gettext_noop("Your link to “{title}”"),
+        gettext_noop(
+            "Hello {name},\n\n{inviter} added this address for you to “{title}”. With your personal link "
+            "you can log in on any device:\n\n{link}\n\nIf you lose it, you can have it sent to this "
+            "address again. The link is just for you; please don't forward it. If you don't know "
+            "“{title}”, please ignore this mail."
+        ),
     ),
     "confirm": (
-        "Confirm your new address for “{title}”",
-        "Hello {name},\n\nplease confirm that this is your new email address for “{title}”:\n\n{link}"
-        "\n\nThe link works for 24 hours. If you didn't ask for this, ignore this mail; nothing changes.",
+        gettext_noop("Confirm your new address for “{title}”"),
+        gettext_noop(
+            "Hello {name},\n\nplease confirm that this is your new email address for “{title}”:\n\n{link}"
+            "\n\nThe link works for 24 hours. If you didn't ask for this, ignore this mail; nothing changes."
+        ),
     ),
 }
 
@@ -112,7 +127,7 @@ class _LinkMail(EmailMultiAlternatives):
         return msg
 
 
-def _html(body: str, link: str, button: str = "Open your link") -> str:
+def _html(body: str, link: str, button: str) -> str:
     """The text body as HTML paragraphs, the link as a button."""
     paragraphs = [
         format_html(
@@ -154,15 +169,15 @@ def send_personal_link(
     cooldown (link_sent_at) starts now, so a second click doesn't queue a second mail.
     """
     pickup = member.pickup
-    inviter_name = inviter.user_name if inviter and inviter.user_name != "Creator" else "Someone"
+    inviter_name = inviter.user_name if inviter and inviter.user_name != "Creator" else _("Someone")
     values = {
-        "title": pickup.title or "Untitled pickup",
-        "name": member.user_name or "there",
+        "title": pickup.title or _("Untitled pickup"),
+        "name": member.user_name or _("there"),
         "greeting": f" {member.user_name}" if member.user_name else "",
         "inviter": inviter_name,
         "link": link or request.build_absolute_uri(member.personal_path),
     }
-    subject, body = (part.format(**values) for part in _TEXT[reason])
+    subject, body = (_(part).format(**values) for part in _TEXT[reason])
     sender = settings.DEFAULT_FROM_EMAIL
     reply_to: list[str] = []
     if reason in ("invited", "added"):
@@ -171,7 +186,7 @@ def send_personal_link(
         if inviter and inviter.email:  # only known with the privacy mode off
             reply_to = [inviter.email]
     message = _LinkMail(subject, body, sender, [address], reply_to=reply_to)
-    button = "Confirm address" if reason == "confirm" else "Open your link"
+    button = _("Confirm address") if reason == "confirm" else _("Open your link")
     message.attach_alternative(_html(body, values["link"], button), "text/html")
     member.link_sent_at = timezone.now()
     member.save(update_fields=["link_sent_at"])
@@ -185,21 +200,26 @@ def send_pickup_list(members: list[Member], address: str, request: HttpRequest) 
     """
 
     def entry(member: Member) -> tuple[str, str]:
-        return member.pickup.title or "Untitled pickup", request.build_absolute_uri(member.personal_path)
+        return member.pickup.title or _("Untitled pickup"), request.build_absolute_uri(member.personal_path)
 
     sections = [
         (heading, [entry(m) for m in members if m.is_creator == created])
-        for heading, created in (("Pickups you created", True), ("Pickups you participate in", False))
+        for heading, created in ((_("Pickups you created"), True), (_("Pickups you participate in"), False))
     ]
     sections = [(heading, entries) for heading, entries in sections if entries]
-    body = (
-        "Hello,\n\nhere is a list of all pickups associated with this email address. "
+    intro = _(
+        "here is a list of all pickups associated with this email address. "
         "Each link logs you in to that pickup."
+    )
+    ignore = _("If you didn't ask for this mail, you can ignore it.")
+    body = (
+        _("Hello,")
+        + f"\n\n{intro}"
         + "".join(
             f"\n\n{heading}:\n\n" + "\n\n".join(f"{title}\n{link}" for title, link in entries)
             for heading, entries in sections
         )
-        + "\n\nIf you didn't ask for this mail, you can ignore it."
+        + f"\n\n{ignore}"
     )
     lists = "\n".join(
         format_html('<h3 style="margin:20px 0 8px;font-size:15px">{}</h3>', heading)
@@ -223,15 +243,14 @@ def send_pickup_list(members: list[Member], address: str, request: HttpRequest) 
             'font-family:system-ui,-apple-system,Segoe UI,sans-serif;font-size:15px;line-height:1.5">',
             '<div style="max-width:520px;margin:0 auto">',
             f'<p><img src="cid:{LOGO_CID}" width="162" height="48" alt="pickup"></p>',
-            "<p>Hello,</p>",
-            "<p>here is a list of all pickups associated with this email address. "
-            "Each link logs you in to that pickup.</p>",
+            format_html("<p>{}</p>", _("Hello,")),
+            format_html("<p>{}</p>", intro),
             lists,
-            "<p>If you didn&#x27;t ask for this mail, you can ignore it.</p>",
+            format_html("<p>{}</p>", ignore),
             "</div></body></html>",
         ]
     )
-    message = _LinkMail("Your pickups", body, settings.DEFAULT_FROM_EMAIL, [address])
+    message = _LinkMail(_("Your pickups"), body, settings.DEFAULT_FROM_EMAIL, [address])
     message.attach_alternative(html, "text/html")
     Member.objects.filter(id__in=[member.id for member in members]).update(link_sent_at=timezone.now())
     _in_background(message.send, "the pickup list")

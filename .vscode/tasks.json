@@ -42,7 +42,7 @@
       "label": "check: backend",
       "detail": "ruff, mypy, deptry, migrations, Django checks, pytest with coverage",
       "type": "shell",
-      "command": "uv sync --locked && uv run ruff check . && uv run ruff format --check . && uv run mypy . && uv run deptry . && uv run python manage.py makemigrations --check --dry-run && uv run python manage.py check --fail-level WARNING && uv run python manage.py spectacular --validate --fail-on-warn --format openapi-json --file .openapi-check.json && uv run python -c \"import filecmp, sys; sys.exit(0 if filecmp.cmp('.openapi-check.json', '../frontend/openapi.json', shallow=False) else 'frontend/openapi.json is outdated: run the api: types task')\" && uv run pytest -q --cov --cov-report=term --cov-fail-under=90",
+      "command": "uv sync --locked && uv run ruff check . && uv run ruff format --check . && uv run mypy . && uv run deptry . && uv run python manage.py makemigrations --check --dry-run && uv run python scripts/check_messages.py && uv run python manage.py check --fail-level WARNING && uv run python manage.py spectacular --validate --fail-on-warn --format openapi-json --file .openapi-check.json && uv run python -c \"import filecmp, sys; sys.exit(0 if filecmp.cmp('.openapi-check.json', '../frontend/openapi.json', shallow=False) else 'frontend/openapi.json is outdated: run the api: types task')\" && uv run pytest -q --cov --cov-report=term --cov-fail-under=90",
       "options": { "cwd": "${workspaceFolder}/backend" },
       "problemMatcher": []
     },
@@ -98,6 +98,14 @@
       "label": "django: makemigrations",
       "type": "shell",
       "command": "uv run python manage.py makemigrations",
+      "options": { "cwd": "${workspaceFolder}/backend" },
+      "problemMatcher": []
+    },
+    {
+      "label": "django: messages",
+      "detail": "After changing server texts: collect them in locale/de/django.po (translate the empty ones), compile django.mo",
+      "type": "shell",
+      "command": "uv run python manage.py makemessages -l de --ignore=.venv --ignore='*/tests/*' --no-obsolete --no-location && uv run python manage.py compilemessages -l de --ignore=.venv",
       "options": { "cwd": "${workspaceFolder}/backend" },
       "problemMatcher": []
     },

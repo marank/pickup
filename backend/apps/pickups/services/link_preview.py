@@ -7,9 +7,9 @@ from functools import lru_cache
 from pathlib import Path
 from uuid import UUID
 
-from ..models import Member, Pickup, live
+from django.utils.translation import gettext as _
 
-GENERIC_DESCRIPTION = "Everyone’s photos and videos from one event in one place. One link, no accounts."
+from ..models import Member, Pickup, live
 
 
 @dataclass(frozen=True)
@@ -18,7 +18,10 @@ class LinkPreview:
     description: str
 
 
-GENERIC = LinkPreview("Pickup", GENERIC_DESCRIPTION)
+def generic() -> LinkPreview:
+    return LinkPreview(
+        "Pickup", _("Everyone’s photos and videos from one event in one place. One link, no accounts.")
+    )
 
 
 def link_preview(pickup_id: UUID) -> LinkPreview:
@@ -28,11 +31,14 @@ def link_preview(pickup_id: UUID) -> LinkPreview:
     """
     pickup = Pickup.objects.filter(live(), id=pickup_id).first()
     if pickup is None or pickup.password:
-        return GENERIC
+        return generic()
     creator = Member.objects.filter(pickup=pickup, is_creator=True).order_by("created_at").first()
     name = creator.user_name if creator and creator.user_name != "Creator" else ""
-    invite = f"{name} invites you to add your photos and videos." if name else "Add your photos and videos."
-    return LinkPreview(pickup.title or "Untitled pickup", f"{invite} One link, no accounts.")
+    if name:
+        description = _("{name} invites you to add your photos and videos. One link, no accounts.")
+    else:
+        description = _("Add your photos and videos. One link, no accounts.")
+    return LinkPreview(pickup.title or _("Untitled pickup"), description.format(name=name))
 
 
 _META = re.compile(r'(<meta (?:property="og:(?:title|description)"|name="description") content=")[^"]*(")')

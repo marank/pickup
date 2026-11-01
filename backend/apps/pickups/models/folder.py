@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from apps.core.models import UUIDModel
 
@@ -11,9 +12,9 @@ from apps.core.models import UUIDModel
 def validate_folder_name(value: str) -> None:
     """Any characters except path separators: the address bar uses "/" between folders."""
     if "/" in value or "\\" in value:
-        raise ValidationError("Folder names cannot contain / or \\.")
+        raise ValidationError(_("Folder names cannot contain / or \\."))
     if value.strip() in {"", ".", ".."}:
-        raise ValidationError("Please enter a folder name.")
+        raise ValidationError(_("Please enter a folder name."))
 
 
 class Folder(UUIDModel):

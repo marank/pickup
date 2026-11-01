@@ -4,6 +4,7 @@ import hashlib
 from collections.abc import Iterable
 
 from django.db.models import Q
+from django.utils.translation import gettext as _
 
 from ..models import Folder, Media
 
@@ -13,8 +14,11 @@ class DuplicateUpload(Exception):
 
     def __init__(self, media: Media) -> None:
         self.media = media
-        where = media.folder.name
-        super().__init__(f"Already uploaded: “{media.original_filename}” in “{where}”.")
+        super().__init__(
+            _("Already uploaded: “{file}” in “{folder}”.").format(
+                file=media.original_filename, folder=media.folder.name
+            )
+        )
 
 
 def fingerprint(blocks: Iterable[bytes]) -> str:

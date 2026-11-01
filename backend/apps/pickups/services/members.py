@@ -8,6 +8,7 @@ from django.db import transaction
 from django.db.models import F, Q
 from django.http import HttpRequest
 from django.utils import timezone
+from django.utils.translation import gettext as _
 
 from ..models import Folder, JoinPolicy, Media, Member, Pickup, UploadSession, live
 from .access import is_closed_for
@@ -153,23 +154,23 @@ def join_pickup(
     new member — if the pickup's join policy allows it.
     """
     if current is not None and current.folder_id is not None:
-        raise MembershipError("You already have a folder in this pickup.")
+        raise MembershipError(_("You already have a folder in this pickup."))
     if is_closed_for(pickup, current):
-        raise MembershipError("This pickup is closed.", status=403)
+        raise MembershipError(_("This pickup is closed."), status=403)
     if pickup.is_read_only:
-        raise MembershipError("This pickup is read-only now: nobody adds photos anymore.", status=403)
+        raise MembershipError(_("This pickup is read-only now: nobody adds photos anymore."), status=403)
     if current is None and pickup.join_policy == JoinPolicy.INVITE:
-        raise MembershipError("This pickup is invite-only. Ask the creator for an invitation.", status=403)
+        raise MembershipError(_("This pickup is invite-only. Ask the creator for an invitation."), status=403)
     if current is None and pickup.join_policy == JoinPolicy.CLOSED:
-        raise MembershipError("This pickup doesn't take new participants anymore.", status=403)
+        raise MembershipError(_("This pickup doesn't take new participants anymore."), status=403)
 
     user_name = normalize_name(user_name)
     if name_taken(pickup, user_name, exclude=current):
         raise MembershipError(
-            "This name is already taken in this pickup. If it is yours, open your personal link."
+            _("This name is already taken in this pickup. If it is yours, open your personal link.")
         )
     if folder_name_taken(pickup, name):
-        raise MembershipError("A folder with this name already exists in this pickup.")
+        raise MembershipError(_("A folder with this name already exists in this pickup."))
 
     folder = Folder.objects.create(pickup=pickup, name=normalize_name(name), user_name=user_name)
     member = current or Member(pickup=pickup)
@@ -191,13 +192,13 @@ def update_member(member: Member, *, user_name: str | None = None, folder_name: 
     """
     pickup = member.pickup
     if is_closed_for(pickup, member):
-        raise MembershipError("This pickup is closed.", status=403)
+        raise MembershipError(_("This pickup is closed."), status=403)
     if user_name is not None:
         user_name = normalize_name(user_name)
         if not user_name:
-            raise MembershipError("Enter a name.")
+            raise MembershipError(_("Enter a name."))
         if name_taken(pickup, user_name, exclude=member):
-            raise MembershipError("This name is already taken in this pickup.")
+            raise MembershipError(_("This name is already taken in this pickup."))
         member.user_name = user_name
         member.save(update_fields=["user_name"])
         if member.folder_id is not None:
@@ -206,9 +207,9 @@ def update_member(member: Member, *, user_name: str | None = None, folder_name: 
             )
     if folder_name is not None:
         if pickup.is_read_only:
-            raise MembershipError("This pickup is read-only now.", status=403)
+            raise MembershipError(_("This pickup is read-only now."), status=403)
         if member.folder is None:
-            raise MembershipError("You don't have a folder in this pickup yet.")
+            raise MembershipError(_("You don't have a folder in this pickup yet."))
         try:
             rename_folder(member.folder, normalize_name(folder_name))
         except FolderError as exc:
@@ -228,7 +229,7 @@ def set_email(request: HttpRequest, member: Member, email: str) -> bool:
         send_personal_link(member, email, request, "requested")
         return False
     if member.link_sent_at and timezone.now() - member.link_sent_at < LINK_MAIL_COOLDOWN:
-        raise MembershipError("We just sent you a mail. Please wait a few minutes.", status=429)
+        raise MembershipError(_("We just sent you a mail. Please wait a few minutes."), status=429)
     # The address travels signed in the link (after the #, so it never reaches the server's
     # logs); nothing is stored until it is confirmed, also not in privacy mode.
     token = signing.dumps(
@@ -244,13 +245,13 @@ def confirm_email(pickup: Pickup, token: str) -> Member:
     try:
         data = signing.loads(token, salt=EMAIL_CHANGE_SALT, max_age=EMAIL_CHANGE_MAX_AGE)
     except signing.BadSignature as exc:  # also expired
-        raise MembershipError("This confirmation link is not valid or has expired.") from exc
+        raise MembershipError(_("This confirmation link is not valid or has expired.")) from exc
     member = Member.objects.select_related("pickup").filter(id=data["member"], pickup=pickup).first()
     if member is None:
-        raise MembershipError("This confirmation link is not valid or has expired.")
+        raise MembershipError(_("This confirmation link is not valid or has expired."))
     others = Member.objects.filter(pickup=pickup, email_hash=email_hash(data["email"])).exclude(id=member.id)
     if others.exists():
-        raise MembershipError("Someone else in this pickup already uses this address.")
+        raise MembershipError(_("Someone else in this pickup already uses this address."))
     remember_email(member, data["email"])
     member.save(update_fields=["email", "email_hash"])
     return member
@@ -292,7 +293,7 @@ def invite(request: HttpRequest, pickup: Pickup, inviter: Member, email: str, na
     if member is None:
         name = normalize_name(name)
         if name and name_taken(pickup, name):
-            raise MembershipError("Someone with this name is already in the pickup.")
+            raise MembershipError(_("Someone with this name is already in the pickup."))
         member = Member(pickup=pickup, user_name=name, invited_at=timezone.now())
         remember_email(member, email)
         member.save()
@@ -317,9 +318,9 @@ def add_email(request: HttpRequest, member: Member, creator: Member, email: str)
     An address a participant already has only they can change (set_email).
     """
     if member.email_hash:
-        raise MembershipError("They already have an address; only they can change it.")
+        raise MembershipError(_("They already have an address; only they can change it."))
     if Member.objects.filter(pickup=member.pickup, email_hash=email_hash(email)).exists():
-        raise MembershipError("Someone in the pickup already has this address.")
+        raise MembershipError(_("Someone in the pickup already has this address."))
     remember_email(member, email)
     member.save(update_fields=["email", "email_hash"])
     send_personal_link(member, email, request, "added", inviter=creator)
@@ -328,7 +329,7 @@ def add_email(request: HttpRequest, member: Member, creator: Member, email: str)
 def resend_invite(request: HttpRequest, member: Member, inviter: Member) -> None:
     """Without privacy mode the address is known, so the creator can resend with one click."""
     if not member.email:
-        raise MembershipError("The address isn't stored (privacy mode). Enter it again to resend.")
+        raise MembershipError(_("The address isn't stored (privacy mode). Enter it again to resend."))
     send_personal_link(member, member.email, request, "invited", inviter=inviter)
 
 
@@ -336,7 +337,7 @@ def resend_invite(request: HttpRequest, member: Member, inviter: Member) -> None
 def remove_member(member: Member) -> int:
     """Remove a participant with their folder and files; returns the number of deleted files."""
     if member.is_creator:
-        raise MembershipError("The creator cannot be removed.")
+        raise MembershipError(_("The creator cannot be removed."))
     deleted = 0
     if member.folder is not None:
         for item in Media.objects.filter(folder_id__in=subtree_ids(member.folder)):

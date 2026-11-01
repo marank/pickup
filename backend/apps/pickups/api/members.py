@@ -2,6 +2,7 @@ from typing import Any
 
 from django.db.models import QuerySet
 from django.shortcuts import get_object_or_404
+from django.utils.translation import gettext as _
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import mixins, status, viewsets
@@ -108,7 +109,7 @@ class MemberViewSet(mixins.ListModelMixin, viewsets.GenericViewSet[Member]):
             resend_invite(request, self.get_object(), creator)
         except MembershipError as exc:
             return Response({"error": str(exc)}, status=exc.status)
-        return Response({"message": "Invitation sent again."})
+        return Response({"message": _("Invitation sent again.")})
 
     @extend_schema(
         parameters=[_PICKUP_ID],
@@ -127,7 +128,7 @@ class MemberViewSet(mixins.ListModelMixin, viewsets.GenericViewSet[Member]):
             add_email(request, self.get_object(), creator, body.validated_data["email"])
         except MembershipError as exc:
             return Response({"error": str(exc)}, status=exc.status)
-        return Response({"message": "Address saved; they got their link by email."})
+        return Response({"message": _("Address saved; they got their link by email.")})
 
     @extend_schema(parameters=[_PICKUP_ID], responses={200: PersonalLinkSerializer, 403: ErrorSerializer})
     @action(detail=True, methods=["get"])
@@ -154,4 +155,6 @@ class MemberViewSet(mixins.ListModelMixin, viewsets.GenericViewSet[Member]):
 
 
 def _creator_only() -> Response:
-    return Response({"error": "Only the creator can manage participants."}, status=status.HTTP_403_FORBIDDEN)
+    return Response(
+        {"error": _("Only the creator can manage participants.")}, status=status.HTTP_403_FORBIDDEN
+    )

@@ -1,5 +1,6 @@
 from typing import Any
 
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 
 from ..models import MediaChunk, UploadSession
@@ -61,7 +62,9 @@ class CreateUploadSessionSerializer(serializers.Serializer[Any]):
         """Same file types as direct uploads; the extension ends up in the stored file name."""
         if file_extension(value) not in ALLOWED_EXTENSIONS:
             raise serializers.ValidationError(
-                f"Only photos and videos can be uploaded; “{file_extension(value)}” files aren't supported."
+                _("Only photos and videos can be uploaded; “{extension}” files aren't supported.").format(
+                    extension=file_extension(value)
+                )
             )
         return value
 

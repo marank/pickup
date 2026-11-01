@@ -4,6 +4,7 @@ from uuid import UUID
 
 from django.db.models import QuerySet
 from django.http import HttpResponseBase, StreamingHttpResponse
+from django.utils.translation import gettext as _
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import mixins, status, viewsets
@@ -58,7 +59,7 @@ from ..services.members import (
 
 def private() -> Response:
     return Response(
-        {"error": "This pickup is private. Join it or open your personal link."},
+        {"error": _("This pickup is private. Join it or open your personal link.")},
         status=status.HTTP_403_FORBIDDEN,
     )
 
@@ -115,7 +116,7 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
         member = self._member()
         if not member or not member.is_creator:
             return Response(
-                {"error": "Only the creator can change the pickup."}, status=status.HTTP_403_FORBIDDEN
+                {"error": _("Only the creator can change the pickup.")}, status=status.HTTP_403_FORBIDDEN
             )
         body = PickupUpdateSerializer(pickup, data=request.data, partial=True)
         body.is_valid(raise_exception=True)
@@ -134,7 +135,7 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
         member = self._member()
         if not member or not member.is_creator:
             return Response(
-                {"error": "Only the creator can delete the pickup."}, status=status.HTTP_403_FORBIDDEN
+                {"error": _("Only the creator can delete the pickup.")}, status=status.HTTP_403_FORBIDDEN
             )
         delete_pickup(pickup)
         logout_member(request, pickup)
@@ -173,10 +174,10 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
             folder_ids = [UUID(v) for v in request.query_params.get("folders", "").split(",") if v]
             media_ids = [UUID(v) for v in request.query_params.get("media", "").split(",") if v]
         except ValueError:
-            return Response({"error": "Invalid id."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": _("Invalid id.")}, status=status.HTTP_400_BAD_REQUEST)
         entries = collect(pickup, folder_ids, media_ids)
         if not entries:
-            return Response({"error": "Nothing to download."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": _("Nothing to download.")}, status=status.HTTP_400_BAD_REQUEST)
         top = {entry.path.split("/")[0] for entry in entries}
         name = top.pop() if len(top) == 1 and folder_ids else safe_name(pickup.title or "pickup")
         response = StreamingHttpResponse(stream(entries), content_type="application/zip")
@@ -210,7 +211,7 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
         # Before anything else, so a wrong password learns nothing (not even taken names).
         password = str(request.data.get("password", "")) if isinstance(request.data, dict) else ""
         if member is None and not check_pickup_password(pickup, password):
-            return Response({"error": "Wrong password."}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"error": _("Wrong password.")}, status=status.HTTP_403_FORBIDDEN)
         body = JoinSerializer(data=request.data, context={"pickup": pickup, "member": member})
         if not body.is_valid():
             return Response(body.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -260,11 +261,13 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
         key = SessionSerializer(data=request.data)
         member = member_for_key(pickup, key.validated_data["access_key"]) if key.is_valid() else None
         if member is None:
-            return Response({"error": "This personal link is not valid."}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"error": _("This personal link is not valid.")}, status=status.HTTP_403_FORBIDDEN
+            )
         current = self._member()
         already = current is not None and current.id == member.id
         if not already and not check_pickup_password(pickup, key.validated_data.get("password", "")):
-            return Response({"error": "Wrong password."}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"error": _("Wrong password.")}, status=status.HTTP_403_FORBIDDEN)
         login_member(request, member)
         member.touch()
         return Response(PickupSerializer(pickup, context={"member": member}).data)
@@ -272,7 +275,7 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
     def _update_member(self, request: Request, pickup: Pickup) -> Response:
         member = self._member()
         if member is None:
-            return Response({"error": "Join the pickup first."}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"error": _("Join the pickup first.")}, status=status.HTTP_403_FORBIDDEN)
         body = MemberDetailsSerializer(data=request.data)
         if not body.is_valid():
             return Response(body.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -294,7 +297,9 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
         key = SessionSerializer(data=request.data)
         member = member_for_key(pickup, key.validated_data["access_key"]) if key.is_valid() else None
         if member is None:
-            return Response({"error": "This personal link is not valid."}, status=status.HTTP_403_FORBIDDEN)
+            return Response(
+                {"error": _("This personal link is not valid.")}, status=status.HTTP_403_FORBIDDEN
+            )
         current = self._member()
         data = {
             "title": pickup.title,
@@ -312,7 +317,7 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
         """Your own personal link, to copy it again (only while this browser is signed in as you)."""
         member = self._member()
         if member is None:
-            return Response({"error": "Join the pickup first."}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"error": _("Join the pickup first.")}, status=status.HTTP_403_FORBIDDEN)
         data = {"member_url": member.personal_path, "has_email": bool(member.email_hash)}
         response = Response(PersonalLinkSerializer(data).data)
         response["Cache-Control"] = "private, no-store"
@@ -324,7 +329,7 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
         """The signed-in member has closed the intro, so it doesn't open by itself again."""
         member = self._member()
         if member is None:
-            return Response({"error": "Join the pickup first."}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"error": _("Join the pickup first.")}, status=status.HTTP_403_FORBIDDEN)
         mark_intro_seen(member)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -340,7 +345,7 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
         """
         member = self._member()
         if member is None:
-            return Response({"error": "Join the pickup first."}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"error": _("Join the pickup first.")}, status=status.HTTP_403_FORBIDDEN)
         body = EmailSerializer(data=request.data)
         body.is_valid(raise_exception=True)
         try:
@@ -348,8 +353,8 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
         except MembershipError as exc:
             return Response({"error": str(exc)}, status=exc.status)
         if pending:
-            return Response({"message": "We sent a confirmation link to the new address."})
-        return Response({"message": "We sent you your personal link."})
+            return Response({"message": _("We sent a confirmation link to the new address.")})
+        return Response({"message": _("We sent you your personal link.")})
 
     @extend_schema(request=EmailConfirmSerializer, responses={200: MessageSerializer, 400: ErrorSerializer})
     @action(detail=True, methods=["post"], url_path="session/email/confirm")
@@ -362,7 +367,7 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
             confirm_email(pickup, body.validated_data["token"])
         except MembershipError as exc:
             return Response({"error": str(exc)}, status=exc.status)
-        return Response({"message": "Your new address is confirmed."})
+        return Response({"message": _("Your new address is confirmed.")})
 
     @extend_schema(
         methods=["GET"], operation_id="pickup_creation_retrieve", responses={200: CreationSerializer}
@@ -395,7 +400,7 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
         body.is_valid(raise_exception=True)
         request_pickup_list(request, body.validated_data["email"])
         return Response(
-            {"message": "If this address belongs to any pickups, we sent you a list."},
+            {"message": _("If this address belongs to any pickups, we sent you a list.")},
             status=status.HTTP_202_ACCEPTED,
         )
 
@@ -407,6 +412,6 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
         body.is_valid(raise_exception=True)
         request_link(request, self.get_object(), body.validated_data["email"])
         return Response(
-            {"message": "If this address belongs to someone in this pickup, their link is on its way."},
+            {"message": _("If this address belongs to someone in this pickup, their link is on its way.")},
             status=status.HTTP_202_ACCEPTED,
         )

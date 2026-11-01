@@ -1,6 +1,7 @@
 import logging
 
 from django.shortcuts import get_object_or_404
+from django.utils.translation import gettext as _
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.request import Request
@@ -31,12 +32,15 @@ def _owner(request: Request, folder: Folder) -> Member | None:
 
 def _forbidden() -> Response:
     return Response(
-        {"error": "You do not have permission to upload to this folder."}, status=status.HTTP_403_FORBIDDEN
+        {"error": _("You do not have permission to upload to this folder.")}, status=status.HTTP_403_FORBIDDEN
     )
 
 
 def _not_pending(session: UploadSession) -> Response:
-    return Response({"error": f"Upload session is {session.status}"}, status=status.HTTP_400_BAD_REQUEST)
+    return Response(
+        {"error": _("Upload session is {status}").format(status=session.status)},
+        status=status.HTTP_400_BAD_REQUEST,
+    )
 
 
 def _too_large(exc: StorageError) -> Response:
@@ -104,7 +108,7 @@ class UploadChunkView(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         chunk_index = serializer.validated_data["chunk_index"]
         if chunk_index >= session.total_chunks:
-            return Response({"error": "Chunk index out of range"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": _("Chunk index out of range")}, status=status.HTTP_400_BAD_REQUEST)
 
         store_chunk(session, chunk_index, serializer.validated_data["chunk"])
         return Response(UploadSessionSerializer(session).data)
@@ -135,7 +139,10 @@ class UploadSessionFinalizeView(APIView):
         uploaded_chunks = MediaChunk.objects.filter(upload_session=session).count()
         if uploaded_chunks < session.total_chunks:
             missing = session.total_chunks - uploaded_chunks
-            return Response({"error": f"Missing {missing} chunks"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": _("Missing {count} chunks").format(count=missing)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         try:
             # Again: an admin may have lowered the limit while the file was uploading.
             check_room(session.folder, session.file_size, exclude_session=session.id)
@@ -156,7 +163,7 @@ class UploadSessionFinalizeView(APIView):
             session.error_message = str(exc)
             session.save(update_fields=["status", "error_message"])
             return Response(
-                {"error": f"Failed to finalize upload: {exc}"},
+                {"error": _("Failed to finalize upload: {error}").format(error=exc)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 

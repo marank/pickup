@@ -1,5 +1,6 @@
 from typing import Any
 
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 
 from ..models import Folder
@@ -72,13 +73,13 @@ class JoinSerializer(serializers.Serializer[Any]):
         """Names identify people in a pickup; a taken name must not hand out its folder."""
         if name_taken(self.context["pickup"], value, exclude=self.context.get("member")):
             raise serializers.ValidationError(
-                "This name is already taken in this pickup. If it is yours, open your personal link."
+                _("This name is already taken in this pickup. If it is yours, open your personal link.")
             )
         return normalize_name(value)
 
     def validate_name(self, value: str) -> str:
         if folder_name_taken(self.context["pickup"], value):
-            raise serializers.ValidationError("A folder with this name already exists in this pickup.")
+            raise serializers.ValidationError(_("A folder with this name already exists in this pickup."))
         return normalize_name(value)
 
 

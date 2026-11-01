@@ -68,7 +68,8 @@ const button =
     <DialogContent
       v-if="item"
       :show-close-button="false"
-      class="flex h-dvh max-h-none w-screen max-w-none flex-col gap-0 overflow-hidden rounded-none border-0 bg-transparent p-0 text-paper sm:max-w-none"
+      fullscreen
+      class="flex flex-col gap-0 overflow-hidden rounded-none border-0 bg-transparent p-0 text-paper ring-0"
       @keydown="onKey"
     >
       <div

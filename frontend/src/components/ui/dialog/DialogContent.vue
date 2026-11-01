@@ -16,15 +16,21 @@ defineOptions({
 
 const props = withDefaults(
   defineProps<
-    DialogContentProps & { class?: HTMLAttributes['class']; showCloseButton?: boolean }
+    DialogContentProps & {
+      class?: HTMLAttributes['class']
+      showCloseButton?: boolean
+      /** The whole screen (the media viewer): no centring, no height limit. */
+      fullscreen?: boolean
+    }
   >(),
   {
     showCloseButton: true,
+    fullscreen: false,
   },
 )
 const emits = defineEmits<DialogContentEmits>()
 
-const delegatedProps = reactiveOmit(props, 'class')
+const delegatedProps = reactiveOmit(props, 'class', 'fullscreen')
 
 const forwarded = useForwardPropsEmits(delegatedProps, emits)
 </script>
@@ -39,7 +45,10 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
       v-bind="{ ...$attrs, ...forwarded }"
       :class="
         cn(
-          'bg-popover text-popover-foreground data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 ring-foreground/10 grid max-w-[calc(100%-2rem)] gap-4 rounded-xl p-4 text-sm ring-1 duration-100 sm:max-w-sm fixed top-[max(1rem,env(safe-area-inset-top))] left-1/2 z-50 max-h-[calc(100dvh-2rem)] w-full -translate-x-1/2 overflow-y-auto outline-none sm:top-1/2 sm:-translate-y-1/2 [.vv_&]:top-[calc(var(--vv-top)+var(--vv-height)/2)] [.vv_&]:max-h-[calc(var(--vv-height)-2rem)] [.vv_&]:-translate-y-1/2',
+          'bg-popover text-popover-foreground data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 ring-foreground/10 grid gap-4 rounded-xl p-4 text-sm ring-1 duration-100 fixed z-50 outline-none',
+          fullscreen
+            ? 'inset-0'
+            : 'max-w-[calc(100%-2rem)] sm:max-w-sm top-[max(1rem,env(safe-area-inset-top))] left-1/2 max-h-[calc(100dvh-2rem)] w-full -translate-x-1/2 overflow-y-auto sm:top-1/2 sm:-translate-y-1/2 [.vv_&]:top-[calc(var(--vv-top)+var(--vv-height)/2)] [.vv_&]:max-h-[calc(var(--vv-height)-2rem)] [.vv_&]:-translate-y-1/2',
           props.class,
         )
       "

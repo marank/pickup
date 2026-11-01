@@ -26,7 +26,7 @@ Reason = Literal["created", "joined", "requested", "invited", "added", "confirm"
 _TEXT: dict[Reason, tuple[str, str]] = {
     "created": (
         "Your new pickup “{title}”",
-        "Hello {name},\n\nyour pickup is ready. With this creator link you can log in as the creator "
+        "Hello {name},\n\nyour pickup is ready. With this personal link you can log in as the creator "
         "on any device. Keep it safe:\n\n{link}\n\nShare the pickup with others using its share link "
         "inside the pickup.",
     ),

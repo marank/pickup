@@ -601,7 +601,7 @@ export interface paths {
 export type webhooks = Record<string, never>
 export interface components {
   schemas: {
-    /** @description A new pickup; the creator may give a name and an address for their creator link. */
+    /** @description A new pickup; the creator may give a name and an address for their personal link. */
     CreatePickupRequest: {
       title?: string
       creator_name?: string

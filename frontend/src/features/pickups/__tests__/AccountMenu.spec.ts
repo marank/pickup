@@ -127,7 +127,7 @@ describe('account menu', () => {
     expect(error).toHaveBeenCalledWith('Could not log out')
   })
 
-  it('warns the creator about the creator link', async () => {
+  it('tells the creator to keep their personal link', async () => {
     serveExplorer({ member: false, creator: true })
     await renderAt(App, explorerPath())
     for (let i = 0; i < 5; i++) await flushPromises()
@@ -135,7 +135,7 @@ describe('account menu', () => {
     await openAccount()
     expect(pageText()).toContain('Creator of this pickup')
     await chooseMenuItem('Log out')
-    expect(pageText()).toContain('open your creator link')
+    expect(pageText()).toContain('open your personal link')
   })
 
   it('offers guests to join, without a leave option', async () => {

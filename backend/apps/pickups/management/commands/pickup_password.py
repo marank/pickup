@@ -9,7 +9,7 @@ from apps.pickups.models import Pickup
 class Command(BaseCommand):
     help = (
         "Show whether a pickup has a password, or remove it (e.g. the creator forgot it: they log in "
-        "with their creator link and set a new one)."
+        "with their personal link and set a new one)."
     )
 
     def add_arguments(self, parser: CommandParser) -> None:

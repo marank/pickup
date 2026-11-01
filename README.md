@@ -149,8 +149,8 @@ docker compose start app
 ## Usage
 
 ### Creating a Pickup
-1. Visit the home page and click "Start a pickup" (`/create`). Give it a name; optionally add your name (you get a folder with that name right away, and invitations show it), your email (you get your creator link by mail) and who can join. Nothing is created before you click "Create pickup".
-2. The second step shows the share link (with the QR card) and your **creator link**, which logs you back in as the creator; "Open the pickup" takes you there. The account menu copies your personal link again anytime ("Copy my creator link").
+1. Visit the home page and click "Start a pickup" (`/create`). Give it a name; optionally add your name (you get a folder with that name right away, and invitations show it), your email (you get your personal link by mail) and who can join. Nothing is created before you click "Create pickup".
+2. The second step shows the share link (with the QR card) and your **personal link**, which logs you back in as the creator; "Open the pickup" takes you there. The account menu copies your personal link again anytime ("Copy my personal link").
 3. Send the **share link** to others, or invite people by email under **People** (bottom of the folder tree).
 4. **Settings** (bottom of the folder tree) decides:
    - *Who can see the photos?* Only participants (default), anyone with the link, or nobody (closed: only the creator still sees the contents; nobody else can look, upload or join until it is opened again).
@@ -230,7 +230,7 @@ docker compose exec app python manage.py storage_limits <pickup id> --member 10G
 
 ## Pickup passwords
 
-The creator can protect a pickup with a password (Settings → Password). Without a login, people then need it to join or to log in with their personal link; setting or changing it logs everyone else out. If the creator forgets it, an admin removes it, and the creator sets a new one after logging in with the creator link:
+The creator can protect a pickup with a password (Settings → Password). Without a login, people then need it to join or to log in with their personal link; setting or changing it logs everyone else out. If the creator forgets it, an admin removes it, and the creator sets a new one after logging in with their personal link:
 
 ```bash
 uv run python manage.py pickup_password <pickup id>            # has it one?

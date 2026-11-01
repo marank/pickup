@@ -67,7 +67,7 @@ const color = computed(() => (ownFolder.value ? ownerColor(name.value) : 'var(--
 
 const leaveDescription = computed(() =>
   isCreator.value
-    ? 'You will be logged out on this device. To log in again as the creator, open your creator link. The pickup is not changed.'
+    ? 'You will be logged out on this device. To log in again as the creator, open your personal link. The pickup is not changed.'
     : 'You will be logged out on this device. To log in again, open your personal link (from when you joined, or from your email). Your folder and files are kept.',
 )
 
@@ -80,7 +80,7 @@ async function copyPersonalLink() {
         .fetchQuery(personalLinkQuery(props.pickupId))
         .then(({ member_url }) => `${window.location.origin}${member_url}`),
     )
-    toast.success(isCreator.value ? 'Creator link copied' : 'Personal link copied')
+    toast.success('Personal link copied')
   } catch (err) {
     toast.error(apiErrorMessage(err, 'Could not copy your link'))
   }
@@ -136,7 +136,7 @@ async function confirmLeave() {
       </DropdownMenuItem>
       <DropdownMenuItem v-if="signedIn" @select="copyPersonalLink">
         <CopyIcon />
-        Copy my {{ isCreator ? 'creator' : 'personal' }} link
+        Copy my personal link
       </DropdownMenuItem>
       <DropdownMenuItem v-if="signedIn" @select="emailOpen = true">
         <MailIcon />

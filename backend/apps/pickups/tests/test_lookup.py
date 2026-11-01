@@ -69,7 +69,7 @@ def test_unknown_addresses_get_the_same_answer_and_no_mail() -> None:
 
 
 def test_the_list_respects_the_mail_cooldown() -> None:
-    new_pickup(Client(), creator_email="anna@example.com")  # its creator link just went out
+    new_pickup(Client(), creator_email="anna@example.com")  # its creator's personal link just went out
     sent = len(mail.outbox)
     assert lookup("anna@example.com").json() == ANSWER
     assert len(mail.outbox) == sent

@@ -2603,7 +2603,7 @@
         "schemas": {
             "CreatePickupRequest": {
                 "type": "object",
-                "description": "A new pickup; the creator may give a name and an address for their creator link.",
+                "description": "A new pickup; the creator may give a name and an address for their personal link.",
                 "properties": {
                     "title": {
                         "type": "string",

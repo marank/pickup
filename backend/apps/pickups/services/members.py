@@ -122,7 +122,7 @@ def create_pickup(
 ) -> tuple[Pickup, Member]:
     """
     Create a pickup with its creator; a creator who gives their name gets a folder named
-    after them right away. Mail the creator link if an address was given.
+    after them right away. Mail their personal link if an address was given.
     """
     pickup = Pickup.objects.create(title=title, join_policy=join_policy)
     name = normalize_name(creator_name)

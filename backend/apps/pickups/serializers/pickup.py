@@ -159,7 +159,7 @@ class PickupUpdateSerializer(serializers.ModelSerializer[Pickup]):
 
 
 class CreatePickupSerializer(serializers.Serializer[Any]):
-    """A new pickup; the creator may give a name and an address for their creator link."""
+    """A new pickup; the creator may give a name and an address for their personal link."""
 
     title = serializers.CharField(max_length=200, required=False, allow_blank=True)
     creator_name = serializers.CharField(max_length=100, required=False, allow_blank=True)

@@ -234,7 +234,7 @@ def test_addresses_are_only_hashed_in_privacy_mode(creator: Client) -> None:
     assert Member.objects.get(user_name="Bob").email_hash == email_hash("bob@example.com")
 
 
-def test_creator_link_is_mailed_when_an_address_is_given(creator: Client) -> None:
+def test_creators_personal_link_is_mailed_when_an_address_is_given(creator: Client) -> None:
     pickup_id = new_pickup(creator, title="Hochzeit", creator_name=" Anna ", creator_email="anna@example.com")
     member = Member.objects.get(is_creator=True)
     assert member.user_name == "Anna"

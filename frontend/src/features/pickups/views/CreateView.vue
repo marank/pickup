@@ -42,7 +42,7 @@ const phase = ref<'form' | 'creating' | 'ready'>('form')
 const PACKING_MS = 2000
 const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
 const pause = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms))
-/** Step 2: the new pickup and whether its creator link went out by mail. */
+/** Step 2: the new pickup and whether the creator's personal link went out by mail. */
 const created = ref<CreatedPickup | null>(null)
 const emailed = ref(false)
 const qr = ref<InstanceType<typeof QrCard> | null>(null)
@@ -201,10 +201,10 @@ async function submit() {
 
                 <div class="space-y-2">
                   <p class="font-medium">
-                    Your creator link
+                    Your personal link
                     <span class="font-normal text-muted-foreground">— only for you</span>
                   </p>
-                  <CopyField :value="absolute(created.member_url)" label="Creator link" />
+                  <CopyField :value="absolute(created.member_url)" label="Personal link" />
                   <p class="text-sm text-muted-foreground">
                     <template v-if="emailed">We also emailed it to you. </template>With this link
                     you log in as the creator on any device. You can copy it again from the account

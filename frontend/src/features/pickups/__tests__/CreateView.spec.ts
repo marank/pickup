@@ -78,7 +78,7 @@ describe('create page', () => {
     expect(step.querySelector('canvas[role="img"]')).not.toBeNull()
     expect(document.body.querySelector('a[href="/"]')).toBeNull() // no way back to step 1
 
-    findButton('Copy creator link').click()
+    findButton('Copy personal link').click()
     await flushPromises()
     expect(writeText).toHaveBeenCalledWith(values[1])
   })
@@ -166,7 +166,7 @@ describe('personal link in the account menu', () => {
     await renderAt(App, explorerPath())
     await settle()
     await openAccount()
-    await chooseMenuItem('Copy my creator link')
+    await chooseMenuItem('Copy my personal link')
     await settle()
     expect(error).toHaveBeenCalledWith('Join the pickup first.')
   })

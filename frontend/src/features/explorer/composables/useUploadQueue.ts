@@ -3,9 +3,11 @@ import { computed, reactive, ref, toValue, type MaybeRefOrGetter } from 'vue'
 import { toast } from 'vue-sonner'
 
 import { api, formBody } from '@/api/client'
-import { apiErrorMessage, unwrap } from '@/api/errors'
+import { unwrap } from '@/api/errors'
 import type { Media, UploadChunkRequest, UploadMediaRequest } from '@/api/types'
 import { pickupKeys } from '@/features/pickups/queryKeys'
+
+import { uploadErrorMessage } from '../lib/uploadErrors'
 
 export const CHUNK_SIZE = 5 * 1024 * 1024
 // Above this, files go up in chunks; must stay below nginx client_max_body_size (25m).
@@ -124,7 +126,7 @@ export function useUploadQueue(
         item.status = 'cancelled'
         return
       }
-      Object.assign(item, { status: 'error', error: apiErrorMessage(err, 'Upload failed') })
+      Object.assign(item, { status: 'error', error: uploadErrorMessage(err) })
       toast.error(`${item.file.name}: ${item.error}`)
     }
   }

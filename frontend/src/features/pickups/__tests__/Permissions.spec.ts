@@ -267,6 +267,31 @@ describe('creator tools', () => {
     })
   })
 
+  it('sums up who sees and who joins in one sentence', async () => {
+    await renderAsCreator()
+    findButton('Settings').click()
+    await settle()
+    const summary = () => $('[data-testid="access-summary"]').textContent!
+    expect(summary()).toContain('Anyone with the share link can join and upload.')
+    expect(summary()).toContain('Only participants see the photos.')
+    const pick = async (name: string, value: string) => {
+      const radio = $<HTMLInputElement>(`input[name="${name}"][value="${value}"]`)
+      radio.checked = true
+      radio.dispatchEvent(new Event('change'))
+      await flushPromises()
+    }
+    await pick('join_policy', 'invite')
+    await pick('visibility', 'link')
+    expect(summary()).toContain('Only people you invite can join and upload.')
+    expect(summary()).toContain('Anyone with the share link sees the photos')
+    await pick('join_policy', 'closed')
+    expect(summary()).toContain('nobody new joins')
+    await pick('visibility', 'creator')
+    expect(summary()).toBe(
+      'In short: Paused: only you see the photos, and nobody joins or uploads.',
+    )
+  })
+
   it('shows how much storage the pickup uses', async () => {
     await renderAsCreator({ storage: { used: 950, limit: 1_000, own_used: null, own_limit: null } })
     findButton('Settings').click()

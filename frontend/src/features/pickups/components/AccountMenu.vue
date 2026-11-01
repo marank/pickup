@@ -2,7 +2,7 @@
 import {
   ChevronDownIcon,
   CircleHelpIcon,
-  CopyIcon,
+  KeyRoundIcon,
   CrownIcon,
   LogOutIcon,
   MailIcon,
@@ -153,7 +153,7 @@ async function confirmLeave() {
         Edit my details
       </DropdownMenuItem>
       <DropdownMenuItem v-if="signedIn" @select="copyPersonalLink">
-        <CopyIcon />
+        <KeyRoundIcon />
         Copy my personal link
       </DropdownMenuItem>
       <DropdownMenuItem v-if="signedIn" @select="emailOpen = true">

@@ -1,5 +1,13 @@
 <script setup lang="ts">
-import { ArrowLeftIcon, ArrowRightIcon, DownloadIcon, LinkIcon, MailIcon } from '@lucide/vue'
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  DownloadIcon,
+  KeyRoundIcon,
+  LinkIcon,
+  MailIcon,
+  UsersIcon,
+} from '@lucide/vue'
 import { useResizeObserver } from '@vueuse/core'
 import { computed, reactive, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
@@ -189,7 +197,8 @@ async function submit() {
 
               <div class="space-y-6">
                 <div class="space-y-2">
-                  <p class="font-medium">
+                  <p class="flex items-center gap-1.5 font-medium">
+                    <UsersIcon class="size-4 text-muted-foreground" />
                     Share link
                     <span class="font-normal text-muted-foreground">— for your guests</span>
                   </p>
@@ -200,15 +209,16 @@ async function submit() {
                 </div>
 
                 <div class="space-y-2">
-                  <p class="font-medium">
+                  <p class="flex items-center gap-1.5 font-medium">
+                    <KeyRoundIcon class="size-4 text-tomato" />
                     Your personal link
                     <span class="font-normal text-muted-foreground">— only for you</span>
                   </p>
                   <CopyField :value="absolute(created.member_url)" label="Personal link" />
                   <p class="text-sm text-muted-foreground">
                     <template v-if="emailed">We also emailed it to you. </template>With this link
-                    you log in as the creator on any device. You can copy it again from the account
-                    menu.
+                    you log in as the creator on any device; keep it to yourself. You can copy it
+                    again from the account menu.
                   </p>
                 </div>
               </div>

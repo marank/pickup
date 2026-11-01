@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { FolderOpenIcon, FolderXIcon, SearchXIcon, UploadIcon } from '@lucide/vue'
+import {
+  FolderOpenIcon,
+  FolderXIcon,
+  ImagePlusIcon,
+  LockIcon,
+  SearchXIcon,
+  UploadIcon,
+} from '@lucide/vue'
 import { computed, ref } from 'vue'
 
 import { Button } from '@/components/ui/button'
@@ -7,12 +14,18 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 import { useExplorer } from '../composables/useExplorer'
 import { useMarquee } from '../composables/useMarquee'
+import { usePhone } from '../composables/usePhone'
 import ItemsDetails from './ItemsDetails.vue'
 import ItemsGrid from './ItemsGrid.vue'
 
 const explorer = useExplorer()
 const pane = ref<HTMLElement | null>(null)
 const marquee = useMarquee(pane, explorer)
+const phone = usePhone()
+/** Your own folder, still empty: the place to start, so it says how. */
+const ownEmpty = computed(
+  () => !explorer.search && explorer.uploadTarget !== null && explorer.folderId !== null,
+)
 const dragDepth = ref(0)
 const dropping = computed(() => dragDepth.value > 0 && explorer.uploadTarget !== null)
 
@@ -79,6 +92,14 @@ const emptyMessage = computed(() => {
     @dragleave.prevent="onDragLeave"
     @drop.prevent="onDrop"
   >
+    <p
+      v-if="phone && explorer.pickup.data?.is_read_only"
+      class="mb-2 flex items-center gap-2 rounded-lg bg-butter/40 px-3 py-2 text-xs"
+    >
+      <LockIcon class="size-3.5 shrink-0" />
+      Read-only now: you can look and download, but nobody adds anything anymore.
+    </p>
+
     <div v-if="explorer.missingFolder" class="flex flex-col items-center gap-3 py-16 text-center">
       <FolderXIcon class="size-10 text-muted-foreground" />
       <p class="font-medium">This folder doesn't exist anymore.</p>
@@ -98,6 +119,23 @@ const emptyMessage = computed(() => {
       <ItemsDetails v-if="explorer.prefs.view === 'details'" />
       <ItemsGrid v-else :variant="explorer.prefs.view" />
     </template>
+
+    <div
+      v-else-if="ownEmpty"
+      class="mx-auto flex max-w-sm flex-col items-center gap-3 py-16 text-center"
+      @click.self="explorer.selection.clear()"
+    >
+      <ImagePlusIcon class="size-12 text-tomato" />
+      <p class="text-lg font-semibold">Nothing here yet</p>
+      <p class="text-sm text-muted-foreground">
+        {{ phone ? 'Add' : 'Drop them here or add' }} your photos and videos, several at once. They
+        keep their full quality.
+      </p>
+      <Button @click="explorer.fileInput?.click()">
+        <UploadIcon />
+        Upload photos and videos
+      </Button>
+    </div>
 
     <div
       v-else

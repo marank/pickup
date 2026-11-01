@@ -80,7 +80,7 @@ const visibilityOptions = [
   },
   {
     value: 'creator',
-    label: 'Nobody (closed)',
+    label: 'Only me (paused)',
     hint: 'Only you still see the contents. Participants can’t look or upload, and nobody can join, until you open it again.',
   },
 ] as const
@@ -101,6 +101,21 @@ const joinOptions = [
     hint: 'Current participants stay, nobody new can join.',
   },
 ] as const
+/** Both answers in one plain sentence, following the form while it is edited. */
+const accessSummary = computed(() => {
+  if (form.visibility === 'creator')
+    return 'Paused: only you see the photos, and nobody joins or uploads.'
+  const join = {
+    open: 'Anyone with the share link can join and upload.',
+    invite: 'Only people you invite can join and upload.',
+    closed: 'Only the current participants upload; nobody new joins.',
+  }[form.join_policy]
+  const see =
+    form.visibility === 'link' && !props.pickup.has_password
+      ? 'Anyone with the share link sees the photos, without joining.'
+      : 'Only participants see the photos.'
+  return `${join} ${see}`
+})
 const turningPrivacyOn = computed(() => form.email_privacy && !props.pickup.email_privacy)
 
 /** The password is never shown again: a new one replaces it, or it is removed. */
@@ -257,6 +272,9 @@ async function removePickup() {
       @save="save('access')"
       @discard="discard('access')"
     >
+      <p class="rounded-lg bg-muted/60 px-3 py-2 text-sm" data-testid="access-summary">
+        <span class="font-medium">In short:</span> {{ accessSummary }}
+      </p>
       <fieldset
         v-for="group in [
           { legend: 'Who can see the photos?', name: 'visibility', options: visibilityOptions },

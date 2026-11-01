@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { DownloadIcon, Share2Icon } from '@lucide/vue'
+import { DownloadIcon, KeyRoundIcon, Share2Icon, UsersIcon } from '@lucide/vue'
 import { computed, ref } from 'vue'
 
 import CopyField from '@/components/CopyField.vue'
@@ -18,6 +18,8 @@ const props = defineProps<{
   title: string
   visibility?: string
   joinPolicy?: string
+  /** Signed in: they also have a personal link, which must not be mixed up with this one. */
+  member?: boolean
 }>()
 const open = defineModel<boolean>('open', { required: true })
 
@@ -66,7 +68,13 @@ async function share() {
           </template>
         </DialogDescription>
       </DialogHeader>
-      <CopyField :value="url" label="Share link" />
+      <div class="space-y-1.5">
+        <p class="flex items-center gap-1.5 text-sm font-medium">
+          <UsersIcon class="size-4 text-muted-foreground" />
+          Share link <span class="font-normal text-muted-foreground">— for everyone</span>
+        </p>
+        <CopyField :value="url" label="Share link" />
+      </div>
       <div class="flex flex-col items-center gap-3 rounded-xl border bg-pane p-4 text-center">
         <QrCard ref="qr" :value="url" :title="title" class="w-44" />
         <p class="text-sm text-muted-foreground">
@@ -81,6 +89,10 @@ async function share() {
         <Share2Icon />
         Share via …
       </Button>
+      <p v-if="member" class="flex gap-1.5 text-xs text-muted-foreground">
+        <KeyRoundIcon class="mt-px size-3.5 shrink-0" />
+        Don't send your personal link instead: it is only for you and logs in as you.
+      </p>
     </DialogContent>
   </Dialog>
 </template>

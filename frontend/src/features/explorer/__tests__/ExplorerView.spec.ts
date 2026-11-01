@@ -838,6 +838,20 @@ describe('explorer: owner actions', () => {
   })
 })
 
+describe('explorer: empty own folder', () => {
+  it('invites to upload, and only in your own folders', async () => {
+    serveExplorer()
+    on('GET', '/api/pickups/:p/folders/:f/media/', { body: [] })
+    await renderRoute(explorerPath(BEACH)) // Alice's, without subfolders
+    await settle()
+    expect(pageText()).toContain('Nothing here yet')
+    const input = document.body.querySelector<HTMLInputElement>('input[type="file"]')!
+    const pick = vi.spyOn(input, 'click').mockImplementation(() => {})
+    findButton('Upload photos and videos').click()
+    expect(pick).toHaveBeenCalled()
+  })
+})
+
 describe('explorer: read-only', () => {
   it('keeps your folder yours but offers no uploading or joining', async () => {
     await render(ALICE, {

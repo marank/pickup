@@ -212,6 +212,7 @@ function onFiles(event: Event) {
       v-model:open="shareOpen"
       :visibility="explorer.pickup.data?.visibility"
       :join-policy="explorer.pickup.data?.join_policy"
+      :member="explorer.pickup.data?.is_member"
       :pickup-id="pickupId"
       :title="explorer.pickup.data?.title || 'Untitled pickup'"
     />

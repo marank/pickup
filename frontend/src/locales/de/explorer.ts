@@ -73,7 +73,7 @@ const explorer: Messages = {
   'Read-only now: you can look and download, but nobody adds anything anymore.':
     'Jetzt schreibgeschützt: Du kannst alles ansehen und herunterladen, aber niemand fügt mehr etwas hinzu.',
   "This folder doesn't exist anymore.": 'Diesen Ordner gibt es nicht mehr.',
-  'Back to the pickup': 'Zurück zur Pickup',
+  'Back to the pickup': 'Zurück zum Pickup',
   'Nothing here yet': 'Noch nichts da',
   'Add your photos and videos, several at once. They keep their full quality.':
     'Füge deine Fotos und Videos hinzu, gern mehrere auf einmal. Sie behalten ihre volle Qualität.',
@@ -115,7 +115,7 @@ const explorer: Messages = {
 
   // NavBar
   Back: 'Zurück',
-  Forward: 'Vor',
+  Forward: 'Vorwärts',
   'Up one level (Backspace)': 'Eine Ebene nach oben (Rücktaste)',
 
   // OwnBadge
@@ -124,7 +124,7 @@ const explorer: Messages = {
 
   // PagePane
   'Only the creator of this pickup can open this.':
-    'Nur wer diese Pickup erstellt hat, kann das öffnen.',
+    'Nur wer diesen Pickup erstellt hat, kann das öffnen.',
 
   // PickupBar
   'Then nobody adds or changes anything': 'Dann fügt niemand mehr etwas hinzu oder ändert etwas',
@@ -135,11 +135,11 @@ const explorer: Messages = {
   'Add your photos to “{title}”': 'Füge deine Fotos zu „{title}“ hinzu',
   'Invite people': 'Leute einladen',
   'The pickup is closed: with this link people only see that it exists. Open it again in Settings.':
-    'Die Pickup ist geschlossen: Mit diesem Link sieht man nur, dass es sie gibt. In den Einstellungen kannst du sie wieder öffnen.',
+    'Der Pickup ist geschlossen: Mit diesem Link sieht man nur, dass es ihn gibt. In den Einstellungen kannst du ihn wieder öffnen.',
   'Only invited people can take part — invite them under People. With this link others can look at the photos.':
-    'Nur Eingeladene können mitmachen – lade sie unter „Teilnehmende“ ein. Mit diesem Link können sich andere die Fotos ansehen.',
+    'Nur Eingeladene können mitmachen – lade sie unter „Personen“ ein. Mit diesem Link können sich andere die Fotos ansehen.',
   'Only invited people can take part — invite them under People. With this link others only see that the pickup exists.':
-    'Nur Eingeladene können mitmachen – lade sie unter „Teilnehmende“ ein. Mit diesem Link sehen andere nur, dass es die Pickup gibt.',
+    'Nur Eingeladene können mitmachen – lade sie unter „Personen“ ein. Mit diesem Link sehen andere nur, dass es den Pickup gibt.',
   'Nobody new can join right now. Everyone with this link can look at the photos.':
     'Gerade kann niemand Neues mitmachen. Alle mit diesem Link können sich die Fotos ansehen.',
   'Nobody new can join right now.': 'Gerade kann niemand Neues mitmachen.',
@@ -150,11 +150,11 @@ const explorer: Messages = {
   'Share link': 'Teilen-Link',
   '— for everyone': '– für alle',
   'Scan to open the pickup. Save the card as an image to print or share it.':
-    'Scannen öffnet die Pickup. Speichere die Karte als Bild, um sie zu drucken oder zu teilen.',
+    'Scannen öffnet den Pickup. Speichere die Karte als Bild, um sie zu drucken oder zu teilen.',
   'Save QR card': 'QR-Karte speichern',
   'Share via …': 'Teilen über …',
   "Don't send your personal link instead: it is only for you and logs in as you.":
-    'Schick nicht stattdessen deinen persönlichen Link: Er ist nur für dich und meldet als du an.',
+    'Schick nicht stattdessen deinen persönlichen Link: Er ist nur für dich, und wer ihn öffnet, ist als du angemeldet.',
 
   // TreeNode, TreeToggle
   'Collapse {name}': '{name} zuklappen',

@@ -27,8 +27,8 @@ const common: Messages = {
   'Pickup start page': 'Pickup-Startseite',
   'Leave the pickup?': 'Pickup verlassen?',
   'You stay logged in on this device. Open the pickup’s link to come back.':
-    'Du bleibst auf diesem Gerät angemeldet. Öffne den Link der Pickup, um zurückzukommen.',
-  'Open the pickup’s link to come back.': 'Öffne den Link der Pickup, um zurückzukommen.',
+    'Du bleibst auf diesem Gerät angemeldet. Öffne den Link des Pickups, um zurückzukommen.',
+  'Open the pickup’s link to come back.': 'Öffne den Link des Pickups, um zurückzukommen.',
   'Stay here': 'Hierbleiben',
 
   // SplashScreen

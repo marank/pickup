@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 msgid "This pickup is private."
-msgstr "Diese Pickup ist privat."
+msgstr "Dieser Pickup ist privat."
 
 msgid "You do not have permission to upload to this folder."
 msgstr "Du darfst in diesen Ordner nichts hochladen."
@@ -50,13 +50,13 @@ msgstr "Nur die Ersteller:in kann Teilnehmende verwalten."
 
 msgid "This pickup is private. Join it or open your personal link."
 msgstr ""
-"Diese Pickup ist privat. Tritt bei oder öffne deinen persönlichen Link."
+"Dieser Pickup ist privat. Tritt bei oder öffne deinen persönlichen Link."
 
 msgid "Only the creator can change the pickup."
-msgstr "Nur die Ersteller:in kann die Pickup ändern."
+msgstr "Nur die Ersteller:in kann den Pickup ändern."
 
 msgid "Only the creator can delete the pickup."
-msgstr "Nur die Ersteller:in kann die Pickup löschen."
+msgstr "Nur die Ersteller:in kann den Pickup löschen."
 
 msgid "Invalid id."
 msgstr "Ungültige ID."
@@ -71,7 +71,7 @@ msgid "This personal link is not valid."
 msgstr "Dieser persönliche Link ist ungültig."
 
 msgid "Join the pickup first."
-msgstr "Tritt zuerst der Pickup bei."
+msgstr "Tritt zuerst dem Pickup bei."
 
 msgid "We sent a confirmation link to the new address."
 msgstr "Wir haben einen Bestätigungslink an die neue Adresse geschickt."
@@ -89,7 +89,7 @@ msgstr ""
 msgid ""
 "If this address belongs to someone in this pickup, their link is on its way."
 msgstr ""
-"Falls diese Adresse zu jemandem in dieser Pickup gehört, ist der Link "
+"Falls diese Adresse zu jemandem in diesem Pickup gehört, ist der Link "
 "unterwegs."
 
 #, python-brace-format
@@ -125,11 +125,11 @@ msgid ""
 "This name is already taken in this pickup. If it is yours, open your "
 "personal link."
 msgstr ""
-"Dieser Name ist in dieser Pickup schon vergeben. Wenn es deiner ist, öffne "
+"Dieser Name ist in diesem Pickup schon vergeben. Wenn es deiner ist, öffne "
 "deinen persönlichen Link."
 
 msgid "A folder with this name already exists in this pickup."
-msgstr "In dieser Pickup gibt es schon einen Ordner mit diesem Namen."
+msgstr "In diesem Pickup gibt es schon einen Ordner mit diesem Namen."
 
 msgid "File type not supported. Please upload an image or video file."
 msgstr "Dateityp nicht unterstützt. Bitte lade ein Foto oder Video hoch."
@@ -141,10 +141,10 @@ msgid "Choose a date in the future."
 msgstr "Wähle ein Datum in der Zukunft."
 
 msgid "Choose a day before the pickup is deleted."
-msgstr "Wähle einen Tag, bevor die Pickup gelöscht wird."
+msgstr "Wähle einen Tag, bevor der Pickup gelöscht wird."
 
 msgid "A new pickup can't start closed."
-msgstr "Eine neue Pickup kann nicht pausiert starten."
+msgstr "Ein neuer Pickup kann nicht pausiert starten."
 
 #, python-brace-format
 msgid ""
@@ -173,24 +173,24 @@ msgid ""
 "accounts."
 msgstr ""
 "Die Fotos und Videos aller Gäste eines Fests an einem Ort. Ein Link, keine "
-"Konten."
+"Accounts."
 
 #, python-brace-format
 msgid ""
 "{name} invites you to add your photos and videos. One link, no accounts."
 msgstr ""
 "{name} lädt dich ein, deine Fotos und Videos beizusteuern. Ein Link, keine "
-"Konten."
+"Accounts."
 
 msgid "Add your photos and videos. One link, no accounts."
-msgstr "Steuere deine Fotos und Videos bei. Ein Link, keine Konten."
+msgstr "Steuere deine Fotos und Videos bei. Ein Link, keine Accounts."
 
 msgid "Untitled pickup"
 msgstr "Pickup ohne Titel"
 
 #, python-brace-format
 msgid "Your new pickup “{title}”"
-msgstr "Deine neue Pickup „{title}“"
+msgstr "Dein neuer Pickup „{title}“"
 
 #, python-brace-format
 msgid ""
@@ -205,12 +205,12 @@ msgid ""
 msgstr ""
 "Hallo {name},\n"
 "\n"
-"deine Pickup ist bereit. Mit diesem persönlichen Link meldest du dich auf "
+"dein Pickup ist bereit. Mit diesem persönlichen Link meldest du dich auf "
 "jedem Gerät als Ersteller:in an. Bewahre ihn gut auf:\n"
 "\n"
 "{link}\n"
 "\n"
-"Teile die Pickup mit anderen über den Teilen-Link in der Pickup."
+"Teile den Pickup mit anderen über seinen Teilen-Link."
 
 #, python-brace-format
 msgid "Your link to “{title}”"
@@ -272,7 +272,7 @@ msgstr ""
 "Hallo{greeting},\n"
 "\n"
 "{inviter} lädt dich ein, deine Fotos und Videos zu „{title}“ beizusteuern. "
-"Öffne deinen persönlichen Link, um mitzumachen – ganz ohne Konto:\n"
+"Öffne deinen persönlichen Link, um mitzumachen – ganz ohne Account:\n"
 "\n"
 "{link}\n"
 "\n"
@@ -349,7 +349,7 @@ msgid ""
 "logs you in to that pickup."
 msgstr ""
 "hier ist eine Liste aller Pickups zu dieser E-Mail-Adresse. Jeder Link "
-"meldet dich bei dieser Pickup an."
+"meldet dich bei seinem Pickup an."
 
 msgid "If you didn't ask for this mail, you can ignore it."
 msgstr "Wenn du diese Mail nicht angefordert hast, kannst du sie ignorieren."
@@ -361,34 +361,34 @@ msgid "Your pickups"
 msgstr "Deine Pickups"
 
 msgid "You already have a folder in this pickup."
-msgstr "Du hast in dieser Pickup schon einen Ordner."
+msgstr "Du hast in diesem Pickup schon einen Ordner."
 
 msgid "This pickup is closed."
-msgstr "Diese Pickup ist pausiert."
+msgstr "Dieser Pickup ist pausiert."
 
 msgid "This pickup is read-only now: nobody adds photos anymore."
 msgstr ""
-"Diese Pickup ist jetzt schreibgeschützt: Niemand fügt mehr Fotos hinzu."
+"Dieser Pickup ist jetzt schreibgeschützt: Niemand fügt mehr Fotos hinzu."
 
 msgid "This pickup is invite-only. Ask the creator for an invitation."
 msgstr ""
-"Bei dieser Pickup macht nur mit, wer eingeladen ist. Frag die Ersteller:in "
+"Bei diesem Pickup macht nur mit, wer eingeladen ist. Frag die Ersteller:in "
 "nach einer Einladung."
 
 msgid "This pickup doesn't take new participants anymore."
-msgstr "Diese Pickup nimmt keine neuen Teilnehmenden mehr auf."
+msgstr "Dieser Pickup nimmt keine neuen Teilnehmenden mehr auf."
 
 msgid "Enter a name."
 msgstr "Gib einen Namen ein."
 
 msgid "This name is already taken in this pickup."
-msgstr "Dieser Name ist in dieser Pickup schon vergeben."
+msgstr "Dieser Name ist in diesem Pickup schon vergeben."
 
 msgid "This pickup is read-only now."
-msgstr "Diese Pickup ist jetzt schreibgeschützt."
+msgstr "Dieser Pickup ist jetzt schreibgeschützt."
 
 msgid "You don't have a folder in this pickup yet."
-msgstr "Du hast in dieser Pickup noch keinen Ordner."
+msgstr "Du hast in diesem Pickup noch keinen Ordner."
 
 msgid "We just sent you a mail. Please wait a few minutes."
 msgstr ""
@@ -398,16 +398,16 @@ msgid "This confirmation link is not valid or has expired."
 msgstr "Dieser Bestätigungslink ist ungültig oder abgelaufen."
 
 msgid "Someone else in this pickup already uses this address."
-msgstr "Jemand anderes in dieser Pickup verwendet diese Adresse schon."
+msgstr "Jemand anderes in diesem Pickup verwendet diese Adresse schon."
 
 msgid "Someone with this name is already in the pickup."
-msgstr "Jemand mit diesem Namen ist schon in der Pickup."
+msgstr "Jemand mit diesem Namen ist schon im Pickup."
 
 msgid "They already have an address; only they can change it."
 msgstr "Die Person hat schon eine Adresse; nur sie selbst kann sie ändern."
 
 msgid "Someone in the pickup already has this address."
-msgstr "Jemand in der Pickup hat diese Adresse schon."
+msgstr "Jemand im Pickup hat diese Adresse schon."
 
 msgid "The address isn't stored (privacy mode). Enter it again to resend."
 msgstr ""
@@ -430,5 +430,5 @@ msgid ""
 "Not enough space: {free} of {limit} left for this pickup, the file has "
 "{size}."
 msgstr ""
-"Nicht genug Platz: Für diese Pickup sind noch {free} von {limit} frei, die "
+"Nicht genug Platz: Für diesen Pickup sind noch {free} von {limit} frei, die "
 "Datei hat {size}."

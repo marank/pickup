@@ -137,9 +137,11 @@ function onFiles(event: Event) {
       <JoinPanel :pickup="explorer.pickup.data" />
     </div>
     <!-- On phones: up to the edges, one toolbar, the title in the header (PickupBar). -->
+    <!-- Fills the screen below the header (3rem + its border) and the 1rem padding above and
+         below, so the gap at the bottom matches the sides. -->
     <div
       v-else
-      class="flex h-[calc(100dvh-5.5rem)] min-h-[28rem] flex-col gap-2 max-sm:h-[calc(100dvh-3rem)] max-sm:min-h-0 max-sm:gap-0 sm:h-[calc(100dvh-6.5rem)]"
+      class="flex h-[calc(100dvh-5rem-1px)] min-h-[28rem] flex-col gap-2 max-sm:h-[calc(100dvh-3rem)] max-sm:min-h-0 max-sm:gap-0"
     >
       <PickupBar />
       <div

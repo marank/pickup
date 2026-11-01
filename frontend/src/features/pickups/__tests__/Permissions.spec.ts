@@ -102,9 +102,10 @@ describe('creator tools', () => {
     expect($('[aria-current="location"]').textContent).toContain('Settings')
     expect($('[aria-current="page"]').textContent).toContain('Settings')
     const commands = $('[role="toolbar"][aria-label="Commands"]')
-    expect(Array.from(commands.querySelectorAll('button')).map((b) => b.ariaLabel)).toEqual([
-      'Show folders',
-    ])
+    const labels = Array.from(commands.querySelectorAll('button')).map(
+      (b) => b.ariaLabel ?? b.textContent?.trim(),
+    )
+    expect(labels).toEqual(['Show folders', 'Timeline']) // no commands on pages, only switching
     expect(findButton('Up one level').disabled).toBe(false)
 
     findButton('Account').dispatchEvent(

@@ -6,12 +6,18 @@ import SettingsPanel from '@/features/pickups/components/SettingsPanel.vue'
 import { t } from '@/lib/i18n'
 
 import { useExplorer } from '../composables/useExplorer'
+import TimelinePane from './TimelinePane.vue'
 
 const explorer = useExplorer()
 </script>
 
 <template>
-  <main class="min-w-0 flex-1 overflow-y-auto p-4 select-text sm:p-6" data-testid="page-pane">
+  <TimelinePane v-if="explorer.page === 'timeline'" />
+  <main
+    v-else
+    class="min-w-0 flex-1 overflow-y-auto p-4 select-text sm:p-6"
+    data-testid="page-pane"
+  >
     <template v-if="explorer.pickup.data?.is_creator">
       <SettingsPanel v-if="explorer.page === 'settings'" :pickup="explorer.pickup.data" />
       <PeoplePanel v-else :pickup="explorer.pickup.data" />

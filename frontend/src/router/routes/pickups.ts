@@ -24,8 +24,8 @@ export const pickupRoutes: RouteRecordRaw[] = [
     meta: { wide: true },
   },
   {
-    // The creator's pages, shown in the explorer's content pane.
-    path: '/pickup/:pickupId/:page(settings|people)',
+    // Pages shown in the explorer's content pane: the timeline, the creator's settings and people.
+    path: '/pickup/:pickupId/:page(timeline|settings|people)',
     name: 'explorer-page',
     component: ExplorerView,
     props: true,

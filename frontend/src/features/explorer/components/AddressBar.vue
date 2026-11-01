@@ -28,7 +28,11 @@ const segments = computed(() => [
   { id: null as string | null, name: title.value },
   ...explorer.path.map((folder) => ({ id: folder.id as string | null, name: folder.name })),
 ])
-const pageNames = { settings: () => t('Settings'), people: () => t('People') } as const
+const pageNames = {
+  timeline: () => t('Timeline'),
+  settings: () => t('Settings'),
+  people: () => t('People'),
+} as const
 const pathText = computed(() => segments.value.map((segment) => segment.name).join(' / '))
 const isLast = (index: number) => index === segments.value.length - 1 && !explorer.page
 

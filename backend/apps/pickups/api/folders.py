@@ -19,6 +19,7 @@ from ..serializers import (
     UploadMediaSerializer,
 )
 from ..services.access import can_delete_folder, can_edit, can_view
+from ..services.capture_time import store_capture_time
 from ..services.duplicates import DuplicateUpload, check_duplicate, fingerprint
 from ..services.folders import FolderError, create_subfolder, delete_subfolder, rename_folder
 from ..services.members import get_member_from_request
@@ -110,6 +111,7 @@ class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
             return Response({"error": str(exc)}, status=status.HTTP_409_CONFLICT)
         media = Media.objects.create(folder=folder, sha256=sha256, **upload.validated_data)
         create_thumbnail(media)
+        store_capture_time(media)
         return Response(
             MediaSerializer(media, context={"member": member}).data, status=status.HTTP_201_CREATED
         )

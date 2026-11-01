@@ -9,6 +9,7 @@ A web application for sharing images and videos without user accounts. Users cre
 - 🗂️ **File explorer** - Folder tree, address bar you can type into, details/content/small/large views, sorting, search, keyboard shortcuts, right-click menus; works on the phone too
 - 🔗 **Easy Sharing** - One share link per pickup (also as a designed QR card to print), one personal link per participant
 - 💾 **Storage limits** - Per pickup and per participant from `.env`, adjustable per pickup by an admin
+- 🕰️ **Timeline** - Everyone's photos and videos in the order they were taken (from the photos' own data), by day and moment, filterable per person
 - 🗜️ **ZIP download** - Everything, a folder or a selection as one ZIP, streamed while it is packed
 - ⏳ **Read-only and expiry dates** - Optional: uploads stop after one day (looking and downloading go on), the pickup deletes itself with all files after another
 - 🔒 **Private by default** - Only participants see the photos; the creator decides who may look (participants, anyone with the link, or nobody: closed), who may join (anyone with the link, invited people only, nobody new), can remove people and content, and can delete the whole pickup

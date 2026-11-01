@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { SettingsIcon, UsersIcon } from '@lucide/vue'
+import { ImagesIcon, SettingsIcon, UsersIcon } from '@lucide/vue'
 import { ref, watch } from 'vue'
 
 import PickupMark from '@/components/PickupMark.vue'
@@ -80,10 +80,23 @@ function openPage(page: ExplorerPage) {
         {{ t('No folders yet.') }}
       </p>
     </nav>
+    <!-- At the bottom: the timeline for everyone, below the line the creator's pages. -->
+    <button
+      v-if="explorer.canView"
+      type="button"
+      class="mt-auto flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-muted"
+      :class="explorer.page === 'timeline' && 'bg-selection font-medium hover:bg-selection'"
+      :aria-current="explorer.page === 'timeline' ? 'page' : undefined"
+      @click="openPage('timeline')"
+    >
+      <ImagesIcon class="size-4 shrink-0 text-tomato" />
+      {{ t('Timeline') }}
+    </button>
     <nav
       v-if="explorer.pickup.data?.is_creator"
       :aria-label="t('Pickup')"
-      class="mt-auto space-y-0.5 border-t pt-2 text-sm"
+      class="space-y-0.5 border-t pt-2 text-sm"
+      :class="!explorer.canView && 'mt-auto'"
     >
       <button
         v-for="entry in pages"

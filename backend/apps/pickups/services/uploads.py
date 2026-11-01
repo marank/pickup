@@ -11,6 +11,7 @@ from django.utils import timezone
 
 from ..models import Folder, Media, MediaChunk, UploadSession
 from ..models.media import media_type_for, stored_name
+from .capture_time import store_capture_time
 from .duplicates import DuplicateUpload, check_duplicate
 from .thumbnails import create_thumbnail
 
@@ -87,6 +88,7 @@ def finalize_upload(session: UploadSession) -> Media:
     )
     _close(session)
     create_thumbnail(media)
+    store_capture_time(media)
     return media
 
 

@@ -45,6 +45,7 @@ import type { ViewMode } from '../composables/useViewPrefs'
 import { pickupDates } from '../lib/dates'
 import type { SortKey } from '../lib/items'
 import AddressBar from './AddressBar.vue'
+import TimelineToggle from './TimelineToggle.vue'
 import TreeToggle from './TreeToggle.vue'
 
 /**
@@ -117,6 +118,7 @@ function toggleSearch() {
         <ArrowUpIcon />
       </Button>
       <AddressBar class="min-w-0 flex-1" />
+      <TimelineToggle compact />
       <template v-if="!explorer.page">
         <Button
           variant="ghost"

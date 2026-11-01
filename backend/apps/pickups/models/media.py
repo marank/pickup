@@ -90,6 +90,12 @@ class Media(UUIDModel):
         help_text="Fingerprint of the file, to skip the same file twice (services/duplicates.py)",
     )
     uploaded_at = models.DateTimeField(default=timezone.now)
+    taken_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text="When it was taken (EXIF, video metadata), else the upload; empty until read",
+    )
 
     # Optional metadata
     caption = models.TextField(blank=True, help_text="Optional caption for the media")

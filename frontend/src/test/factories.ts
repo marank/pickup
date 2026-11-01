@@ -69,6 +69,7 @@ export function media(overrides: Partial<Media> = {}): Media {
     file_size: 2048,
     file_size_display: '2.0 KB',
     uploaded_at: '2026-10-27T10:00:00Z',
+    taken_at: null,
     caption: 'Sunset',
     can_edit: false,
     can_delete: false,

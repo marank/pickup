@@ -641,8 +641,8 @@
         },
         "/api/pickups/{id}/media/": {
             "get": {
-                "operationId": "pickup_media_list",
-                "description": "Get all media in a pickup.",
+                "operationId": "pickup_timeline",
+                "description": "Every file of the pickup, all folders, in the order they were taken (the timeline).",
                 "parameters": [
                     {
                         "in": "path",
@@ -3268,6 +3268,13 @@
                         "format": "date-time",
                         "readOnly": true
                     },
+                    "taken_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "readOnly": true,
+                        "nullable": true,
+                        "description": "When it was taken (EXIF, video metadata), else the upload; empty until read"
+                    },
                     "caption": {
                         "type": "string",
                         "description": "Optional caption for the media"
@@ -3309,6 +3316,7 @@
                     "media_type",
                     "original_filename",
                     "owner_name",
+                    "taken_at",
                     "thumbnail",
                     "uploaded_at"
                 ]

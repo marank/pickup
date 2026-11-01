@@ -30,6 +30,7 @@ import { Separator } from '@/components/ui/separator'
 import { t } from '@/lib/i18n'
 
 import { useExplorer } from '../composables/useExplorer'
+import TimelineToggle from './TimelineToggle.vue'
 import TreeToggle from './TreeToggle.vue'
 import type { ViewMode } from '../composables/useViewPrefs'
 import type { SortKey } from '../lib/items'
@@ -71,8 +72,9 @@ const single = computed(() => (selected.value.length === 1 ? selected.value[0]! 
     :aria-label="t('Commands')"
   >
     <TreeToggle @open-tree="emit('openTree')" />
+    <TimelineToggle />
     <Separator v-if="!explorer.page" orientation="vertical" class="mx-1 !h-5 !self-center" />
-    <!-- The creator's pages have no commands, only the tree toggle. -->
+    <!-- Pages (timeline, the creator's) have no commands, only the toggles. -->
     <template v-if="explorer.page" />
     <template v-else-if="explorer.uploadTarget">
       <Button size="sm" :title="t('Upload photos or videos')" @click="explorer.fileInput?.click()">

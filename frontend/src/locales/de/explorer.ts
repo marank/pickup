@@ -181,6 +181,21 @@ const explorer: Messages = {
   '{done} of {total} uploaded': '{done} von {total} hochgeladen',
   '{n} uploads failed': ['1 Upload fehlgeschlagen', '{n} Uploads fehlgeschlagen'],
   Uploads: 'Uploads',
+
+  // TimelinePane, TimelineToggle, FolderTree: everyone's photos by the time they were taken
+  Timeline: 'Zeitleiste',
+  'Show photos of': 'Fotos zeigen von',
+  'Show everyone': 'Alle zeigen',
+  'No photos yet': 'Noch keine Fotos',
+  'As soon as someone uploads, everything shows up here in the order it was taken, from all folders.':
+    'Sobald jemand etwas hochlädt, erscheint hier alles in der Reihenfolge, in der es aufgenommen wurde – aus allen Ordnern.',
+  'Go to my folder': 'Zu meinem Ordner',
+  '{name}, by {owner}, {time}': '{name}, von {owner}, {time}',
+  Days: 'Tage',
+  'Back to the folders': 'Zurück zu den Ordnern',
+  'All photos by the time they were taken': 'Alle Fotos nach Aufnahmezeit',
+  '{n} photos and videos': ['1 Foto oder Video', '{n} Fotos und Videos'],
+  'by {n} people': ['von 1 Person', 'von {n} Personen'],
 }
 
 export default explorer

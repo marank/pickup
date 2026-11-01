@@ -84,7 +84,7 @@
         "dist/assets/*.js",
         "!dist/assets/de-*.js"
       ],
-      "limit": "172 kB"
+      "limit": "175 kB"
     },
     {
       "name": "German texts (loaded only in German)",

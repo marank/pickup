@@ -26,6 +26,16 @@ export function useFolderMedia(
   })
 }
 
+/** Every file of the pickup, all folders, in the order taken (the timeline). */
+export function useTimelineMedia(pickupId: Id, enabled: MaybeRefOrGetter<boolean> = true) {
+  return useQuery({
+    queryKey: computed(() => pickupKeys.timeline(toValue(pickupId))),
+    enabled: computed(() => toValue(enabled)),
+    queryFn: () =>
+      unwrap(api.GET('/api/pickups/{id}/media/', { params: { path: { id: toValue(pickupId) } } })),
+  })
+}
+
 /** Everything a member can change in the explorer; each refreshes the whole pickup. */
 export function useExplorerMutations(pickupId: Id) {
   const client = useQueryClient()

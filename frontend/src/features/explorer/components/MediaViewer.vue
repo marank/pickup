@@ -10,7 +10,7 @@ import { useExplorer } from '../composables/useExplorer'
 import { useViewerGestures } from '../composables/useViewerGestures'
 
 const explorer = useExplorer()
-const files = computed(() => explorer.files)
+const files = computed(() => explorer.viewerFiles)
 const at = (index: number) => {
   const count = files.value.length
   const file = files.value[(index + count) % count]

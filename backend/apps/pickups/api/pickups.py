@@ -3,6 +3,7 @@ from urllib.parse import quote
 from uuid import UUID
 
 from django.db.models import QuerySet
+from django.db.models.functions import Coalesce
 from django.http import HttpResponseBase, StreamingHttpResponse
 from django.utils.translation import gettext as _
 from drf_spectacular.types import OpenApiTypes
@@ -187,16 +188,20 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
         return response
 
     @extend_schema(
-        operation_id="pickup_media_list",
+        operation_id="pickup_timeline",
         responses={200: MediaSerializer(many=True), 403: ErrorSerializer},
     )
     @action(detail=True, methods=["get"])
     def media(self, request: Request, id: str | None = None) -> Response:
-        """Get all media in a pickup."""
+        """Every file of the pickup, all folders, in the order they were taken (the timeline)."""
         pickup = self.get_object()
         if not can_view(pickup, self._member()):
             return private()
-        media = Media.objects.filter(folder__pickup=pickup).select_related("folder")
+        media = (
+            Media.objects.filter(folder__pickup=pickup)
+            .select_related("folder__pickup")
+            .order_by(Coalesce("taken_at", "uploaded_at"), "uploaded_at", "id")
+        )
         return Response(MediaSerializer(media, many=True, context=self.get_serializer_context()).data)
 
     @extend_schema(

@@ -24,7 +24,7 @@ type ExplorerDialog =
   | { kind: 'share' }
 
 /** Pages of the pickup itself, shown in the content pane instead of a folder. */
-export type ExplorerPage = 'settings' | 'people'
+export type ExplorerPage = 'timeline' | 'settings' | 'people'
 
 function folderRoute(pickupId: string, folderId: string | null) {
   return folderId
@@ -127,17 +127,26 @@ function createExplorer(
   }
 
   // --- items ----------------------------------------------------------------------
-  const viewer = reactive<{ open: boolean; index: number }>({ open: false, index: 0 })
+  // The viewer pages through the folder's files, or another list (the timeline's).
+  const viewer = reactive<{
+    open: boolean
+    index: number
+    source: (() => ExplorerItem[]) | null
+  }>({ open: false, index: 0, source: null })
+  const viewerFiles = computed(() => viewer.source?.() ?? files.value)
+
+  function openInViewer(item: ExplorerItem, source: (() => ExplorerItem[]) | null = null) {
+    viewer.source = source
+    viewer.index = Math.max(
+      0,
+      viewerFiles.value.findIndex((file) => file.id === item.id),
+    )
+    viewer.open = true
+  }
 
   function openItem(item: ExplorerItem) {
     if (item.kind === 'folder') navigate(item.id)
-    else {
-      viewer.index = Math.max(
-        0,
-        files.value.findIndex((file) => file.id === item.id),
-      )
-      viewer.open = true
-    }
+    else openInViewer(item)
   }
 
   // --- dialogs & actions ------------------------------------------------------------
@@ -307,6 +316,8 @@ function createExplorer(
     uploads,
     mutations,
     viewer,
+    viewerFiles,
+    openInViewer,
     dialog,
     fileInput,
     uploadTarget,

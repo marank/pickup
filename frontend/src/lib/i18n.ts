@@ -65,6 +65,16 @@ export function plural(n: number, one: string, other: string, params?: Params): 
   return fill(n === 1 ? single : many, { n, ...params })
 }
 
+/** A time of day in the current language, e.g. 18:30 or 6:30 PM. */
+export function formatTime(value: string | Date): string {
+  return new Date(value).toLocaleTimeString(locale.value, { hour: 'numeric', minute: '2-digit' })
+}
+
+/** Two dates as one range, e.g. „13.–15. Juni 2026“. */
+export function formatDateRange(from: Date, to: Date, options: Intl.DateTimeFormatOptions): string {
+  return new Intl.DateTimeFormat(locale.value, options).formatRange(from, to)
+}
+
 /** A date in the current language, e.g. `formatDate(iso, { dateStyle: 'long' })`. */
 export function formatDate(value: string | Date, options: Intl.DateTimeFormatOptions): string {
   return new Date(value).toLocaleDateString(locale.value, options)

@@ -6,15 +6,16 @@ from django.core.management.base import BaseCommand
 from django.db.models import Q
 
 from apps.pickups.models import Media, live
+from apps.pickups.services.capture_time import store_capture_time
 from apps.pickups.services.duplicates import fingerprint
 from apps.pickups.services.thumbnails import create_thumbnail
 
 
 class Command(BaseCommand):
     help = (
-        "Create missing previews and fingerprints (e.g. of files from before they existed). On "
-        "SIGTERM or SIGINT it finishes the current file and stops, so a container can shut down "
-        "meanwhile."
+        "Create missing previews, fingerprints and capture times (e.g. of files from before they "
+        "existed). On SIGTERM or SIGINT it finishes the current file and stops, so a container can "
+        "shut down meanwhile."
     )
 
     stopping = False
@@ -27,6 +28,7 @@ class Command(BaseCommand):
         try:
             created = self.create_missing()
             fingerprinted = self.fingerprint_missing()
+            self.read_capture_times()
         finally:
             for sig, handler in previous.items():
                 signal.signal(sig, handler)
@@ -65,3 +67,12 @@ class Command(BaseCommand):
                 continue  # the file is missing on disk: nothing to compare with
             done += Media.objects.filter(id=media.id, sha256="").update(sha256=sha256)
         return done
+
+    def read_capture_times(self) -> None:
+        """Files from before the timeline: when they were taken."""
+        for media in (
+            Media.objects.filter(live("folder__pickup__"), taken_at=None).order_by("uploaded_at").iterator()
+        ):
+            if self.stopping:
+                break
+            store_capture_time(media)

@@ -14,8 +14,6 @@ Ideas that are not scheduled yet. Most important first.
   photo. A medium size (about 2048 px), made on the server like the previews, would be much
   faster on phones and mobile data; the original stays for downloading. (HEIC photos already
   get such a JPEG for viewing, `Media.display`; this would extend it to all images.)
-- **One timeline for everyone.** All photos of all folders by the time they were taken (EXIF),
-  so the event can be scrolled through in order.
 - **Location in photos.** Originals often carry GPS coordinates that every member can see.
   Mention it in the intro, or let the creator strip it from downloads.
 - **Android: "Share → Pickup".** Send photos straight from Google Photos to a pickup; possible

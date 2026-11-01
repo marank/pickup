@@ -204,8 +204,8 @@ export interface paths {
       path?: never
       cookie?: never
     }
-    /** @description Get all media in a pickup. */
-    get: operations['pickup_media_list']
+    /** @description Every file of the pickup, all folders, in the order they were taken (the timeline). */
+    get: operations['pickup_timeline']
     put?: never
     post?: never
     delete?: never
@@ -843,6 +843,11 @@ export interface components {
       readonly file_size_display: string
       /** Format: date-time */
       readonly uploaded_at: string
+      /**
+       * Format: date-time
+       * @description When it was taken (EXIF, video metadata), else the upload; empty until read
+       */
+      readonly taken_at: string | null
       /** @description Optional caption for the media */
       caption?: string
       /** @description Check if the current authenticated member owns this media's folder. */
@@ -1495,7 +1500,7 @@ export interface operations {
       }
     }
   }
-  pickup_media_list: {
+  pickup_timeline: {
     parameters: {
       query?: never
       header?: never

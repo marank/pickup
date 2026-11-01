@@ -114,16 +114,21 @@ def _thumbnail_of(media: Media) -> bytes:
         return render_thumbnail(source)
 
 
-def _display_of(media: Media) -> bytes:
+def _display_of(media: Media) -> bytes | None:
     with media.file.open("rb") as source:
-        return render_thumbnail(source, DISPLAY_SIZE, DISPLAY_QUALITY)
+        data = render_thumbnail(source, DISPLAY_SIZE, DISPLAY_QUALITY)
+    # Not worth it when it isn't smaller than the original (HEIC needs one anyway).
+    heic = (media.file.name or "").lower().endswith((".heic", ".heif"))
+    return data if heic or len(data) < media.file_size else None
 
 
-def _store(media: Media, field: str, render: Callable[[Media], bytes]) -> bool:
+def _store(media: Media, field: str, render: Callable[[Media], bytes | None]) -> bool:
     try:
         data = render(media)
     except Exception:  # any unreadable or hostile file: the tile falls back to the file itself
         logger.warning("No %s for media %s", field, media.id, exc_info=True)
+        return False
+    if data is None:
         return False
     preview: FieldFile = getattr(media, field)
     preview.save("preview.jpg", ContentFile(data), save=False)

@@ -3,6 +3,7 @@
 import email.message
 import email.policy
 import logging
+import threading
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from email.policy import Policy
@@ -80,6 +81,7 @@ _TEXT: dict[Reason, tuple[str, str]] = {
 # request. Created on first use (after gunicorn forked its workers); its threads finish what
 # is queued before a worker exits.
 _pool: ThreadPoolExecutor | None = None
+_pool_lock = threading.Lock()  # gunicorn runs requests in threads: create the pool once
 
 
 def _in_background(send: Callable[[], object], what: str) -> None:
@@ -94,8 +96,9 @@ def _in_background(send: Callable[[], object], what: str) -> None:
 
     def start() -> None:
         global _pool
-        if _pool is None:
-            _pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="mail")
+        with _pool_lock:
+            if _pool is None:
+                _pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="mail")
         _pool.submit(run)
 
     if settings.MAIL_IN_BACKGROUND:

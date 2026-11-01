@@ -39,11 +39,14 @@ class FolderSerializer(serializers.ModelSerializer[Folder]):
         ]
         read_only_fields = fields
 
+    # Counted in the query where lists use services.folders.with_counts, else asked here.
     def get_media_count(self, obj: Folder) -> int:
-        return obj.get_media_count()
+        counted: int | None = getattr(obj, "media_total", None)
+        return obj.get_media_count() if counted is None else counted
 
     def get_subfolder_count(self, obj: Folder) -> int:
-        return obj.get_subfolder_count()
+        counted: int | None = getattr(obj, "subfolder_total", None)
+        return obj.get_subfolder_count() if counted is None else counted
 
     def get_can_edit(self, obj: Folder) -> bool:
         """Check if the current authenticated member owns this folder."""

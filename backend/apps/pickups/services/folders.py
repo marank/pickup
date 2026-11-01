@@ -3,6 +3,8 @@
 import uuid
 
 from django.db import transaction
+from django.db.models import Count, OuterRef, QuerySet, Subquery
+from django.db.models.functions import Coalesce
 from django.utils.translation import gettext as _
 
 from ..models import Folder, Media
@@ -69,3 +71,13 @@ def delete_subfolder(folder: Folder) -> int:
         count += 1
     folder.delete()  # cascades to subfolders and their media rows
     return count
+
+
+def with_counts(folders: QuerySet[Folder]) -> QuerySet[Folder]:
+    """Files and subfolders per folder in the same query (the tree lists every folder)."""
+
+    def count(model: type[Media] | type[Folder], field: str) -> Coalesce:
+        rows = model.objects.filter(**{field: OuterRef("pk")}).order_by().values(field)
+        return Coalesce(Subquery(rows.annotate(n=Count("pk")).values("n")[:1]), 0)
+
+    return folders.annotate(media_total=count(Media, "folder"), subfolder_total=count(Folder, "parent"))

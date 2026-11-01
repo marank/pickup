@@ -303,3 +303,29 @@ def test_unsupported_files_are_refused_with_a_clear_reason(client: Client, joine
     assert response.json() == {
         "file": ["Only photos and videos can be uploaded; “pdf” files aren't supported."]
     }
+
+
+def noise(size: tuple[int, int], fmt: str = "JPEG") -> bytes:
+    """A photo-like file of several MB (noise doesn't compress)."""
+    out = io.BytesIO()
+    Image.frombytes("RGB", size, os.urandom(size[0] * size[1] * 3)).save(out, fmt, quality=95)
+    return out.getvalue()
+
+
+def test_large_photos_get_a_lighter_jpeg_for_the_viewer(client: Client, joined: tuple[str, str]) -> None:
+    content = noise((3000, 2000))
+    assert len(content) > 1_500_000
+    media = upload(client, *joined, "IMG_1.jpg", content)
+    assert media["display"] == f"/api/files/{media['id']}/display/"
+    response = client.get(media["display"])
+    display = b"".join(response.streaming_content)  # type: ignore[attr-defined]
+    assert Image.open(io.BytesIO(display)).size == (DISPLAY_SIZE, 1707)
+    assert len(display) < len(content)
+
+
+def test_animations_and_small_photos_keep_their_file(client: Client, joined: tuple[str, str]) -> None:
+    gif = io.BytesIO()
+    Image.frombytes("L", (1500, 1200), os.urandom(1500 * 1200)).save(gif, "GIF")
+    assert len(gif.getvalue()) > 1_500_000
+    assert upload(client, *joined, "party.gif", gif.getvalue())["display"] is None
+    assert upload(client, *joined, "small.jpg", image_bytes((800, 600)))["display"] is None

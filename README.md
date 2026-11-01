@@ -16,7 +16,7 @@ A web application for sharing images and videos without user accounts. Users cre
 - ✉️ **Invitations** - The creator invites by email; everyone can have their personal link mailed again
 - 🕶️ **Privacy mode** - Email addresses are stored only as a keyed hash (switchable per pickup, off by default)
 - 📦 **Large Files** - Files above 20 MB are uploaded in resumable 5 MB chunks
-- 🖼️ **Previews** - Small JPEG previews of photos and video stills, made on the server; iPhone photos (HEIC) are accepted and get a JPEG for viewing in every browser
+- 🖼️ **Previews** - Small JPEG previews of photos and video stills, made on the server; iPhone photos (HEIC) are accepted and get a JPEG for viewing in every browser, large photos a lighter one for the viewer (the original stays for downloading)
 - 📱 **Responsive Design** - Works on all devices
 
 ## Tech Stack

@@ -110,7 +110,7 @@ def test_files_are_handed_to_nginx_in_production(creator: Client, settings: Sett
     assert response["X-Accel-Redirect"] == f"/protected-media/{stored}"
     assert response["Content-Type"] == "image/jpeg"
     assert "Strand%20Tag%201.jpg" in response["Content-Disposition"]
-    assert response["Cache-Control"] == "private, max-age=3600"
+    assert response["Cache-Control"] == "private, max-age=604800"  # a week: files never change
 
 
 def test_a_closed_pickup_is_only_visible_to_the_creator(creator: Client) -> None:

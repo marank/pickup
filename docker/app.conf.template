@@ -54,7 +54,6 @@ ${ADMIN_LOCATION}
     location /protected-media/ {
         internal;
         alias /data/media/;
-        add_header Cache-Control "private, max-age=3600" always;
         add_header Content-Security-Policy "default-src 'none'; img-src 'self'; media-src 'self'; style-src 'unsafe-inline'; sandbox" always;
         add_header X-Content-Type-Options "nosniff" always;
         add_header Cross-Origin-Resource-Policy "same-origin" always;

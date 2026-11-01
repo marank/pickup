@@ -37,6 +37,7 @@ from ..serializers import (
 from ..services.access import can_view
 from ..services.archive import collect, safe_name, stream
 from ..services.creation import creation_mode, creation_refused
+from ..services.folders import with_counts
 from ..services.identity import forget_plain_emails
 from ..services.members import (
     MembershipError,
@@ -152,7 +153,7 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
         pickup = self.get_object()
         if not can_view(pickup, self._member()):
             return private()
-        folders = pickup.folders.select_related("pickup").all()
+        folders = with_counts(pickup.folders.select_related("pickup").order_by("name"))
         return Response(FolderSerializer(folders, many=True, context=self.get_serializer_context()).data)
 
     @extend_schema(

@@ -6,9 +6,18 @@ from django.core.management.base import BaseCommand
 from django.db.models import Q
 
 from apps.pickups.models import Media, live
+from apps.pickups.models.media import DISPLAY_FROM_BYTES, LARGE_STILLS, NEEDS_DISPLAY
 from apps.pickups.services.capture_time import store_capture_time
 from apps.pickups.services.duplicates import fingerprint
 from apps.pickups.services.thumbnails import create_thumbnail
+
+
+def _ending(extensions: set[str]) -> Q:
+    """Files with one of these extensions."""
+    query = Q()
+    for extension in sorted(extensions):
+        query |= Q(file__iendswith=f".{extension}")
+    return query
 
 
 class Command(BaseCommand):
@@ -41,10 +50,11 @@ class Command(BaseCommand):
 
     def create_missing(self) -> int:
         created = 0
-        # No preview yet, or a HEIC photo without the viewer's JPEG.
-        heic = Q(file__iendswith=".heic") | Q(file__iendswith=".heif")
+        # No preview yet, or no viewer's JPEG where one is due (Media.needs_display; large
+        # photos may get none when it wouldn't be smaller: they are tried once per start).
+        display_due = _ending(NEEDS_DISPLAY) | (_ending(LARGE_STILLS) & Q(file_size__gt=DISPLAY_FROM_BYTES))
         missing = Media.objects.filter(
-            Q(thumbnail="") | (Q(display="") & heic), live("folder__pickup__")
+            Q(thumbnail="") | (Q(display="") & display_due), live("folder__pickup__")
         ).order_by("uploaded_at")
         for media in missing.iterator():
             if self.stopping:

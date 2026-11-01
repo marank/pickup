@@ -68,6 +68,11 @@ def _viewable_media(request: Request, media_id: str) -> Media | None:
     return media
 
 
+# A file never changes under its address (new uploads get new ones): browsers keep files and
+# previews a week instead of asking the access check again. nginx passes this header on.
+CACHE_CONTROL = "private, max-age=604800"
+
+
 def _send(file: FieldFile, content_type: str, filename: str) -> HttpResponseBase:
     response: HttpResponseBase
     if settings.MEDIA_ACCEL_REDIRECT:
@@ -76,5 +81,5 @@ def _send(file: FieldFile, content_type: str, filename: str) -> HttpResponseBase
         response["Content-Disposition"] = f"inline; filename*=UTF-8''{quote(filename)}"
     else:
         response = FileResponse(file.open("rb"), content_type=content_type, filename=filename)
-    response["Cache-Control"] = "private, max-age=3600"
+    response["Cache-Control"] = CACHE_CONTROL
     return response

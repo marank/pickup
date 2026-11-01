@@ -11,8 +11,12 @@ from apps.core.models import UUIDModel
 
 # No SVG: it can carry script and would run on our origin when opened directly.
 IMAGE_EXTENSIONS = {"jpg", "jpeg", "png", "gif", "webp", "bmp", "heic", "heif"}
-# iPhone photos (HEIC) show only in Safari: they get a JPEG to view (Media.display).
+# The viewer gets a JPEG (Media.display) for iPhone photos (HEIC, only Safari shows them) and
+# for large photos, so it doesn't load several MB per picture. Not for GIF and WebP: they may
+# be animated, a JPEG would stop that.
 NEEDS_DISPLAY = {"heic", "heif"}
+LARGE_STILLS = {"jpg", "jpeg", "png", "bmp"}
+DISPLAY_FROM_BYTES = 1_500_000
 VIDEO_EXTENSIONS = {"mp4", "avi", "mov", "wmv", "flv", "webm", "mkv"}
 ALLOWED_EXTENSIONS = IMAGE_EXTENSIONS | VIDEO_EXTENSIONS
 
@@ -81,7 +85,7 @@ class Media(UUIDModel):
         upload_to=thumbnail_upload_to,
         max_length=255,
         blank=True,
-        help_text="Large JPEG for the viewer, for formats browsers can't show (HEIC)",
+        help_text="JPEG for the viewer (at most 2560 px): HEIC, and large photos",
     )
     sha256 = models.CharField(
         max_length=64,
@@ -131,8 +135,11 @@ class Media(UUIDModel):
 
     @property
     def needs_display(self) -> bool:
-        """Browsers (except Safari) can't show the file itself: the viewer gets a JPEG."""
-        return file_extension(self.file.name or "") in NEEDS_DISPLAY
+        """The viewer gets a JPEG: browsers can't show the file (HEIC), or it is large."""
+        extension = file_extension(self.file.name or "")
+        return extension in NEEDS_DISPLAY or (
+            extension in LARGE_STILLS and self.file_size > DISPLAY_FROM_BYTES
+        )
 
     @property
     def is_image(self) -> bool:

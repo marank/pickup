@@ -1,5 +1,7 @@
 import createClient, { type Middleware } from 'openapi-fetch'
 
+import { locale } from '@/lib/i18n'
+
 import { ensureCsrf, getCsrfToken } from './csrf'
 import type { paths } from './schema'
 
@@ -21,6 +23,13 @@ export const api = createClient<paths>({
   credentials: 'same-origin',
 })
 api.use(csrf)
+// The server answers (errors, mails) in the language the app shows, also when chosen there.
+api.use({
+  onRequest({ request }) {
+    request.headers.set('Accept-Language', locale.value)
+    return request
+  },
+})
 
 /**
  * openapi-typescript types binary fields as strings; real files go as FormData.

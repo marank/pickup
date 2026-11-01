@@ -18,6 +18,7 @@ import { toast } from 'vue-sonner'
 
 import { apiErrorMessage } from '@/api/errors'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import LanguageOptions from '@/components/LanguageOptions.vue'
 import ThemeOptions from '@/components/ThemeOptions.vue'
 import {
   DropdownMenu,
@@ -180,6 +181,8 @@ async function confirmLeave() {
       <DropdownMenuRadioGroup v-model="theme">
         <ThemeOptions />
       </DropdownMenuRadioGroup>
+      <DropdownMenuSeparator />
+      <LanguageOptions />
       <template v-if="signedIn">
         <DropdownMenuSeparator />
         <DropdownMenuItem variant="destructive" @select="confirmOpen = true">

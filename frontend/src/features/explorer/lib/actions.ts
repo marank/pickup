@@ -8,6 +8,8 @@ import {
 } from '@lucide/vue'
 import type { Component } from 'vue'
 
+import { t } from '@/lib/i18n'
+
 import type { Explorer } from '../composables/useExplorer'
 import type { ExplorerItem } from './items'
 
@@ -35,7 +37,7 @@ export function itemActions(explorer: Explorer, item: ExplorerItem): ItemAction[
   if (single) {
     actions.push({
       id: 'open',
-      label: item.kind === 'folder' ? 'Open' : 'View',
+      label: t('Open'),
       icon: item.kind === 'folder' ? FolderOpenIcon : ImageIcon,
       shortcut: 'Enter',
       run: () => explorer.openItem(item),
@@ -45,9 +47,9 @@ export function itemActions(explorer: Explorer, item: ExplorerItem): ItemAction[
     id: 'download',
     label: single
       ? item.kind === 'folder'
-        ? 'Download as ZIP'
-        : 'Download'
-      : `Download ${targets.length} items as ZIP`,
+        ? t('Download as ZIP')
+        : t('Download')
+      : t('Download {n} items as ZIP', { n: targets.length }),
     icon: DownloadIcon,
     run: () => explorer.download(targets),
   })
@@ -56,14 +58,14 @@ export function itemActions(explorer: Explorer, item: ExplorerItem): ItemAction[
       item.kind === 'folder'
         ? {
             id: 'rename',
-            label: 'Rename',
+            label: t('Rename'),
             icon: PencilIcon,
             shortcut: 'F2',
             run: () => explorer.requestRename(item),
           }
         : {
             id: 'caption',
-            label: 'Edit caption',
+            label: t('Edit caption'),
             icon: TextIcon,
             shortcut: 'F2',
             run: () => explorer.requestRename(item),
@@ -73,7 +75,7 @@ export function itemActions(explorer: Explorer, item: ExplorerItem): ItemAction[
   if (explorer.canDelete(targets)) {
     actions.push({
       id: 'delete',
-      label: single ? 'Delete' : `Delete ${targets.length} items`,
+      label: single ? t('Delete') : t('Delete {n} items', { n: targets.length }),
       icon: Trash2Icon,
       shortcut: 'Del',
       destructive: true,

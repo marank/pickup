@@ -4,6 +4,7 @@ import { computed } from 'vue'
 
 import type { Pickup } from '@/api/types'
 import { Separator } from '@/components/ui/separator'
+import { t } from '@/lib/i18n'
 
 import JoinForm from './JoinForm.vue'
 import LinkRequestForm from './LinkRequestForm.vue'
@@ -23,7 +24,7 @@ const canJoin = computed(
 const initialName = computed(() =>
   claiming.value && props.pickup.member_name !== 'Creator' ? props.pickup.member_name : '',
 )
-const title = computed(() => props.pickup.title || 'this pickup')
+const title = computed(() => props.pickup.title || t('this pickup'))
 </script>
 
 <template>
@@ -36,35 +37,39 @@ const title = computed(() => props.pickup.title || 'this pickup')
         <LockIcon class="size-3.5" />
         {{
           closed
-            ? 'Closed'
+            ? t('Closed')
             : pickup.password_required
-              ? 'Protected with a password'
-              : 'Private pickup'
+              ? t('Protected with a password')
+              : t('Private pickup')
         }}
       </p>
       <h1 class="text-2xl font-bold">
-        {{ !canJoin ? title : claiming ? 'Choose your name' : `Join ${title}` }}
+        {{ !canJoin ? title : claiming ? t('Choose your name') : t('Join {title}', { title }) }}
       </h1>
       <p v-if="invalidLink" class="text-sm text-destructive">
-        That personal link is not valid. Join below, or ask for a new link.
+        {{ t('That personal link is not valid. Join below, or ask for a new link.') }}
       </p>
       <p class="text-muted-foreground">
-        <template v-if="closed"
-          >The creator has closed this pickup. Nobody can look at or add photos right now.</template
-        >
-        <template v-else-if="claiming"
-          >Your folder gets this name; everyone in “{{ title }}” sees it.</template
-        >
+        <template v-if="closed">{{
+          t('The creator has closed this pickup. Nobody can look at or add photos right now.')
+        }}</template>
+        <template v-else-if="claiming">{{
+          t('Your folder gets this name; everyone in “{title}” sees it.', { title })
+        }}</template>
         <template v-else-if="canJoin">
-          You get your own folder for uploads and can see everyone else's photos.
+          {{ t("You get your own folder for uploads and can see everyone else's photos.") }}
         </template>
         <template v-else-if="pickup.is_read_only">
-          This pickup is read-only now: nobody joins or adds photos anymore.
+          {{ t('This pickup is read-only now: nobody joins or adds photos anymore.') }}
         </template>
         <template v-else-if="pickup.join_policy === 'invite'">
-          Only invited people can take part. If you were invited, use the link from your invitation.
+          {{
+            t(
+              'Only invited people can take part. If you were invited, use the link from your invitation.',
+            )
+          }}
         </template>
-        <template v-else>This pickup doesn't take new participants anymore.</template>
+        <template v-else>{{ t("This pickup doesn't take new participants anymore.") }}</template>
       </p>
     </div>
     <JoinForm

@@ -6,6 +6,7 @@ import { RouterLink } from 'vue-router'
 import { api } from '@/api/client'
 import { apiErrorMessage, unwrap } from '@/api/errors'
 import { Button } from '@/components/ui/button'
+import { t } from '@/lib/i18n'
 
 /** The link from the "confirm your new address" mail; the token comes after the #. */
 const props = defineProps<{ pickupId: string }>()
@@ -26,7 +27,7 @@ onMounted(async () => {
     message.value = result.message
     state.value = 'done'
   } catch (err) {
-    message.value = apiErrorMessage(err, 'Could not confirm the address')
+    message.value = apiErrorMessage(err, t('Could not confirm the address'))
     state.value = 'failed'
   }
 })
@@ -35,7 +36,7 @@ onMounted(async () => {
 <template>
   <div class="mx-auto max-w-md space-y-4 rounded-2xl border bg-card p-6 text-center shadow-sm">
     <p v-if="state === 'pending'" class="text-muted-foreground" role="status">
-      Confirming your address…
+      {{ t('Confirming your address…') }}
     </p>
     <template v-else>
       <component
@@ -44,11 +45,13 @@ onMounted(async () => {
         :class="state === 'done' ? 'text-sage' : 'text-destructive'"
       />
       <h1 class="font-heading text-2xl font-bold">
-        {{ state === 'done' ? 'Address confirmed' : 'Not confirmed' }}
+        {{ state === 'done' ? t('Address confirmed') : t('Not confirmed') }}
       </h1>
       <p class="text-muted-foreground">{{ message }}</p>
       <Button as-child class="w-full">
-        <RouterLink :to="{ name: 'explorer', params: { pickupId } }">Open the pickup</RouterLink>
+        <RouterLink :to="{ name: 'explorer', params: { pickupId } }">{{
+          t('Open the pickup')
+        }}</RouterLink>
       </Button>
     </template>
   </div>

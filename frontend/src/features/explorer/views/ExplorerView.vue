@@ -4,6 +4,7 @@ import { computed, ref, watch } from 'vue'
 import { isNotFound } from '@/api/errors'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import NotFoundCard from '@/components/NotFoundCard.vue'
+import { t } from '@/lib/i18n'
 import JoinPanel from '@/features/pickups/components/JoinPanel.vue'
 import {
   Sheet,
@@ -66,8 +67,22 @@ watch(dialog, (value) => {
 const deleteDescription = computed(() => {
   const items = deleteItems.value
   const folders = items.filter((item) => item.kind === 'folder').length
-  const what = items.length === 1 ? `“${items[0]!.name}”` : `${items.length} items`
-  return `${what} will be removed for everyone${folders ? ', including everything inside' : ''}. This cannot be undone.`
+  if (items.length === 1) {
+    const name = items[0]!.name
+    return folders
+      ? t(
+          '“{name}” will be removed for everyone, including everything inside. This cannot be undone.',
+          { name },
+        )
+      : t('“{name}” will be removed for everyone. This cannot be undone.', { name })
+  }
+  const n = items.length
+  return folders
+    ? t(
+        '{n} items will be removed for everyone, including everything inside. This cannot be undone.',
+        { n },
+      )
+    : t('{n} items will be removed for everyone. This cannot be undone.', { n })
 })
 
 async function createFolder(name: string) {
@@ -76,8 +91,8 @@ async function createFolder(name: string) {
   explorer.closeDialog()
   const folder = await explorer.run(
     mutations.createFolder.mutateAsync({ parentId, name }),
-    `Folder “${name}” created`,
-    'Could not create the folder',
+    t('Folder “{name}” created', { name }),
+    t('Could not create the folder'),
   )
   if (folder) explorer.selection.select(folder.id)
 }
@@ -88,8 +103,8 @@ async function renameFolder(name: string) {
   explorer.closeDialog()
   await explorer.run(
     mutations.renameFolder.mutateAsync({ folderId, name }),
-    'Folder renamed',
-    'Could not rename',
+    t('Folder renamed'),
+    t('Could not rename'),
   )
 }
 
@@ -99,8 +114,8 @@ async function saveCaption(caption: string) {
   explorer.closeDialog()
   await explorer.run(
     mutations.updateCaption.mutateAsync({ media, caption }),
-    'Caption saved',
-    'Could not save the caption',
+    t('Caption saved'),
+    t('Could not save the caption'),
   )
 }
 
@@ -115,8 +130,8 @@ function onFiles(event: Event) {
   <div class="px-2 py-3 max-sm:p-0 sm:px-4 sm:py-4">
     <NotFoundCard
       v-if="isNotFound(explorer.pickup.error)"
-      title="Pickup not found"
-      description="Check the link you got, or ask for a new one."
+      :title="t('Pickup not found')"
+      :description="t('Check the link you got, or ask for a new one.')"
     />
     <div v-else-if="explorer.pickup.data && !explorer.canView" class="py-6 sm:py-10">
       <JoinPanel :pickup="explorer.pickup.data" />
@@ -157,8 +172,8 @@ function onFiles(event: Event) {
     <Sheet v-model:open="treeOpen">
       <SheetContent side="left" class="w-[85vw] max-w-80 overflow-y-auto bg-pane p-3">
         <SheetHeader class="p-0 pb-2">
-          <SheetTitle>Folders</SheetTitle>
-          <SheetDescription class="sr-only">Choose a folder to open</SheetDescription>
+          <SheetTitle>{{ t('Folders') }}</SheetTitle>
+          <SheetDescription class="sr-only">{{ t('Choose a folder to open') }}</SheetDescription>
         </SheetHeader>
         <FolderTree class="flex-1 pb-[env(safe-area-inset-bottom)]" @navigated="treeOpen = false" />
       </SheetContent>
@@ -180,32 +195,32 @@ function onFiles(event: Event) {
 
     <NameDialog
       v-model:open="newFolderOpen"
-      title="New folder"
-      label="Name"
-      confirm-label="Create"
+      :title="t('New folder')"
+      :label="t('Name')"
+      :confirm-label="t('Create')"
       @confirm="createFolder"
     />
     <NameDialog
       v-model:open="renameFolderOpen"
-      title="Rename folder"
-      label="Name"
+      :title="t('Rename folder')"
+      :label="t('Name')"
       :initial="dialog?.kind === 'rename-folder' ? dialog.folder.name : ''"
-      confirm-label="Rename"
+      :confirm-label="t('Rename')"
       @confirm="renameFolder"
     />
     <CaptionDialog
       v-model:open="captionOpen"
-      title="Caption"
+      :title="t('Caption')"
       :description="dialog?.kind === 'caption' ? dialog.media.original_filename : ''"
       :caption="dialog?.kind === 'caption' ? dialog.media.caption : ''"
-      confirm-label="Save"
+      :confirm-label="t('Save')"
       @confirm="saveCaption"
     />
     <ConfirmDialog
       v-model:open="deleteOpen"
-      title="Delete?"
+      :title="t('Delete?')"
       :description="deleteDescription"
-      confirm-label="Delete"
+      :confirm-label="t('Delete')"
       @confirm="explorer.confirmDelete(deleteItems)"
     />
     <ShareDialog
@@ -214,7 +229,7 @@ function onFiles(event: Event) {
       :join-policy="explorer.pickup.data?.join_policy"
       :member="explorer.pickup.data?.is_member"
       :pickup-id="pickupId"
-      :title="explorer.pickup.data?.title || 'Untitled pickup'"
+      :title="explorer.pickup.data?.title || t('Untitled pickup')"
     />
   </div>
 </template>

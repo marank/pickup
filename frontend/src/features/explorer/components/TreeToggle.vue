@@ -3,6 +3,7 @@ import { FolderTreeIcon } from '@lucide/vue'
 import { useMediaQuery } from '@vueuse/core'
 
 import { Button } from '@/components/ui/button'
+import { t } from '@/lib/i18n'
 
 import { useExplorer } from '../composables/useExplorer'
 
@@ -21,12 +22,10 @@ function toggleTree() {
   <Button
     variant="ghost"
     size="icon-sm"
-    :aria-label="
-      wide ? (explorer.prefs.treePane ? 'Hide folders' : 'Show folders') : 'Show folders'
-    "
+    :aria-label="wide && explorer.prefs.treePane ? t('Hide folders') : t('Show folders')"
     :aria-pressed="wide ? explorer.prefs.treePane : undefined"
     :class="wide && explorer.prefs.treePane && 'bg-muted'"
-    title="Folders"
+    :title="t('Folders')"
     @click="toggleTree"
   >
     <FolderTreeIcon />

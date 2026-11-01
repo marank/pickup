@@ -3,6 +3,7 @@ import { LockIcon } from '@lucide/vue'
 
 import PeoplePanel from '@/features/pickups/components/PeoplePanel.vue'
 import SettingsPanel from '@/features/pickups/components/SettingsPanel.vue'
+import { t } from '@/lib/i18n'
 
 import { useExplorer } from '../composables/useExplorer'
 
@@ -20,7 +21,7 @@ const explorer = useExplorer()
       class="flex h-full flex-col items-center justify-center gap-2 text-center text-muted-foreground"
     >
       <LockIcon class="size-6" />
-      <p>Only the creator of this pickup can open this.</p>
+      <p>{{ t('Only the creator of this pickup can open this.') }}</p>
     </div>
   </main>
 </template>

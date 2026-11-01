@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { UploadIcon } from '@lucide/vue'
 
+import { t } from '@/lib/i18n'
+
 import { useExplorer } from '../composables/useExplorer'
 
 /** Upload on phones: a round button bottom right, above the upload list while it is shown. */
@@ -15,7 +17,7 @@ const explorer = useExplorer()
     :style="{
       bottom: 'calc(1rem + env(safe-area-inset-bottom) + var(--upload-tray-height, 0px))',
     }"
-    aria-label="Upload photos or videos"
+    :aria-label="t('Upload photos or videos')"
     @click="explorer.fileInput?.click()"
   >
     <UploadIcon class="size-6" />

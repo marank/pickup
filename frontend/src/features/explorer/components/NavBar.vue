@@ -12,6 +12,7 @@ import { ref } from 'vue'
 
 import { Button } from '@/components/ui/button'
 import { pickupKeys } from '@/features/pickups/queryKeys'
+import { t } from '@/lib/i18n'
 
 import { useExplorer } from '../composables/useExplorer'
 import AddressBar from './AddressBar.vue'
@@ -32,8 +33,8 @@ const refresh = () => client.invalidateQueries({ queryKey: pickupKeys.all(explor
         <Button
           variant="ghost"
           size="icon"
-          aria-label="Back"
-          title="Back"
+          :aria-label="t('Back')"
+          :title="t('Back')"
           :disabled="!explorer.canGoBack"
           @click="explorer.goBack()"
         >
@@ -42,8 +43,8 @@ const refresh = () => client.invalidateQueries({ queryKey: pickupKeys.all(explor
         <Button
           variant="ghost"
           size="icon"
-          aria-label="Forward"
-          title="Forward"
+          :aria-label="t('Forward')"
+          :title="t('Forward')"
           :disabled="!explorer.canGoForward"
           @click="explorer.goForward()"
         >
@@ -52,8 +53,8 @@ const refresh = () => client.invalidateQueries({ queryKey: pickupKeys.all(explor
         <Button
           variant="ghost"
           size="icon"
-          aria-label="Up one level"
-          title="Up one level (Backspace)"
+          :aria-label="t('Up one level')"
+          :title="t('Up one level (Backspace)')"
           :disabled="explorer.folderId === null && !explorer.page"
           @click="explorer.goUp()"
         >
@@ -61,19 +62,25 @@ const refresh = () => client.invalidateQueries({ queryKey: pickupKeys.all(explor
         </Button>
       </div>
       <div class="flex items-center gap-1 max-md:ml-auto">
-        <Button variant="ghost" size="icon" aria-label="Refresh" title="Refresh" @click="refresh">
+        <Button
+          variant="ghost"
+          size="icon"
+          :aria-label="t('Refresh')"
+          :title="t('Refresh')"
+          @click="refresh"
+        >
           <RefreshCwIcon />
         </Button>
         <label
           v-if="!explorer.page"
           class="relative flex h-9 items-center max-md:hidden md:w-48 lg:w-64"
-          aria-label="Search this folder"
+          :aria-label="t('Search this folder')"
         >
           <SearchIcon class="pointer-events-none absolute left-2.5 size-4 text-muted-foreground" />
           <input
             v-model="explorer.search"
             type="search"
-            placeholder="Search this folder"
+            :placeholder="t('Search this folder')"
             class="h-full w-full rounded-lg border bg-card pr-2 pl-8 text-sm shadow-xs outline-none focus:ring-2 focus:ring-ring/40"
           />
         </label>
@@ -82,7 +89,7 @@ const refresh = () => client.invalidateQueries({ queryKey: pickupKeys.all(explor
           variant="ghost"
           size="icon"
           class="md:hidden"
-          :aria-label="searchOpen ? 'Close search' : 'Search'"
+          :aria-label="searchOpen ? t('Close search') : t('Search')"
           @click="searchOpen = !searchOpen"
         >
           <XIcon v-if="searchOpen" />
@@ -95,8 +102,8 @@ const refresh = () => client.invalidateQueries({ queryKey: pickupKeys.all(explor
       <input
         v-model="explorer.search"
         type="search"
-        placeholder="Search this folder"
-        aria-label="Search this folder"
+        :placeholder="t('Search this folder')"
+        :aria-label="t('Search this folder')"
         class="h-full w-full rounded-lg border bg-card pr-2 pl-8 text-sm outline-none focus:ring-2 focus:ring-ring/40"
       />
     </label>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button'
+import { t } from '@/lib/i18n'
 
 /**
  * One group of the settings page: heading and explanation on the left (above when the page
@@ -38,8 +39,10 @@ const emit = defineEmits<{ save: []; discard: [] }>()
       </div>
     </div>
     <div v-if="saveable" class="flex justify-end gap-2 border-t px-5 py-3">
-      <Button v-if="dirty" type="button" variant="ghost" @click="emit('discard')">Discard</Button>
-      <Button type="submit" :disabled="!dirty || pending">Save</Button>
+      <Button v-if="dirty" type="button" variant="ghost" @click="emit('discard')">{{
+        t('Discard')
+      }}</Button>
+      <Button type="submit" :disabled="!dirty || pending">{{ t('Save') }}</Button>
     </div>
   </component>
 </template>

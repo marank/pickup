@@ -4,6 +4,7 @@ import { toast } from 'vue-sonner'
 
 import { apiErrorMessage } from '@/api/errors'
 import { formatFileSize } from '@/lib/format'
+import { t } from '@/lib/i18n'
 import type { Folder, Media } from '@/api/types'
 import { usePickup, usePickupFolders } from '@/features/pickups/composables/usePickup'
 
@@ -113,7 +114,7 @@ function createExplorer(
 
   /** Typed path in the address bar; returns false if it doesn't exist. */
   function navigateToPath(text: string): boolean {
-    const title = pickup.data.value?.title || 'Untitled pickup'
+    const title = pickup.data.value?.title || t('Untitled pickup')
     const trimmed = text.trim().replace(/^\/+/, '')
     // The address bar shows the pickup title as first segment; accept it but don't require it.
     const withoutTitle = trimmed.toLowerCase().startsWith(title.toLowerCase())
@@ -153,7 +154,7 @@ function createExplorer(
   function addFiles(list: File[]) {
     const target = uploadTarget.value
     if (!target) {
-      toast.error('You can only upload into your own folders.')
+      toast.error(t('You can only upload into your own folders.'))
       return
     }
     let free = freeSpace()
@@ -163,10 +164,13 @@ function createExplorer(
         file.type.startsWith('image/') ||
         file.type.startsWith('video/') ||
         /\.(heic|heif)$/i.test(file.name)
-      if (!ok) toast.error(`${file.name} is not a photo or video`)
+      if (!ok) toast.error(t('{name} is not a photo or video', { name: file.name }))
       else if (free !== null && file.size > free) {
         toast.error(
-          `${file.name} doesn't fit: ${formatFileSize(Math.max(free, 0))} of storage left`,
+          t("{name} doesn't fit: {free} of storage left", {
+            name: file.name,
+            free: formatFileSize(Math.max(free, 0)),
+          }),
         )
         return false
       } else if (free !== null) free -= file.size
@@ -239,14 +243,14 @@ function createExplorer(
       if (item.kind === 'folder') {
         await run(
           mutations.deleteFolder.mutateAsync(item.id),
-          `“${item.name}” deleted`,
-          'Could not delete the folder',
+          t('“{name}” deleted', { name: item.name }),
+          t('Could not delete the folder'),
         )
       } else {
         await run(
           mutations.deleteMedia.mutateAsync(item.media),
-          `“${item.name}” deleted`,
-          'Could not delete the file',
+          t('“{name}” deleted', { name: item.name }),
+          t('Could not delete the file'),
         )
       }
     }

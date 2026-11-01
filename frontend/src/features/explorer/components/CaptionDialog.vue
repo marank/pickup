@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Textarea } from '@/components/ui/textarea'
+import { t } from '@/lib/i18n'
 
 const props = withDefaults(
   defineProps<{
@@ -24,7 +25,7 @@ const props = withDefaults(
     previewIsImage?: boolean
     pending?: boolean
   }>(),
-  { description: '', caption: '', cancelLabel: 'Cancel', previewUrl: '', previewIsImage: true },
+  { description: '', caption: '', cancelLabel: '', previewUrl: '', previewIsImage: true },
 )
 const open = defineModel<boolean>('open', { required: true })
 const emit = defineEmits<{ confirm: [caption: string]; cancel: [] }>()
@@ -56,9 +57,14 @@ function cancel() {
         />
         <video v-else :src="previewUrl" controls preload="metadata" class="max-h-60 w-full" />
       </template>
-      <Textarea v-model="text" placeholder="Add a caption…" rows="3" aria-label="Caption" />
+      <Textarea
+        v-model="text"
+        :placeholder="t('Add a caption…')"
+        rows="3"
+        :aria-label="t('Caption')"
+      />
       <DialogFooter>
-        <Button variant="outline" @click="cancel">{{ cancelLabel }}</Button>
+        <Button variant="outline" @click="cancel">{{ cancelLabel || t('Cancel') }}</Button>
         <Button :disabled="pending" @click="emit('confirm', text.trim())">{{
           confirmLabel
         }}</Button>

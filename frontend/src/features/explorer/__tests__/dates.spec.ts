@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { pickupDates } from '../lib/dates'
 
 const at = '2026-12-15T22:59:59Z'
-const day = new Date(at).toLocaleDateString(undefined, { dateStyle: 'medium' })
+const day = new Date(at).toLocaleDateString('en', { dateStyle: 'medium' }) // the app's language
 
 describe('pickupDates', () => {
   it('says until when uploads go, or that they stopped, and when it is deleted', () => {

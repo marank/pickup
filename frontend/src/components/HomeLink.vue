@@ -14,6 +14,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { usePickup } from '@/features/pickups/composables/usePickup'
+import { t } from '@/lib/i18n'
 
 /**
  * The logo in the header, back to the start page. Inside a pickup it asks first.
@@ -29,9 +30,9 @@ const askOpen = ref(false)
 const description = computed(() => {
   const data = pickup.data.value
   if (data?.is_member) {
-    return 'You stay logged in on this device. Open the pickup’s link to come back.'
+    return t('You stay logged in on this device. Open the pickup’s link to come back.')
   }
-  return 'Open the pickup’s link to come back.'
+  return t('Open the pickup’s link to come back.')
 })
 
 function click(event: MouseEvent) {
@@ -50,19 +51,19 @@ function goHome() {
 </script>
 
 <template>
-  <a href="/" class="flex h-7 items-center" aria-label="Pickup start page" @click="click">
+  <a href="/" class="flex h-7 items-center" :aria-label="t('Pickup start page')" @click="click">
     <PickupLogo :compact="pickupId !== ''" />
   </a>
 
   <AlertDialog v-model:open="askOpen">
     <AlertDialogContent>
       <AlertDialogHeader>
-        <AlertDialogTitle>Leave the pickup?</AlertDialogTitle>
+        <AlertDialogTitle>{{ t('Leave the pickup?') }}</AlertDialogTitle>
         <AlertDialogDescription>{{ description }}</AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
-        <AlertDialogCancel>Stay here</AlertDialogCancel>
-        <AlertDialogAction @click="goHome">Go to the start page</AlertDialogAction>
+        <AlertDialogCancel>{{ t('Stay here') }}</AlertDialogCancel>
+        <AlertDialogAction @click="goHome">{{ t('Go to the start page') }}</AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>
   </AlertDialog>

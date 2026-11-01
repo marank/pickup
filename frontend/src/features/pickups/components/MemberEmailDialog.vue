@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { t } from '@/lib/i18n'
 
 import { usePickupAdmin } from '../composables/usePickupAdmin'
 
@@ -34,7 +35,7 @@ async function submit() {
     toast.success(message)
     open.value = false
   } catch (err) {
-    toast.error(apiErrorMessage(err, 'Could not save the address'))
+    toast.error(apiErrorMessage(err, t('Could not save the address')))
   }
 }
 </script>
@@ -44,20 +45,27 @@ async function submit() {
     <DialogContent class="sm:max-w-md">
       <form class="space-y-4" @submit.prevent="submit">
         <DialogHeader>
-          <DialogTitle>Add an email for {{ member?.user_name }}</DialogTitle>
+          <DialogTitle>{{
+            t('Add an email for {name}', { name: member?.user_name ?? '' })
+          }}</DialogTitle>
           <DialogDescription>
-            They get their personal link at this address right away, and can have it sent there
-            again whenever they lose it. Only they can change it later.
-            <template v-if="pickup.email_privacy">It is stored only as a hash.</template>
+            {{
+              t(
+                'They get their personal link at this address right away, and can have it sent there again whenever they lose it. Only they can change it later.',
+              )
+            }}
+            <template v-if="pickup.email_privacy">{{ t('It is stored only as a hash.') }}</template>
           </DialogDescription>
         </DialogHeader>
         <div class="space-y-1.5">
-          <Label for="member-email">Their email</Label>
+          <Label for="member-email">{{ t('Their email') }}</Label>
           <Input id="member-email" v-model="email" type="email" required autocomplete="off" />
         </div>
         <DialogFooter>
-          <Button type="button" variant="outline" @click="open = false">Cancel</Button>
-          <Button type="submit" :disabled="admin.addEmail.isPending.value">Save and send</Button>
+          <Button type="button" variant="outline" @click="open = false">{{ t('Cancel') }}</Button>
+          <Button type="submit" :disabled="admin.addEmail.isPending.value">{{
+            t('Save and send')
+          }}</Button>
         </DialogFooter>
       </form>
     </DialogContent>

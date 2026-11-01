@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 
 import { formatFileSize, formatRelativeDate } from '@/lib/format'
+import { plural, t } from '@/lib/i18n'
 
 import { useExplorer } from '../composables/useExplorer'
 import { useItemPointer } from '../composables/useItemPointer'
@@ -18,9 +19,10 @@ const { onPointerDown, onClick, onDoubleClick } = useItemPointer()
 /** Second line: what's inside a folder; a file's caption, else who added it. */
 function subtitle(item: ExplorerItem): string {
   if (item.kind === 'file') return item.media.caption || item.owner
-  const count = item.folder.subfolder_count + item.folder.media_count
-  return count === 1 ? '1 item' : `${count} items`
+  return count(item)
 }
+const count = (item: Extract<ExplorerItem, { kind: 'folder' }>) =>
+  plural(item.folder.subfolder_count + item.folder.media_count, '1 item', '{n} items')
 
 const layout = computed(
   () =>
@@ -34,7 +36,7 @@ const layout = computed(
 </script>
 
 <template>
-  <ul :class="layout" role="listbox" aria-multiselectable="true" aria-label="Folder contents">
+  <ul :class="layout" role="listbox" aria-multiselectable="true" :aria-label="t('Folder contents')">
     <ItemContextMenu v-for="item in explorer.items" :key="item.id" :item="item">
       <li
         role="option"
@@ -72,9 +74,7 @@ const layout = computed(
           <p class="text-xs text-muted-foreground">
             {{ typeLabel(item) }} · {{ item.owner }} · {{ formatRelativeDate(item.date) }}
             <template v-if="item.size !== null"> · {{ formatFileSize(item.size) }}</template>
-            <template v-else>
-              · {{ item.folder.subfolder_count + item.folder.media_count }} items</template
-            >
+            <template v-else> · {{ count(item) }}</template>
           </p>
         </div>
         <div v-else class="px-1 pt-1.5 pb-0.5">

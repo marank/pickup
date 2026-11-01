@@ -6,6 +6,7 @@ import { RouterLink, useRouter } from 'vue-router'
 import { Button } from '@/components/ui/button'
 import CreationCodeDialog from '@/features/pickups/components/CreationCodeDialog.vue'
 import { creationCode, useCreationMode } from '@/features/pickups/composables/useCreation'
+import { t } from '@/lib/i18n'
 
 const router = useRouter()
 const creation = useCreationMode()
@@ -19,7 +20,7 @@ function accepted(code: string) {
 
 <template>
   <p v-if="creation.data.value?.mode === 'none'" class="text-muted-foreground">
-    Creating new pickups is turned off on this server.
+    {{ t('Creating new pickups is turned off on this server.') }}
   </p>
   <Button
     v-else-if="creation.data.value?.mode === 'code'"
@@ -28,12 +29,12 @@ function accepted(code: string) {
     @click="askCode = true"
   >
     <PlusIcon />
-    Start a pickup
+    {{ t('Start a pickup') }}
   </Button>
   <Button v-else as-child size="lg" class="h-12 px-5 text-base">
     <RouterLink :to="{ name: 'create' }">
       <PlusIcon />
-      Start a pickup
+      {{ t('Start a pickup') }}
     </RouterLink>
   </Button>
   <CreationCodeDialog v-model:open="askCode" @accepted="accepted" @cancel="askCode = false" />

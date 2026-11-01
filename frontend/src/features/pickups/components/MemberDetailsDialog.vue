@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { t } from '@/lib/i18n'
 
 import { personalLinkQuery, useUpdateMember } from '../composables/usePickup'
 import { useSetEmail } from '../composables/usePickupAdmin'
@@ -58,11 +59,11 @@ async function submit() {
       const { message } = await setEmail.mutateAsync(email)
       toast.success(message)
     } else {
-      toast.success('Saved')
+      toast.success(t('Saved'))
     }
     open.value = false
   } catch (err) {
-    toast.error(apiErrorMessage(err, 'Could not save'))
+    toast.error(apiErrorMessage(err, t('Could not save')))
   } finally {
     saving.value = false
   }
@@ -74,11 +75,13 @@ async function submit() {
     <DialogContent class="sm:max-w-md">
       <form class="space-y-4" @submit.prevent="submit">
         <DialogHeader>
-          <DialogTitle>Your details</DialogTitle>
-          <DialogDescription>Everyone in the pickup sees your name and folder.</DialogDescription>
+          <DialogTitle>{{ t('Your details') }}</DialogTitle>
+          <DialogDescription>{{
+            t('Everyone in the pickup sees your name and folder.')
+          }}</DialogDescription>
         </DialogHeader>
         <div class="space-y-1.5">
-          <Label for="details-name">Your name</Label>
+          <Label for="details-name">{{ t('Your name') }}</Label>
           <Input
             id="details-name"
             v-model="form.name"
@@ -88,28 +91,30 @@ async function submit() {
           />
         </div>
         <div v-if="folderName !== null" class="space-y-1.5">
-          <Label for="details-folder">Your folder</Label>
+          <Label for="details-folder">{{ t('Your folder') }}</Label>
           <Input id="details-folder" v-model="form.folder" required maxlength="100" />
         </div>
         <div class="space-y-1.5">
-          <Label for="details-email">Email</Label>
+          <Label for="details-email">{{ t('Email') }}</Label>
           <Input
             id="details-email"
             v-model="form.email"
             type="email"
             autocomplete="email"
-            :placeholder="hasEmail ? 'Saved. Enter a new address to change it' : 'Optional'"
+            :placeholder="hasEmail ? t('Saved. Enter a new address to change it') : t('Optional')"
           />
           <p class="text-xs text-muted-foreground">
             <template v-if="hasEmail">
-              A new address is only saved after you confirm it with the link we send to it.
+              {{
+                t('A new address is only saved after you confirm it with the link we send to it.')
+              }}
             </template>
-            <template v-else>We send you your personal link to this address.</template>
+            <template v-else>{{ t('We send you your personal link to this address.') }}</template>
           </p>
         </div>
         <DialogFooter>
-          <Button type="button" variant="outline" @click="open = false">Cancel</Button>
-          <Button type="submit" :disabled="saving">Save</Button>
+          <Button type="button" variant="outline" @click="open = false">{{ t('Cancel') }}</Button>
+          <Button type="submit" :disabled="saving">{{ t('Save') }}</Button>
         </DialogFooter>
       </form>
     </DialogContent>

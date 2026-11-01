@@ -4,6 +4,7 @@ import { computed } from 'vue'
 
 import { Button } from '@/components/ui/button'
 import { formatFileSize } from '@/lib/format'
+import { locale, t } from '@/lib/i18n'
 import { ownerColor } from '@/lib/ownerColor'
 
 import { useExplorer } from '../composables/useExplorer'
@@ -17,7 +18,7 @@ const single = computed(() => (selected.value.length === 1 ? selected.value[0]! 
 const currentItem = computed(() => (explorer.current ? folderItem(explorer.current) : null))
 const shown = computed(() => single.value ?? currentItem.value)
 const totalSize = computed(() => selected.value.reduce((sum, item) => sum + (item.size ?? 0), 0))
-const fullDate = (iso: string) => new Date(iso).toLocaleString()
+const fullDate = (iso: string) => new Date(iso).toLocaleString(locale.value)
 /** One top-level folder per member. */
 const people = computed(() => childrenOf(explorer.tree, null).length)
 </script>
@@ -25,12 +26,14 @@ const people = computed(() => childrenOf(explorer.tree, null).length)
 <template>
   <aside
     class="flex w-72 shrink-0 flex-col gap-4 overflow-y-auto border-l bg-pane p-4"
-    aria-label="Details"
+    :aria-label="t('Details')"
   >
     <template v-if="selected.length > 1">
-      <p class="font-heading text-lg font-semibold">{{ selected.length }} items selected</p>
+      <p class="font-heading text-lg font-semibold">
+        {{ t('{n} items selected', { n: selected.length }) }}
+      </p>
       <p v-if="totalSize" class="text-sm text-muted-foreground">
-        {{ formatFileSize(totalSize) }} in files
+        {{ t('{size} in files', { size: formatFileSize(totalSize) }) }}
       </p>
     </template>
 
@@ -46,7 +49,7 @@ const people = computed(() => childrenOf(explorer.tree, null).length)
         <p class="text-sm text-muted-foreground">{{ typeLabel(shown) }}</p>
       </div>
       <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-sm">
-        <dt class="text-muted-foreground">Owner</dt>
+        <dt class="text-muted-foreground">{{ t('Owner') }}</dt>
         <dd class="flex min-w-0 items-center gap-1.5">
           <span
             class="size-2 shrink-0 rounded-full"
@@ -54,25 +57,32 @@ const people = computed(() => childrenOf(explorer.tree, null).length)
           />
           <span class="truncate">{{ shown.owner }}</span>
         </dd>
-        <dt class="text-muted-foreground">Added</dt>
+        <dt class="text-muted-foreground">{{ t('Added') }}</dt>
         <dd>{{ fullDate(shown.date) }}</dd>
         <template v-if="shown.kind === 'file'">
-          <dt class="text-muted-foreground">Size</dt>
+          <dt class="text-muted-foreground">{{ t('Size') }}</dt>
           <dd>{{ formatFileSize(shown.size) }}</dd>
         </template>
         <template v-else>
-          <dt class="text-muted-foreground">Contains</dt>
-          <dd>{{ shown.folder.subfolder_count }} folders, {{ shown.folder.media_count }} files</dd>
+          <dt class="text-muted-foreground">{{ t('Contains') }}</dt>
+          <dd>
+            {{
+              t('{folders} folders, {files} files', {
+                folders: shown.folder.subfolder_count,
+                files: shown.folder.media_count,
+              })
+            }}
+          </dd>
         </template>
       </dl>
       <div v-if="shown.kind === 'file'" class="space-y-1.5">
         <div class="flex items-center justify-between">
-          <p class="text-sm font-medium">Caption</p>
+          <p class="text-sm font-medium">{{ t('Caption') }}</p>
           <Button
             v-if="shown.editable"
             variant="ghost"
             size="icon-xs"
-            aria-label="Edit caption"
+            :aria-label="t('Edit caption')"
             @click="explorer.requestRename(shown)"
           >
             <PencilIcon />
@@ -82,27 +92,33 @@ const people = computed(() => childrenOf(explorer.tree, null).length)
           class="text-sm whitespace-pre-line"
           :class="!shown.media.caption && 'text-muted-foreground'"
         >
-          {{ shown.media.caption || 'No caption' }}
+          {{ shown.media.caption || t('No caption') }}
         </p>
         <Button variant="outline" size="sm" class="mt-2 w-full" @click="explorer.download([shown])">
           <DownloadIcon />
-          Download
+          {{ t('Download') }}
         </Button>
       </div>
     </template>
 
     <template v-else-if="explorer.pickup.data">
-      <h2 class="text-lg font-semibold">{{ explorer.pickup.data.title || 'Untitled pickup' }}</h2>
+      <h2 class="text-lg font-semibold">
+        {{ explorer.pickup.data.title || t('Untitled pickup') }}
+      </h2>
       <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-sm">
-        <dt class="text-muted-foreground">People</dt>
+        <dt class="text-muted-foreground">{{ t('People') }}</dt>
         <dd>{{ people }}</dd>
-        <dt class="text-muted-foreground">Files</dt>
+        <dt class="text-muted-foreground">{{ t('Files') }}</dt>
         <dd>{{ explorer.pickup.data.media_count }}</dd>
-        <dt class="text-muted-foreground">Started</dt>
+        <dt class="text-muted-foreground">{{ t('Started') }}</dt>
         <dd>{{ fullDate(explorer.pickup.data.created_at) }}</dd>
       </dl>
       <p class="text-sm text-muted-foreground">
-        Everyone who joins gets a folder in their colour. Select something to see its details.
+        {{
+          t(
+            'Everyone who joins gets a folder in their colour. Select something to see its details.',
+          )
+        }}
       </p>
     </template>
   </aside>

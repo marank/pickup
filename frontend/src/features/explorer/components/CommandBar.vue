@@ -27,6 +27,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Separator } from '@/components/ui/separator'
+import { t } from '@/lib/i18n'
 
 import { useExplorer } from '../composables/useExplorer'
 import TreeToggle from './TreeToggle.vue'
@@ -36,18 +37,18 @@ import type { SortKey } from '../lib/items'
 const emit = defineEmits<{ openTree: [] }>()
 const explorer = useExplorer()
 
-const views: { mode: ViewMode; label: string; icon: unknown }[] = [
-  { mode: 'details', label: 'Details', icon: ListIcon },
-  { mode: 'content', label: 'Content', icon: RowsIcon },
-  { mode: 'small', label: 'Small icons', icon: LayoutGridIcon },
-  { mode: 'large', label: 'Large icons', icon: SquareIcon },
+const views: { mode: ViewMode; label: () => string; icon: unknown }[] = [
+  { mode: 'details', label: () => t('Details'), icon: ListIcon },
+  { mode: 'content', label: () => t('Content'), icon: RowsIcon },
+  { mode: 'small', label: () => t('Small icons'), icon: LayoutGridIcon },
+  { mode: 'large', label: () => t('Large icons'), icon: SquareIcon },
 ]
-const sorts: { key: SortKey; label: string }[] = [
-  { key: 'name', label: 'Name' },
-  { key: 'date', label: 'Date added' },
-  { key: 'size', label: 'Size' },
-  { key: 'type', label: 'Type' },
-  { key: 'owner', label: 'Owner' },
+const sorts: { key: SortKey; label: () => string }[] = [
+  { key: 'name', label: () => t('Name') },
+  { key: 'date', label: () => t('Date added') },
+  { key: 'size', label: () => t('Size') },
+  { key: 'type', label: () => t('Type') },
+  { key: 'owner', label: () => t('Owner') },
 ]
 const currentView = computed(
   () => views.find((view) => view.mode === explorer.prefs.view) ?? views[0]!,
@@ -67,27 +68,27 @@ const single = computed(() => (selected.value.length === 1 ? selected.value[0]! 
   <div
     class="flex min-h-10 items-center gap-1 overflow-x-auto no-scrollbar"
     role="toolbar"
-    aria-label="Commands"
+    :aria-label="t('Commands')"
   >
     <TreeToggle @open-tree="emit('openTree')" />
     <Separator v-if="!explorer.page" orientation="vertical" class="mx-1 !h-5 !self-center" />
     <!-- The creator's pages have no commands, only the tree toggle. -->
     <template v-if="explorer.page" />
     <template v-else-if="explorer.uploadTarget">
-      <Button size="sm" title="Upload photos or videos" @click="explorer.fileInput?.click()">
+      <Button size="sm" :title="t('Upload photos or videos')" @click="explorer.fileInput?.click()">
         <UploadIcon />
-        Upload
+        {{ t('Upload') }}
       </Button>
       <Button
         v-if="explorer.canEditHere"
         variant="ghost"
         size="sm"
-        title="New folder"
-        aria-label="New folder"
+        :title="t('New folder')"
+        :aria-label="t('New folder')"
         @click="explorer.requestNewFolder()"
       >
         <FolderPlusIcon />
-        New folder
+        {{ t('New folder') }}
       </Button>
     </template>
     <Button
@@ -98,7 +99,7 @@ const single = computed(() => (selected.value.length === 1 ? selected.value[0]! 
     >
       <RouterLink :to="{ name: 'pickup-join', params: { pickupId: explorer.pickupId } }">
         <UserPlusIcon />
-        {{ explorer.pickup.data?.is_member ? 'Create your folder' : 'Join to upload' }}
+        {{ explorer.pickup.data?.is_member ? t('Create your folder') : t('Join to upload') }}
       </RouterLink>
     </Button>
 
@@ -108,26 +109,33 @@ const single = computed(() => (selected.value.length === 1 ? selected.value[0]! 
         v-if="single?.editable"
         variant="ghost"
         size="sm"
-        :aria-label="single.kind === 'folder' ? 'Rename' : 'Edit caption'"
+        :aria-label="single.kind === 'folder' ? t('Rename') : t('Edit caption')"
         @click="explorer.requestRename(single)"
       >
         <PencilIcon />
-        <span class="max-md:hidden">{{ single.kind === 'folder' ? 'Rename' : 'Caption' }}</span>
+        <span class="max-md:hidden">{{
+          single.kind === 'folder' ? t('Rename') : t('Caption')
+        }}</span>
       </Button>
-      <Button variant="ghost" size="sm" aria-label="Download" @click="explorer.download(selected)">
+      <Button
+        variant="ghost"
+        size="sm"
+        :aria-label="t('Download')"
+        @click="explorer.download(selected)"
+      >
         <DownloadIcon />
-        <span class="max-md:hidden">Download</span>
+        <span class="max-md:hidden">{{ t('Download') }}</span>
       </Button>
       <Button
         v-if="explorer.canDelete(selected)"
         variant="ghost"
         size="sm"
         class="text-destructive hover:text-destructive"
-        aria-label="Delete"
+        :aria-label="t('Delete')"
         @click="explorer.requestDelete(selected)"
       >
         <Trash2Icon />
-        <span class="max-md:hidden">Delete</span>
+        <span class="max-md:hidden">{{ t('Delete') }}</span>
       </Button>
     </template>
 
@@ -136,49 +144,51 @@ const single = computed(() => (selected.value.length === 1 ? selected.value[0]! 
         v-if="!selected.length && explorer.items.length"
         variant="ghost"
         size="sm"
-        :aria-label="explorer.folderId ? 'Download folder' : 'Download all'"
-        :title="explorer.folderId ? 'Download this folder as ZIP' : 'Download everything as ZIP'"
+        :aria-label="explorer.folderId ? t('Download folder') : t('Download all')"
+        :title="
+          explorer.folderId ? t('Download this folder as ZIP') : t('Download everything as ZIP')
+        "
         @click="explorer.downloadAll()"
       >
         <DownloadIcon />
         <span class="max-md:hidden">{{
-          explorer.folderId ? 'Download folder' : 'Download all'
+          explorer.folderId ? t('Download folder') : t('Download all')
         }}</span>
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
-          <Button variant="ghost" size="sm" aria-label="Sort">
+          <Button variant="ghost" size="sm" :aria-label="t('Sort')">
             <ArrowDownWideNarrowIcon />
-            <span class="max-md:hidden">Sort</span>
+            <span class="max-md:hidden">{{ t('Sort') }}</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" class="min-w-48 whitespace-nowrap">
-          <DropdownMenuLabel>Sort by</DropdownMenuLabel>
+          <DropdownMenuLabel>{{ t('Sort by') }}</DropdownMenuLabel>
           <DropdownMenuRadioGroup v-model="explorer.prefs.sortKey">
             <DropdownMenuRadioItem v-for="sort in sorts" :key="sort.key" :value="sort.key">
-              {{ sort.label }}
+              {{ sort.label() }}
             </DropdownMenuRadioItem>
           </DropdownMenuRadioGroup>
           <DropdownMenuSeparator />
           <DropdownMenuRadioGroup v-model="explorer.prefs.sortDirection">
-            <DropdownMenuRadioItem value="asc">Ascending</DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="desc">Descending</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="asc">{{ t('Ascending') }}</DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="desc">{{ t('Descending') }}</DropdownMenuRadioItem>
           </DropdownMenuRadioGroup>
         </DropdownMenuContent>
       </DropdownMenu>
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
-          <Button variant="ghost" size="sm" aria-label="View">
+          <Button variant="ghost" size="sm" :aria-label="t('View')">
             <component :is="currentView.icon" />
-            <span class="max-md:hidden">{{ currentView.label }}</span>
+            <span class="max-md:hidden">{{ currentView.label() }}</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" class="min-w-48 whitespace-nowrap">
-          <DropdownMenuLabel>View</DropdownMenuLabel>
+          <DropdownMenuLabel>{{ t('View') }}</DropdownMenuLabel>
           <DropdownMenuRadioGroup v-model="explorer.prefs.view">
             <DropdownMenuRadioItem v-for="view in views" :key="view.mode" :value="view.mode">
               <component :is="view.icon" />
-              {{ view.label }}
+              {{ view.label() }}
             </DropdownMenuRadioItem>
           </DropdownMenuRadioGroup>
         </DropdownMenuContent>
@@ -189,8 +199,8 @@ const single = computed(() => (selected.value.length === 1 ? selected.value[0]! 
         class="max-lg:hidden"
         :aria-pressed="explorer.prefs.detailsPane"
         :class="explorer.prefs.detailsPane && 'bg-muted'"
-        aria-label="Details pane"
-        title="Details pane"
+        :aria-label="t('Details pane')"
+        :title="t('Details pane')"
         @click="explorer.prefs.detailsPane = !explorer.prefs.detailsPane"
       >
         <PanelRightIcon />

@@ -7,6 +7,7 @@ import { ApiError, apiErrorMessage } from '@/api/errors'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { t } from '@/lib/i18n'
 
 import { useJoinPickup } from '../composables/usePickup'
 
@@ -38,7 +39,7 @@ async function submit() {
     const joined = await join.mutateAsync(
       props.passwordRequired ? { ...details, password } : details,
     )
-    toast.success('Welcome! Your folder is ready.')
+    toast.success(t('Welcome! Your folder is ready.'))
     await router.push({
       name: 'explorer-folder',
       params: { pickupId: props.pickupId, folderId: joined.folder.id },
@@ -49,7 +50,7 @@ async function submit() {
         if (Array.isArray(messages)) fieldErrors.value[field] = String(messages[0])
       }
     }
-    toast.error(apiErrorMessage(err, 'Could not join the pickup'))
+    toast.error(apiErrorMessage(err, t('Could not join the pickup')))
   }
 }
 </script>
@@ -57,7 +58,7 @@ async function submit() {
 <template>
   <form class="space-y-4" @submit.prevent="submit">
     <div v-if="passwordRequired" class="space-y-1.5">
-      <Label for="join_password">Password of the pickup</Label>
+      <Label for="join_password">{{ t('Password of the pickup') }}</Label>
       <Input
         id="join_password"
         v-model="form.password"
@@ -65,32 +66,32 @@ async function submit() {
         required
         autocomplete="current-password"
       />
-      <p class="text-sm text-muted-foreground">Ask the person who shared the link.</p>
+      <p class="text-sm text-muted-foreground">{{ t('Ask the person who shared the link.') }}</p>
     </div>
     <div class="space-y-1.5">
-      <Label for="user_name">Your name</Label>
+      <Label for="user_name">{{ t('Your name') }}</Label>
       <Input id="user_name" v-model="form.user_name" required autocomplete="name" />
       <p v-if="fieldErrors.user_name" class="text-sm text-destructive">
         {{ fieldErrors.user_name }}
       </p>
     </div>
     <div class="space-y-1.5">
-      <Label for="folder_name">Folder name</Label>
+      <Label for="folder_name">{{ t('Folder name') }}</Label>
       <Input id="folder_name" v-model="form.name" required @input="folderNameTouched = true" />
       <p v-if="fieldErrors.name" class="text-sm text-destructive">{{ fieldErrors.name }}</p>
     </div>
     <div class="space-y-1.5">
-      <Label for="email">Email (optional)</Label>
+      <Label for="email">{{ t('Email (optional)') }}</Label>
       <Input id="email" v-model="form.email" type="email" autocomplete="email" />
       <p class="text-sm text-muted-foreground">
-        We send you your personal link, so you can log in on other devices.
+        {{ t('We send you your personal link, so you can log in on other devices.') }}
       </p>
       <p v-if="fieldErrors.email" class="text-sm text-destructive">
         {{ fieldErrors.email }}
       </p>
     </div>
     <Button type="submit" class="w-full" :disabled="join.isPending.value">
-      {{ join.isPending.value ? 'Joining…' : 'Join pickup' }}
+      {{ join.isPending.value ? t('Joining…') : t('Join pickup') }}
     </Button>
   </form>
 </template>

@@ -5,10 +5,14 @@ import { toast } from 'vue-sonner'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { locale, t } from '@/lib/i18n'
 
 const props = defineProps<{ value: string; label: string }>()
 
 const copied = ref(false)
+
+/** The label inside a sentence: lower case in English; German nouns keep their capital. */
+const inSentence = (label: string) => (locale.value === 'de' ? label : label.toLowerCase())
 
 async function copyValue() {
   try {
@@ -16,9 +20,9 @@ async function copyValue() {
     await navigator.clipboard.writeText(props.value)
     copied.value = true
     setTimeout(() => (copied.value = false), 1500)
-    toast.success(`${props.label} copied`)
+    toast.success(t('{label} copied', { label: props.label }))
   } catch {
-    toast.error(`Could not copy the ${props.label.toLowerCase()}`)
+    toast.error(t('Could not copy the {label}', { label: inSentence(props.label) }))
   }
 }
 
@@ -36,7 +40,11 @@ function selectAll(event: FocusEvent) {
       class="font-mono text-xs"
       @focus="selectAll"
     />
-    <Button variant="outline" :aria-label="`Copy ${label.toLowerCase()}`" @click="copyValue">
+    <Button
+      variant="outline"
+      :aria-label="t('Copy {label}', { label: inSentence(label) })"
+      @click="copyValue"
+    >
       <CheckIcon v-if="copied" />
       <CopyIcon v-else />
     </Button>

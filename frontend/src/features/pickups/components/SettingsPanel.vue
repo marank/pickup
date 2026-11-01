@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { endOfDay, formatFileSize, toDateInput } from '@/lib/format'
+import { formatDate, plural, t } from '@/lib/i18n'
 
 import { usePickupAdmin } from '../composables/usePickupAdmin'
 import SettingsCard from './SettingsCard.vue'
@@ -30,8 +31,7 @@ const form = reactive({
 })
 type Field = keyof typeof form
 const today = toDateInput(new Date())
-const longDate = (day: string) =>
-  new Date(`${day}T12:00`).toLocaleDateString(undefined, { dateStyle: 'long' })
+const longDate = (day: string) => formatDate(`${day}T12:00`, { dateStyle: 'long' })
 const saved = (pickup: Pickup): typeof form => ({
   title: pickup.title ?? '',
   visibility: pickup.visibility,
@@ -70,50 +70,54 @@ watch(
 const visibilityOptions = [
   {
     value: 'members',
-    label: 'Only participants',
-    hint: 'Recommended. Others with the link see the name of the pickup and how to join.',
+    label: () => t('Only participants'),
+    hint: () => t('Recommended. Others with the link see the name of the pickup and how to join.'),
   },
   {
     value: 'link',
-    label: 'Anyone with the link',
-    hint: 'Everyone who has the link can look at all photos, without joining.',
+    label: () => t('Anyone with the link'),
+    hint: () => t('Everyone who has the link can look at all photos, without joining.'),
   },
   {
     value: 'creator',
-    label: 'Only me (paused)',
-    hint: 'Only you still see the contents. Participants can’t look or upload, and nobody can join, until you open it again.',
+    label: () => t('Only me (paused)'),
+    hint: () =>
+      t(
+        'Only you still see the contents. Participants can’t look or upload, and nobody can join, until you open it again.',
+      ),
   },
 ] as const
 const joinOptions = [
   {
     value: 'open',
-    label: 'Anyone with the link',
-    hint: 'People pick a new name and get their own folder.',
+    label: () => t('Anyone with the link'),
+    hint: () => t('People pick a new name and get their own folder.'),
   },
   {
     value: 'invite',
-    label: 'Only invited people',
-    hint: 'You invite people by email; each gets a personal link.',
+    label: () => t('Only invited people'),
+    hint: () => t('You invite people by email; each gets a personal link.'),
   },
   {
     value: 'closed',
-    label: 'Nobody new',
-    hint: 'Current participants stay, nobody new can join.',
+    label: () => t('Nobody new'),
+    hint: () => t('Current participants stay, nobody new can join.'),
   },
 ] as const
 /** Both answers in one plain sentence, following the form while it is edited. */
 const accessSummary = computed(() => {
   if (form.visibility === 'creator')
-    return 'Paused: only you see the photos, and nobody joins or uploads.'
-  const join = {
-    open: 'Anyone with the share link can join and upload.',
-    invite: 'Only people you invite can join and upload.',
-    closed: 'Only the current participants upload; nobody new joins.',
-  }[form.join_policy]
+    return t('Paused: only you see the photos, and nobody joins or uploads.')
+  const joinTexts: Record<string, () => string> = {
+    open: () => t('Anyone with the share link can join and upload.'),
+    invite: () => t('Only people you invite can join and upload.'),
+    closed: () => t('Only the current participants upload; nobody new joins.'),
+  }
+  const join = joinTexts[form.join_policy]?.() ?? ''
   const see =
     form.visibility === 'link' && !props.pickup.has_password
-      ? 'Anyone with the share link sees the photos, without joining.'
-      : 'Only participants see the photos.'
+      ? t('Anyone with the share link sees the photos, without joining.')
+      : t('Only participants see the photos.')
   return `${join} ${see}`
 })
 const turningPrivacyOn = computed(() => form.email_privacy && !props.pickup.email_privacy)
@@ -125,10 +129,10 @@ async function savePassword(password: string) {
   passwordSaving.value = true
   try {
     await updateSettings.mutateAsync({ password })
-    toast.success(password ? 'Password saved' : 'Password removed')
+    toast.success(password ? t('Password saved') : t('Password removed'))
     newPassword.value = ''
   } catch (err) {
-    toast.error(apiErrorMessage(err, 'Could not save the password'))
+    toast.error(apiErrorMessage(err, t('Could not save the password')))
   } finally {
     passwordSaving.value = false
   }
@@ -152,9 +156,9 @@ async function save(card: Card) {
   saving.value = card
   try {
     await updateSettings.mutateAsync(values as Parameters<typeof updateSettings.mutateAsync>[0])
-    toast.success('Saved')
+    toast.success(t('Saved'))
   } catch (err) {
-    toast.error(apiErrorMessage(err, 'Could not save the settings'))
+    toast.error(apiErrorMessage(err, t('Could not save the settings')))
   } finally {
     saving.value = null
   }
@@ -165,26 +169,33 @@ const storage = computed(() => {
   return {
     text:
       limit === null
-        ? `${formatFileSize(used)} used`
-        : `${formatFileSize(used)} of ${formatFileSize(limit)} used`,
+        ? t('{size} used', { size: formatFileSize(used) })
+        : t('{used} of {limit} used', {
+            used: formatFileSize(used),
+            limit: formatFileSize(limit),
+          }),
     percent: limit ? Math.min(100, Math.round((used / limit) * 100)) : null,
   }
 })
 
-const count = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`
-const deleteDescription = computed(
-  () =>
-    `${count(props.pickup.folder_count, 'folder')} and ${count(props.pickup.media_count, 'file')} are deleted for everyone, and all links stop working. There is no way to get them back.`,
+const deleteDescription = computed(() =>
+  t(
+    '{folders} and {files} are deleted for everyone, and all links stop working. There is no way to get them back.',
+    {
+      folders: plural(props.pickup.folder_count, '1 folder', '{n} folders'),
+      files: plural(props.pickup.media_count, '1 file', '{n} files'),
+    },
+  ),
 )
 
 async function removePickup() {
-  const title = props.pickup.title || 'The pickup'
+  const title = props.pickup.title || t('The pickup')
   try {
     await deletePickup.mutateAsync()
-    toast.success(`${title} was deleted`)
+    toast.success(t('{title} was deleted', { title }))
     await router.push({ name: 'home' })
   } catch (err) {
-    toast.error(apiErrorMessage(err, 'Could not delete the pickup'))
+    toast.error(apiErrorMessage(err, t('Could not delete the pickup')))
   }
 }
 </script>
@@ -192,13 +203,15 @@ async function removePickup() {
 <template>
   <div class="@container max-w-4xl space-y-6">
     <div>
-      <h2 class="font-heading text-xl font-semibold">Settings</h2>
-      <p class="text-sm text-muted-foreground">Only you as the creator can change these.</p>
+      <h2 class="font-heading text-xl font-semibold">{{ t('Settings') }}</h2>
+      <p class="text-sm text-muted-foreground">
+        {{ t('Only you as the creator can change these.') }}
+      </p>
     </div>
 
     <SettingsCard
-      title="General"
-      description="The name everyone sees, and when the pickup goes away."
+      :title="t('General')"
+      :description="t('The name everyone sees, and when the pickup goes away.')"
       saveable
       :dirty="dirty('general')"
       :pending="saving === 'general'"
@@ -206,16 +219,16 @@ async function removePickup() {
       @discard="discard('general')"
     >
       <div class="space-y-1.5">
-        <Label for="settings-title">Name of the pickup</Label>
+        <Label for="settings-title">{{ t('Name of the pickup') }}</Label>
         <Input
           id="settings-title"
           v-model="form.title"
           maxlength="200"
-          placeholder="Untitled pickup"
+          :placeholder="t('Untitled pickup')"
         />
       </div>
       <div class="space-y-1.5">
-        <Label for="settings-read-only">Read-only</Label>
+        <Label for="settings-read-only">{{ t('Read-only') }}</Label>
         <div class="flex gap-2">
           <Input
             id="settings-read-only"
@@ -227,19 +240,22 @@ async function removePickup() {
             aria-describedby="settings-read-only-hint"
           />
           <Button v-if="form.readOnly" type="button" variant="ghost" @click="form.readOnly = ''">
-            Never
+            {{ t('Never') }}
           </Button>
         </div>
         <p id="settings-read-only-hint" class="text-sm text-muted-foreground">
           {{
             form.readOnly
-              ? `After ${longDate(form.readOnly)} nobody joins, uploads or changes anything; everyone can still look and download. Everyone sees the date.`
-              : 'Never: people can add photos until the pickup is deleted.'
+              ? t(
+                  'After {date} nobody joins, uploads or changes anything; everyone can still look and download. Everyone sees the date.',
+                  { date: longDate(form.readOnly) },
+                )
+              : t('Never: people can add photos until the pickup is deleted.')
           }}
         </p>
       </div>
       <div class="space-y-1.5">
-        <Label for="settings-expires">Delete automatically</Label>
+        <Label for="settings-expires">{{ t('Delete automatically') }}</Label>
         <div class="flex gap-2">
           <Input
             id="settings-expires"
@@ -250,22 +266,25 @@ async function removePickup() {
             aria-describedby="settings-expires-hint"
           />
           <Button v-if="form.expires" type="button" variant="ghost" @click="form.expires = ''">
-            Never
+            {{ t('Never') }}
           </Button>
         </div>
         <p id="settings-expires-hint" class="text-sm text-muted-foreground">
           {{
             form.expires
-              ? `At the end of ${longDate(form.expires)} the pickup is deleted with all photos and videos. Everyone sees the date.`
-              : 'Never: the pickup stays until you delete it.'
+              ? t(
+                  'At the end of {date} the pickup is deleted with all photos and videos. Everyone sees the date.',
+                  { date: longDate(form.expires) },
+                )
+              : t('Never: the pickup stays until you delete it.')
           }}
         </p>
       </div>
     </SettingsCard>
 
     <SettingsCard
-      title="Access"
-      description="Who sees the photos, and who can join with a folder of their own."
+      :title="t('Access')"
+      :description="t('Who sees the photos, and who can join with a folder of their own.')"
       saveable
       :dirty="dirty('access')"
       :pending="saving === 'access'"
@@ -273,12 +292,12 @@ async function removePickup() {
       @discard="discard('access')"
     >
       <p class="rounded-lg bg-muted/60 px-3 py-2 text-sm" data-testid="access-summary">
-        <span class="font-medium">In short:</span> {{ accessSummary }}
+        <span class="font-medium">{{ t('In short:') }}</span> {{ accessSummary }}
       </p>
       <fieldset
         v-for="group in [
-          { legend: 'Who can see the photos?', name: 'visibility', options: visibilityOptions },
-          { legend: 'Who can join and upload?', name: 'join_policy', options: joinOptions },
+          { legend: t('Who can see the photos?'), name: 'visibility', options: visibilityOptions },
+          { legend: t('Who can join and upload?'), name: 'join_policy', options: joinOptions },
         ] as const"
         :key="group.name"
       >
@@ -297,11 +316,11 @@ async function removePickup() {
               class="mt-1 accent-tomato"
             />
             <span>
-              <span class="block text-sm font-medium">{{ option.label }}</span>
+              <span class="block text-sm font-medium">{{ option.label() }}</span>
               <span class="block text-xs text-muted-foreground">
-                {{ option.hint }}
+                {{ option.hint() }}
                 <template v-if="option.value === 'link' && pickup.has_password">
-                  With a password, only participants see the photos.
+                  {{ t('With a password, only participants see the photos.') }}
                 </template>
               </span>
             </span>
@@ -311,8 +330,10 @@ async function removePickup() {
     </SettingsCard>
 
     <SettingsCard
-      title="Password"
-      description="People without a login need it to join or to log in with their personal link."
+      :title="t('Password')"
+      :description="
+        t('People without a login need it to join or to log in with their personal link.')
+      "
       saveable
       :dirty="newPassword !== ''"
       :pending="passwordSaving"
@@ -322,7 +343,9 @@ async function removePickup() {
       <div class="flex flex-wrap items-center justify-between gap-2">
         <p class="text-sm">
           {{
-            pickup.has_password ? 'This pickup is protected with a password.' : 'No password set.'
+            pickup.has_password
+              ? t('This pickup is protected with a password.')
+              : t('No password set.')
           }}
         </p>
         <Button
@@ -334,12 +357,12 @@ async function removePickup() {
           :disabled="passwordSaving"
           @click="savePassword('')"
         >
-          Remove password
+          {{ t('Remove password') }}
         </Button>
       </div>
       <div class="space-y-1.5">
         <Label for="settings-password">{{
-          pickup.has_password ? 'New password' : 'Password'
+          pickup.has_password ? t('New password') : t('Password')
         }}</Label>
         <Input
           id="settings-password"
@@ -349,15 +372,18 @@ async function removePickup() {
           autocomplete="new-password"
         />
         <p v-if="newPassword" class="text-sm text-destructive">
-          Saving logs everyone else out of this pickup. They need their personal link and the
-          password to come back. If you forget it, the server operator can remove it.
+          {{
+            t(
+              'Saving logs everyone else out of this pickup. They need their personal link and the password to come back. If you forget it, the server operator can remove it.',
+            )
+          }}
         </p>
       </div>
     </SettingsCard>
 
     <SettingsCard
-      title="Privacy"
-      description="How email addresses of participants are stored."
+      :title="t('Privacy')"
+      :description="t('How email addresses of participants are stored.')"
       saveable
       :dirty="dirty('privacy')"
       :pending="saving === 'privacy'"
@@ -367,22 +393,24 @@ async function removePickup() {
       <label class="flex cursor-pointer gap-3">
         <input v-model="form.email_privacy" type="checkbox" class="mt-1 accent-tomato" />
         <span>
-          <span class="block text-sm font-medium">Privacy mode for email addresses</span>
+          <span class="block text-sm font-medium">{{ t('Privacy mode for email addresses') }}</span>
           <span class="block text-sm text-muted-foreground">
-            Email addresses are stored only as a hash. You can't see them, and to send an invitation
-            again you have to enter the address again. Off: addresses are stored and shown in the
-            list of people.
+            {{
+              t(
+                "Email addresses are stored only as a hash. You can't see them, and to send an invitation again you have to enter the address again. Off: addresses are stored and shown in the list of people.",
+              )
+            }}
           </span>
           <span v-if="turningPrivacyOn" class="mt-1 block text-sm text-destructive">
-            Saving deletes all stored addresses of this pickup now.
+            {{ t('Saving deletes all stored addresses of this pickup now.') }}
           </span>
         </span>
       </label>
     </SettingsCard>
 
     <SettingsCard
-      title="Storage"
-      description="The server operator sets these limits. Ask them if you need more space."
+      :title="t('Storage')"
+      :description="t('The server operator sets these limits. Ask them if you need more space.')"
     >
       <div
         v-if="storage.percent !== null"
@@ -391,7 +419,7 @@ async function removePickup() {
         :aria-valuenow="storage.percent"
         aria-valuemin="0"
         aria-valuemax="100"
-        aria-label="Storage used"
+        :aria-label="t('Storage used')"
       >
         <div
           class="h-full rounded-full"
@@ -403,8 +431,12 @@ async function removePickup() {
     </SettingsCard>
 
     <SettingsCard
-      title="Delete this pickup"
-      description="Removes the pickup with every folder, photo and video for everyone. This cannot be undone."
+      :title="t('Delete this pickup')"
+      :description="
+        t(
+          'Removes the pickup with every folder, photo and video for everyone. This cannot be undone.',
+        )
+      "
       danger
     >
       <div>
@@ -414,7 +446,7 @@ async function removePickup() {
           @click="confirmDelete = true"
         >
           <Trash2Icon />
-          Delete pickup
+          {{ t('Delete pickup') }}
         </Button>
       </div>
     </SettingsCard>
@@ -422,9 +454,9 @@ async function removePickup() {
 
   <ConfirmDialog
     v-model:open="confirmDelete"
-    :title="`Delete “${pickup.title || 'Untitled pickup'}” for good?`"
+    :title="t('Delete “{title}” for good?', { title: pickup.title || t('Untitled pickup') })"
     :description="deleteDescription"
-    confirm-label="Delete for good"
+    :confirm-label="t('Delete for good')"
     @confirm="removePickup"
   />
 </template>

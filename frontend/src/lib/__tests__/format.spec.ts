@@ -26,6 +26,6 @@ describe('formatRelativeDate', () => {
 
   it('falls back to the date after a week', () => {
     const old = new Date(2026, 8, 1)
-    expect(formatRelativeDate(old.toISOString(), now)).toBe(old.toLocaleDateString())
+    expect(formatRelativeDate(old.toISOString(), now)).toBe(old.toLocaleDateString('en')) // the app's language, not the system's
   })
 })

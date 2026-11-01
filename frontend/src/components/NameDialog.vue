@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { t } from '@/lib/i18n'
 
 const props = withDefaults(
   defineProps<{
@@ -58,7 +59,7 @@ function submit() {
           />
         </div>
         <DialogFooter>
-          <Button type="button" variant="outline" @click="open = false">Cancel</Button>
+          <Button type="button" variant="outline" @click="open = false">{{ t('Cancel') }}</Button>
           <Button type="submit" :disabled="pending || (!allowEmpty && !value.trim())">{{
             confirmLabel
           }}</Button>

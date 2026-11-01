@@ -10,6 +10,7 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { t } from '@/lib/i18n'
 
 import { useExplorer } from '../composables/useExplorer'
 import { itemActions } from '../lib/actions'
@@ -26,7 +27,7 @@ const actions = computed(() => itemActions(explorer, props.item))
       <Button
         variant="ghost"
         size="icon-xs"
-        :aria-label="`Actions for ${item.name}`"
+        :aria-label="t('Actions for {name}', { name: item.name })"
         class="text-muted-foreground"
         @click.stop
         @dblclick.stop

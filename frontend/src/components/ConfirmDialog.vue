@@ -9,6 +9,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { t } from '@/lib/i18n'
 
 defineProps<{ title: string; description: string; confirmLabel: string }>()
 const open = defineModel<boolean>('open', { required: true })
@@ -23,7 +24,7 @@ const emit = defineEmits<{ confirm: [] }>()
         <AlertDialogDescription>{{ description }}</AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
-        <AlertDialogCancel>Cancel</AlertDialogCancel>
+        <AlertDialogCancel>{{ t('Cancel') }}</AlertDialogCancel>
         <AlertDialogAction variant="destructive" @click="emit('confirm')">
           {{ confirmLabel }}
         </AlertDialogAction>

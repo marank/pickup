@@ -80,8 +80,16 @@
   "size-limit": [
     {
       "name": "JS",
-      "path": "dist/assets/*.js",
-      "limit": "170 kB"
+      "path": [
+        "dist/assets/*.js",
+        "!dist/assets/de-*.js"
+      ],
+      "limit": "172 kB"
+    },
+    {
+      "name": "German texts (loaded only in German)",
+      "path": "dist/assets/de-*.js",
+      "limit": "13 kB"
     },
     {
       "name": "CSS",

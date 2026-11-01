@@ -20,6 +20,7 @@ import QrCard from '@/components/QrCard.vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { t } from '@/lib/i18n'
 
 import CreationCodeDialog from '../components/CreationCodeDialog.vue'
 import PackingAnimation from '../components/PackingAnimation.vue'
@@ -38,7 +39,7 @@ watch(
   (mode) => {
     if (mode === 'code' && !creationCode.value) askCode.value = true
     if (mode === 'none') {
-      toast.error('Creating pickups is turned off on this server.')
+      toast.error(t('Creating pickups is turned off on this server.'))
       void router.replace({ name: 'home' })
     }
   },
@@ -63,22 +64,22 @@ const shareUrl = computed(() => (created.value ? absolute(`/pickup/${created.val
 const form = reactive({ title: '', creator_name: '', creator_email: '', join_policy: 'open' })
 const fieldErrors = ref<Record<string, string>>({})
 const steps = computed(() => [
-  { label: 'Details', current: phase.value !== 'ready' },
-  { label: 'Links', current: phase.value === 'ready' },
+  { label: t('Details'), current: phase.value !== 'ready' },
+  { label: t('Links'), current: phase.value === 'ready' },
 ])
 
 const policies = [
   {
     value: 'open',
     icon: LinkIcon,
-    label: 'Anyone with the link',
-    hint: 'Everyone with the link picks a name and gets a folder.',
+    label: () => t('Anyone with the link'),
+    hint: () => t('Everyone with the link picks a name and gets a folder.'),
   },
   {
     value: 'invite',
     icon: MailIcon,
-    label: 'Only people I invite',
-    hint: 'You invite people by email; each gets a personal link.',
+    label: () => t('Only people I invite'),
+    hint: () => t('You invite people by email; each gets a personal link.'),
   },
 ] as const
 
@@ -113,7 +114,7 @@ async function submit() {
         if (Array.isArray(messages)) fieldErrors.value[field] = String(messages[0])
       }
     }
-    toast.error(apiErrorMessage(err, 'Could not create the pickup'))
+    toast.error(apiErrorMessage(err, t('Could not create the pickup')))
   }
 }
 </script>
@@ -127,9 +128,9 @@ async function submit() {
         class="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
       >
         <ArrowLeftIcon class="size-4" />
-        Back
+        {{ t('Back') }}
       </RouterLink>
-      <ol class="ml-auto flex items-center gap-2 text-muted-foreground" aria-label="Steps">
+      <ol class="ml-auto flex items-center gap-2 text-muted-foreground" :aria-label="t('Steps')">
         <template v-for="(step, index) in steps" :key="step.label">
           <!-- The line between the steps fills while the pickup is packed. -->
           <li
@@ -171,13 +172,13 @@ async function submit() {
           <section
             v-if="phase === 'ready' && created"
             class="space-y-6"
-            aria-label="Your pickup is ready"
+            :aria-label="t('Your pickup is ready')"
           >
             <div class="space-y-1">
               <h1 class="font-heading text-2xl font-bold">
-                “{{ created.title || 'Untitled pickup' }}” is ready
+                {{ t('“{title}” is ready', { title: created.title || t('Untitled pickup') }) }}
               </h1>
-              <p class="text-muted-foreground">You get two links.</p>
+              <p class="text-muted-foreground">{{ t('You get two links.') }}</p>
             </div>
 
             <div class="grid items-start gap-6 sm:grid-cols-[13rem_1fr]">
@@ -186,12 +187,12 @@ async function submit() {
                 <QrCard
                   ref="qr"
                   :value="shareUrl"
-                  :title="created.title || 'Untitled pickup'"
+                  :title="created.title || t('Untitled pickup')"
                   class="w-full"
                 />
                 <Button variant="outline" class="w-full" @click="qr?.save()">
                   <DownloadIcon />
-                  Save QR card
+                  {{ t('Save QR card') }}
                 </Button>
               </div>
 
@@ -199,26 +200,31 @@ async function submit() {
                 <div class="space-y-2">
                   <p class="flex items-center gap-1.5 font-medium">
                     <UsersIcon class="size-4 text-muted-foreground" />
-                    Share link
-                    <span class="font-normal text-muted-foreground">— for your guests</span>
+                    {{ t('Share link') }}
+                    <span class="font-normal text-muted-foreground">{{
+                      t('— for your guests')
+                    }}</span>
                   </p>
-                  <CopyField :value="shareUrl" label="Share link" />
+                  <CopyField :value="shareUrl" :label="t('Share link')" />
                   <p class="text-sm text-muted-foreground">
-                    Send it to your guests, or print the QR card.
+                    {{ t('Send it to your guests, or print the QR card.') }}
                   </p>
                 </div>
 
                 <div class="space-y-2">
                   <p class="flex items-center gap-1.5 font-medium">
                     <KeyRoundIcon class="size-4 text-tomato" />
-                    Your personal link
-                    <span class="font-normal text-muted-foreground">— only for you</span>
+                    {{ t('Your personal link') }}
+                    <span class="font-normal text-muted-foreground">{{ t('— only for you') }}</span>
                   </p>
-                  <CopyField :value="absolute(created.member_url)" label="Personal link" />
+                  <CopyField :value="absolute(created.member_url)" :label="t('Personal link')" />
                   <p class="text-sm text-muted-foreground">
-                    <template v-if="emailed">We also emailed it to you. </template>With this link
-                    you log in as the creator on any device; keep it to yourself. You can copy it
-                    again from the account menu.
+                    <template v-if="emailed">{{ t('We also emailed it to you.') }} </template
+                    >{{
+                      t(
+                        'With this link you log in as the creator on any device; keep it to yourself. You can copy it again from the account menu.',
+                      )
+                    }}
                   </p>
                 </div>
               </div>
@@ -226,7 +232,7 @@ async function submit() {
 
             <Button as-child size="lg" class="w-full">
               <RouterLink :to="{ name: 'explorer', params: { pickupId: created.id } }">
-                Open the pickup
+                {{ t('Open the pickup') }}
                 <ArrowRightIcon />
               </RouterLink>
             </Button>
@@ -236,22 +242,22 @@ async function submit() {
             <PackingAnimation />
           </div>
 
-          <form v-else class="space-y-6" aria-label="New pickup" @submit.prevent="submit">
+          <form v-else class="space-y-6" :aria-label="t('New pickup')" @submit.prevent="submit">
             <div class="space-y-1">
-              <h1 class="font-heading text-2xl font-bold">Start a pickup</h1>
+              <h1 class="font-heading text-2xl font-bold">{{ t('Start a pickup') }}</h1>
               <p class="text-muted-foreground">
-                A shared place for everyone's photos and videos. Nobody needs an account.
+                {{ t("A shared place for everyone's photos and videos. Nobody needs an account.") }}
               </p>
             </div>
 
             <div class="space-y-1.5">
-              <Label for="create-title">Name of the pickup</Label>
+              <Label for="create-title">{{ t('Name of the pickup') }}</Label>
               <Input
                 id="create-title"
                 v-model="form.title"
                 required
                 maxlength="200"
-                placeholder="e.g. Anna & Mark’s wedding"
+                :placeholder="t('e.g. Anna & Mark’s wedding')"
                 autocomplete="off"
               />
               <p v-if="fieldErrors.title" class="text-sm text-destructive">
@@ -262,7 +268,8 @@ async function submit() {
             <div class="grid gap-4 sm:grid-cols-2">
               <div class="space-y-1.5">
                 <Label for="create-name"
-                  >Your name <span class="text-muted-foreground">(optional)</span></Label
+                  >{{ t('Your name') }}
+                  <span class="text-muted-foreground">{{ t('(optional)') }}</span></Label
                 >
                 <Input
                   id="create-name"
@@ -271,12 +278,13 @@ async function submit() {
                   autocomplete="name"
                 />
                 <p class="text-xs text-muted-foreground">
-                  You get a folder with this name right away.
+                  {{ t('You get a folder with this name right away.') }}
                 </p>
               </div>
               <div class="space-y-1.5">
                 <Label for="create-email"
-                  >Your email <span class="text-muted-foreground">(optional)</span></Label
+                  >{{ t('Your email') }}
+                  <span class="text-muted-foreground">{{ t('(optional)') }}</span></Label
                 >
                 <Input
                   id="create-email"
@@ -284,7 +292,9 @@ async function submit() {
                   type="email"
                   autocomplete="email"
                 />
-                <p class="text-xs text-muted-foreground">We send you your link to get back in.</p>
+                <p class="text-xs text-muted-foreground">
+                  {{ t('We send you your link to get back in.') }}
+                </p>
                 <p v-if="fieldErrors.creator_email" class="text-sm text-destructive">
                   {{ fieldErrors.creator_email }}
                 </p>
@@ -292,7 +302,7 @@ async function submit() {
             </div>
 
             <fieldset class="space-y-2">
-              <legend class="mb-1 text-sm font-medium">Who can join?</legend>
+              <legend class="mb-1 text-sm font-medium">{{ t('Who can join?') }}</legend>
               <div class="grid gap-2 sm:grid-cols-2">
                 <label
                   v-for="policy in policies"
@@ -308,19 +318,22 @@ async function submit() {
                       class="accent-tomato"
                     />
                     <component :is="policy.icon" class="size-4 text-muted-foreground" />
-                    {{ policy.label }}
+                    {{ policy.label() }}
                   </span>
-                  <span class="text-sm text-muted-foreground">{{ policy.hint }}</span>
+                  <span class="text-sm text-muted-foreground">{{ policy.hint() }}</span>
                 </label>
               </div>
               <p class="text-xs text-muted-foreground">
-                Only participants see the photos. You can change this and more later in the
-                settings.
+                {{
+                  t(
+                    'Only participants see the photos. You can change this and more later in the settings.',
+                  )
+                }}
               </p>
             </fieldset>
 
             <Button type="submit" size="lg" class="w-full" :disabled="phase !== 'form'">
-              Create pickup
+              {{ t('Create pickup') }}
               <ArrowRightIcon />
             </Button>
           </form>

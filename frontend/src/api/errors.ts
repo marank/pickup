@@ -1,10 +1,12 @@
+import { t } from '@/lib/i18n'
+
 /** A failed API request; `body` is the parsed error response. */
 export class ApiError extends Error {
   constructor(
     readonly status: number,
     readonly body: unknown,
   ) {
-    super(messageFrom(body) ?? `Request failed (${status})`)
+    super(messageFrom(body) ?? t('Request failed ({status})', { status }))
   }
 }
 

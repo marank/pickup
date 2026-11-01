@@ -4,6 +4,7 @@ import { computed, ref, watch } from 'vue'
 
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { formatFileSize } from '@/lib/format'
+import { t } from '@/lib/i18n'
 
 import { useExplorer } from '../composables/useExplorer'
 import { useViewerGestures } from '../composables/useViewerGestures'
@@ -89,7 +90,7 @@ const button =
           v-if="item.editable"
           type="button"
           :class="button"
-          aria-label="Edit caption"
+          :aria-label="t('Edit caption')"
           @click="editCaption"
         >
           <PencilIcon class="size-4" />
@@ -98,14 +99,14 @@ const button =
           :href="item.media.file"
           :download="item.media.original_filename"
           :class="button"
-          aria-label="Download"
+          :aria-label="t('Download')"
         >
           <DownloadIcon class="size-4" />
         </a>
         <button
           type="button"
           :class="button"
-          aria-label="Close"
+          :aria-label="t('Close')"
           @click="explorer.viewer.open = false"
         >
           <XIcon class="size-5" />
@@ -167,7 +168,7 @@ const button =
           <button
             type="button"
             class="absolute top-1/2 left-2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-paper/10 hover:bg-paper/20 pointer-coarse:hidden"
-            aria-label="Previous"
+            :aria-label="t('Previous')"
             @click="step(-1)"
           >
             <ChevronLeftIcon />
@@ -175,7 +176,7 @@ const button =
           <button
             type="button"
             class="absolute top-1/2 right-2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-paper/10 hover:bg-paper/20 pointer-coarse:hidden"
-            aria-label="Next"
+            :aria-label="t('Next')"
             @click="step(1)"
           >
             <ChevronRightIcon />
@@ -197,7 +198,7 @@ const button =
           v-else-if="files.length > 1"
           class="hidden px-4 pb-4 text-center text-xs text-paper/50 pointer-coarse:block"
         >
-          Swipe for the next one · pinch to zoom · swipe down to close
+          {{ t('Swipe for the next one · pinch to zoom · swipe down to close') }}
         </p>
       </div>
     </DialogContent>

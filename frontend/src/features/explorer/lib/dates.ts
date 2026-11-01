@@ -1,6 +1,7 @@
 import type { Pickup } from '@/api/types'
+import { formatDate, t } from '@/lib/i18n'
 
-const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, { dateStyle: 'medium' })
+const day = (iso: string) => formatDate(iso, { dateStyle: 'medium' })
 
 /**
  * What the header says about a pickup's two optional dates: until when photos can be added
@@ -11,10 +12,10 @@ export function pickupDates(
 ) {
   return {
     readOnly: pickup?.is_read_only
-      ? 'Read-only'
+      ? t('Read-only')
       : pickup?.read_only_at
-        ? `Uploads until ${day(pickup.read_only_at)}`
+        ? t('Uploads until {date}', { date: day(pickup.read_only_at) })
         : '',
-    deleted: pickup?.expires_at ? `Deleted after ${day(pickup.expires_at)}` : '',
+    deleted: pickup?.expires_at ? t('Deleted after {date}', { date: day(pickup.expires_at) }) : '',
   }
 }

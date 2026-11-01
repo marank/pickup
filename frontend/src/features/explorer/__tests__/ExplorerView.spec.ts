@@ -710,7 +710,7 @@ describe('explorer: owner actions', () => {
     )
     await flushPromises()
     expect(item('zebra.jpg').getAttribute('aria-selected')).toBe('true')
-    await chooseMenuItem('View')
+    await chooseMenuItem('Open')
     expect($('[role="dialog"]')!.textContent).toContain('zebra.jpg')
     findButton('Close').click()
     await settle()

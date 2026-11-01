@@ -6,6 +6,7 @@ import 'vue-sonner/style.css'
 import SplashScreen from '@/components/SplashScreen.vue'
 import { Toaster } from '@/components/ui/sonner'
 import AppLayout from '@/layouts/AppLayout.vue'
+import { t } from '@/lib/i18n'
 import { pageKey } from '@/router/pageKey'
 
 /** How long the logo intro needs (LogoIntro.vue) plus a short moment to look at it. */
@@ -39,7 +40,7 @@ const scrollTop = () => window.scrollTo({ top: 0 })
   <Transition name="splash">
     <SplashScreen v-if="splash" />
   </Transition>
-  <Toaster rich-colors position="top-right" />
+  <Toaster rich-colors position="top-right" :container-aria-label="t('Notifications')" />
 </template>
 
 <style scoped>

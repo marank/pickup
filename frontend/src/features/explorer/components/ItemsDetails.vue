@@ -2,6 +2,7 @@
 import { ArrowDownIcon, ArrowUpIcon } from '@lucide/vue'
 
 import { formatFileSize, formatRelativeDate } from '@/lib/format'
+import { t } from '@/lib/i18n'
 
 import { useExplorer } from '../composables/useExplorer'
 import { useItemPointer } from '../composables/useItemPointer'
@@ -14,19 +15,19 @@ import OwnBadge from './OwnBadge.vue'
 const explorer = useExplorer()
 const { onPointerDown, onClick, onDoubleClick } = useItemPointer()
 
-const columns: { key: SortKey; label: string; class: string }[] = [
-  { key: 'name', label: 'Name', class: 'w-full' },
-  { key: 'owner', label: 'Owner', class: 'max-sm:hidden w-36' },
-  { key: 'date', label: 'Added', class: 'max-md:hidden w-32' },
-  { key: 'type', label: 'Type', class: 'max-lg:hidden w-32' },
-  { key: 'size', label: 'Size', class: 'w-24 text-right' },
+const columns: { key: SortKey; label: () => string; class: string }[] = [
+  { key: 'name', label: () => t('Name'), class: 'w-full' },
+  { key: 'owner', label: () => t('Owner'), class: 'max-sm:hidden w-36' },
+  { key: 'date', label: () => t('Added'), class: 'max-md:hidden w-32' },
+  { key: 'type', label: () => t('Type'), class: 'max-lg:hidden w-32' },
+  { key: 'size', label: () => t('Size'), class: 'w-24 text-right' },
 ]
 </script>
 
 <template>
   <table
     class="w-full table-fixed text-sm"
-    aria-label="Folder contents"
+    :aria-label="t('Folder contents')"
     aria-multiselectable="true"
   >
     <thead class="sticky top-0 z-10 bg-card text-left text-xs text-muted-foreground">
@@ -50,14 +51,16 @@ const columns: { key: SortKey; label: string; class: string }[] = [
             "
             @click="explorer.prefs.sortBy(column.key)"
           >
-            {{ column.label }}
+            {{ column.label() }}
             <template v-if="explorer.prefs.sortKey === column.key">
               <ArrowUpIcon v-if="explorer.prefs.sortDirection === 'asc'" class="size-3" />
               <ArrowDownIcon v-else class="size-3" />
             </template>
           </button>
         </th>
-        <th class="w-10"><span class="sr-only">Actions</span></th>
+        <th class="w-10">
+          <span class="sr-only">{{ t('Actions') }}</span>
+        </th>
       </tr>
     </thead>
     <tbody>

@@ -3,6 +3,7 @@ import { ChevronRightIcon, FolderIcon, FolderOpenIcon } from '@lucide/vue'
 import { computed } from 'vue'
 
 import type { Folder } from '@/api/types'
+import { t } from '@/lib/i18n'
 import { ownerColor } from '@/lib/ownerColor'
 
 import { useExplorer } from '../composables/useExplorer'
@@ -45,7 +46,11 @@ function onKey(event: KeyboardEvent) {
         type="button"
         class="flex size-6 shrink-0 items-center justify-center rounded text-muted-foreground hover:text-foreground"
         :class="!children.length && 'invisible'"
-        :aria-label="`${isOpen ? 'Collapse' : 'Expand'} ${folder.name}`"
+        :aria-label="
+          isOpen
+            ? t('Collapse {name}', { name: folder.name })
+            : t('Expand {name}', { name: folder.name })
+        "
         tabindex="-1"
         @click="emit('toggle', folder.id)"
       >

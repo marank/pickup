@@ -3,6 +3,7 @@ import { useRoute } from 'vue-router'
 
 import { isNotFound } from '@/api/errors'
 import NotFoundCard from '@/components/NotFoundCard.vue'
+import { t } from '@/lib/i18n'
 
 import JoinPanel from '../components/JoinPanel.vue'
 import { usePickup } from '../composables/usePickup'
@@ -15,8 +16,8 @@ const pickup = usePickup(() => props.pickupId)
 <template>
   <NotFoundCard
     v-if="isNotFound(pickup.error.value)"
-    title="Pickup not found"
-    description="Check the link you got, or ask for a new one."
+    :title="t('Pickup not found')"
+    :description="t('Check the link you got, or ask for a new one.')"
   />
   <JoinPanel
     v-else-if="pickup.data.value"

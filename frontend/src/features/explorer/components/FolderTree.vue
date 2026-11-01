@@ -4,6 +4,7 @@ import { ref, watch } from 'vue'
 
 import PickupMark from '@/components/PickupMark.vue'
 import { Skeleton } from '@/components/ui/skeleton'
+import { t } from '@/lib/i18n'
 
 import { useExplorer, type ExplorerPage } from '../composables/useExplorer'
 import { childrenOf } from '../lib/tree'
@@ -36,9 +37,9 @@ function openRoot() {
   emit('navigated')
 }
 
-const pages: { page: ExplorerPage; label: string; icon: unknown }[] = [
-  { page: 'people', label: 'People', icon: UsersIcon },
-  { page: 'settings', label: 'Settings', icon: SettingsIcon },
+const pages: { page: ExplorerPage; label: () => string; icon: unknown }[] = [
+  { page: 'people', label: () => t('People'), icon: UsersIcon },
+  { page: 'settings', label: () => t('Settings'), icon: SettingsIcon },
 ]
 function openPage(page: ExplorerPage) {
   explorer.openPage(page)
@@ -48,7 +49,7 @@ function openPage(page: ExplorerPage) {
 
 <template>
   <div class="flex flex-col gap-2">
-    <nav aria-label="Folders" class="text-sm">
+    <nav :aria-label="t('Folders')" class="text-sm">
       <button
         type="button"
         class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left font-medium hover:bg-muted"
@@ -56,7 +57,7 @@ function openPage(page: ExplorerPage) {
         @click="openRoot"
       >
         <PickupMark class="size-4 shrink-0" />
-        <span class="truncate">{{ explorer.pickup.data?.title || 'Untitled pickup' }}</span>
+        <span class="truncate">{{ explorer.pickup.data?.title || t('Untitled pickup') }}</span>
       </button>
       <div v-if="explorer.folders.isPending" class="mt-2 space-y-1.5 px-2">
         <Skeleton v-for="n in 4" :key="n" class="h-6" />
@@ -76,12 +77,12 @@ function openPage(page: ExplorerPage) {
         v-if="explorer.folders.isSuccess && !childrenOf(explorer.tree, null).length"
         class="px-3 py-2 text-xs text-muted-foreground"
       >
-        No folders yet.
+        {{ t('No folders yet.') }}
       </p>
     </nav>
     <nav
       v-if="explorer.pickup.data?.is_creator"
-      aria-label="Pickup"
+      :aria-label="t('Pickup')"
       class="mt-auto space-y-0.5 border-t pt-2 text-sm"
     >
       <button
@@ -94,7 +95,7 @@ function openPage(page: ExplorerPage) {
         @click="openPage(entry.page)"
       >
         <component :is="entry.icon" class="size-4 shrink-0 text-muted-foreground" />
-        {{ entry.label }}
+        {{ entry.label() }}
       </button>
     </nav>
   </div>

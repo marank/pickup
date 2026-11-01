@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { t } from '@/lib/i18n'
 
 import { useSetEmail } from '../composables/usePickupAdmin'
 
@@ -28,10 +29,10 @@ async function submit() {
   try {
     const { message } = await setEmail.mutateAsync(email.value.trim())
     // A different address than the stored one only gets a confirmation link.
-    toast.success(message || 'Check your inbox for your personal link')
+    toast.success(message || t('Check your inbox for your personal link'))
     open.value = false
   } catch (err) {
-    toast.error(apiErrorMessage(err, 'Could not send the mail'))
+    toast.error(apiErrorMessage(err, t('Could not send the mail')))
   }
 }
 </script>
@@ -41,20 +42,23 @@ async function submit() {
     <DialogContent class="sm:max-w-md">
       <form class="space-y-4" @submit.prevent="submit">
         <DialogHeader>
-          <DialogTitle>Email me my personal link</DialogTitle>
+          <DialogTitle>{{ t('Email me my personal link') }}</DialogTitle>
           <DialogDescription>
-            With your personal link you can log in on any device. We also save the address, so you
-            can request the link again later.
-            <template v-if="pickup.email_privacy">It is stored only as a hash.</template>
+            {{
+              t(
+                'With your personal link you can log in on any device. We also save the address, so you can request the link again later.',
+              )
+            }}
+            <template v-if="pickup.email_privacy">{{ t('It is stored only as a hash.') }}</template>
           </DialogDescription>
         </DialogHeader>
         <div class="space-y-1.5">
-          <Label for="own-email">Your email</Label>
+          <Label for="own-email">{{ t('Your email') }}</Label>
           <Input id="own-email" v-model="email" type="email" required autocomplete="email" />
         </div>
         <DialogFooter>
-          <Button type="button" variant="outline" @click="open = false">Cancel</Button>
-          <Button type="submit" :disabled="setEmail.isPending.value">Send</Button>
+          <Button type="button" variant="outline" @click="open = false">{{ t('Cancel') }}</Button>
+          <Button type="submit" :disabled="setEmail.isPending.value">{{ t('Send') }}</Button>
         </DialogFooter>
       </form>
     </DialogContent>

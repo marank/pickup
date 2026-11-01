@@ -2,14 +2,15 @@
 import { FolderIcon } from '@lucide/vue'
 
 import PickupMark from '@/components/PickupMark.vue'
+import { t } from '@/lib/i18n'
 
 // A drawn, non-interactive preview of the explorer for the start page.
 const folders = [
-  { name: 'Alice', color: 'var(--owner-1)', open: true },
-  { name: 'Beach day', color: 'var(--owner-1)', depth: 1, current: true },
-  { name: 'Ben', color: 'var(--owner-2)' },
-  { name: 'Chloé', color: 'var(--owner-3)' },
-  { name: 'Grandma', color: 'var(--owner-5)' },
+  { name: () => 'Alice', color: 'var(--owner-1)', open: true },
+  { name: () => t('Beach day'), color: 'var(--owner-1)', depth: 1, current: true },
+  { name: () => 'Ben', color: 'var(--owner-2)' },
+  { name: () => 'Chloé', color: 'var(--owner-3)' },
+  { name: () => t('Grandma'), color: 'var(--owner-5)' },
 ]
 const tiles = [
   'from-[oklch(0.8_0.1_60)] to-[oklch(0.65_0.15_35)]',
@@ -34,19 +35,19 @@ const tiles = [
         class="ml-2 flex flex-1 items-center gap-1 rounded-md border bg-card px-2 py-1 text-muted-foreground"
       >
         <PickupMark class="size-3" />
-        Summer party <span>›</span> Alice <span>›</span>
-        <span class="font-semibold text-foreground">Beach day</span>
+        {{ t('Summer party') }} <span>›</span> Alice <span>›</span>
+        <span class="font-semibold text-foreground">{{ t('Beach day') }}</span>
       </div>
     </div>
     <div class="flex">
       <div class="w-32 shrink-0 space-y-0.5 border-r bg-pane p-2 max-sm:hidden">
         <div class="flex items-center gap-1 px-1 py-0.5 font-medium">
           <PickupMark class="size-3" />
-          Summer party
+          {{ t('Summer party') }}
         </div>
         <div
-          v-for="folder in folders"
-          :key="folder.name"
+          v-for="(folder, index) in folders"
+          :key="index"
           class="flex items-center gap-1 rounded px-1 py-0.5"
           :class="folder.current && 'bg-selection font-medium'"
           :style="{ paddingLeft: `${(folder.depth ?? 0) * 0.6 + 0.6}rem` }"
@@ -57,7 +58,7 @@ const tiles = [
             fill="currentColor"
             fill-opacity="0.2"
           />
-          {{ folder.name }}
+          {{ folder.name() }}
         </div>
       </div>
       <div class="grid flex-1 grid-cols-3 gap-2 p-2.5">
@@ -74,8 +75,8 @@ const tiles = [
       </div>
     </div>
     <div class="flex justify-between border-t bg-pane px-2.5 py-1 text-muted-foreground">
-      <span>6 items · 1 selected</span>
-      <span>You: Alice</span>
+      <span>{{ t('6 items · 1 selected') }}</span>
+      <span>{{ t('You: {name}', { name: 'Alice' }) }}</span>
     </div>
   </div>
 </template>

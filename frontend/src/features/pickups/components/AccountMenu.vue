@@ -30,6 +30,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { copyText } from '@/lib/clipboard'
+import { t } from '@/lib/i18n'
 import { ownerColor } from '@/lib/ownerColor'
 import { useTheme } from '@/lib/theme'
 
@@ -77,13 +78,19 @@ const ownFolder = computed(() =>
 const isCreator = computed(() => pickup.data.value?.is_creator ?? false)
 /** This browser is signed in as a member (with a folder, or as the creator). */
 const signedIn = computed(() => pickup.data.value?.is_member ?? false)
-const name = computed(() => (signedIn.value ? pickup.data.value?.member_name || 'You' : 'Guest'))
+const name = computed(() =>
+  signedIn.value ? pickup.data.value?.member_name || t('You') : t('Guest'),
+)
 const color = computed(() => (ownFolder.value ? ownerColor(name.value) : 'var(--muted-foreground)'))
 
 const leaveDescription = computed(() =>
   isCreator.value
-    ? 'You will be logged out on this device. To log in again as the creator, open your personal link. The pickup is not changed.'
-    : 'You will be logged out on this device. To log in again, open your personal link (from when you joined, or from your email). Your folder and files are kept.',
+    ? t(
+        'You will be logged out on this device. To log in again as the creator, open your personal link. The pickup is not changed.',
+      )
+    : t(
+        'You will be logged out on this device. To log in again, open your personal link (from when you joined, or from your email). Your folder and files are kept.',
+      ),
 )
 
 const client = useQueryClient()
@@ -95,19 +102,19 @@ async function copyPersonalLink() {
         .fetchQuery(personalLinkQuery(props.pickupId))
         .then(({ member_url }) => `${window.location.origin}${member_url}`),
     )
-    toast.success('Personal link copied')
+    toast.success(t('Personal link copied'))
   } catch (err) {
-    toast.error(apiErrorMessage(err, 'Could not copy your link'))
+    toast.error(apiErrorMessage(err, t('Could not copy your link')))
   }
 }
 
 async function confirmLeave() {
   try {
     await leave.mutateAsync()
-    toast.success('You are logged out')
+    toast.success(t('You are logged out'))
     await router.push({ name: 'home' })
   } catch (err) {
-    toast.error(apiErrorMessage(err, 'Could not log out'))
+    toast.error(apiErrorMessage(err, t('Could not log out')))
   }
 }
 </script>
@@ -116,7 +123,7 @@ async function confirmLeave() {
   <DropdownMenu>
     <DropdownMenuTrigger
       class="flex h-9 items-center gap-2 rounded-full border bg-card py-1 pr-2 pl-1 text-sm shadow-xs hover:bg-muted"
-      aria-label="Account"
+      :aria-label="t('Account')"
     >
       <span
         class="flex size-7 items-center justify-center rounded-full text-xs font-semibold text-paper"
@@ -130,11 +137,11 @@ async function confirmLeave() {
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end" class="min-w-60">
       <DropdownMenuLabel class="font-normal">
-        <p class="font-medium">{{ signedIn ? name : 'Viewing as a guest' }}</p>
+        <p class="font-medium">{{ signedIn ? name : t('Viewing as a guest') }}</p>
         <p class="text-xs text-muted-foreground">
-          <template v-if="isCreator">Creator of this pickup</template>
-          <template v-else-if="ownFolder">Member of this pickup</template>
-          <template v-else>Join to add your own photos</template>
+          <template v-if="isCreator">{{ t('Creator of this pickup') }}</template>
+          <template v-else-if="ownFolder">{{ t('Member of this pickup') }}</template>
+          <template v-else>{{ t('Join to add your own photos') }}</template>
         </p>
       </DropdownMenuLabel>
       <DropdownMenuSeparator />
@@ -147,37 +154,39 @@ async function confirmLeave() {
         @select="router.push({ name: 'pickup-join', params: { pickupId } })"
       >
         <UserPlusIcon />
-        {{ signedIn ? 'Create my folder' : 'Join this pickup' }}
+        {{ signedIn ? t('Create my folder') : t('Join this pickup') }}
       </DropdownMenuItem>
       <DropdownMenuItem v-if="signedIn" @select="detailsOpen = true">
         <UserPenIcon />
-        Edit my details
+        {{ t('Edit my details') }}
       </DropdownMenuItem>
       <DropdownMenuItem v-if="signedIn" @select="copyPersonalLink">
         <KeyRoundIcon />
-        Copy my personal link
+        {{ t('Copy my personal link') }}
       </DropdownMenuItem>
       <DropdownMenuItem v-if="signedIn" @select="emailOpen = true">
         <MailIcon />
-        Email me my personal link
+        {{ t('Email me my personal link') }}
       </DropdownMenuItem>
       <DropdownMenuItem v-if="signedIn" @select="introOpen = true">
         <CircleHelpIcon />
-        How Pickup works
+        {{ t('How Pickup works') }}
       </DropdownMenuItem>
       <template v-if="isCreator">
         <DropdownMenuSeparator />
         <DropdownMenuItem @select="openPage('people')">
           <UsersIcon />
-          People &amp; invitations
+          {{ t('People & invitations') }}
         </DropdownMenuItem>
         <DropdownMenuItem @select="openPage('settings')">
           <SettingsIcon />
-          Pickup settings
+          {{ t('Pickup settings') }}
         </DropdownMenuItem>
       </template>
       <DropdownMenuSeparator />
-      <DropdownMenuLabel class="text-xs text-muted-foreground">Appearance</DropdownMenuLabel>
+      <DropdownMenuLabel class="text-xs text-muted-foreground">{{
+        t('Appearance')
+      }}</DropdownMenuLabel>
       <DropdownMenuRadioGroup v-model="theme">
         <ThemeOptions />
       </DropdownMenuRadioGroup>
@@ -187,7 +196,7 @@ async function confirmLeave() {
         <DropdownMenuSeparator />
         <DropdownMenuItem variant="destructive" @select="confirmOpen = true">
           <LogOutIcon />
-          Log out
+          {{ t('Log out') }}
         </DropdownMenuItem>
       </template>
     </DropdownMenuContent>
@@ -210,9 +219,9 @@ async function confirmLeave() {
 
   <ConfirmDialog
     v-model:open="confirmOpen"
-    title="Log out on this device?"
+    :title="t('Log out on this device?')"
     :description="leaveDescription"
-    confirm-label="Log out"
+    :confirm-label="t('Log out')"
     @confirm="confirmLeave"
   />
 </template>

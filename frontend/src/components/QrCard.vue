@@ -3,6 +3,7 @@ import { onMounted, ref, watch } from 'vue'
 import { toast } from 'vue-sonner'
 
 import { CARD, cardFonts, drawQrCard } from '@/lib/qrCard'
+import { t } from '@/lib/i18n'
 
 const props = defineProps<{ value: string; title: string }>()
 const canvas = ref<HTMLCanvasElement | null>(null)
@@ -41,12 +42,12 @@ async function toPng(): Promise<Blob | null> {
 async function save() {
   const blob = await toPng()
   if (!blob) {
-    toast.error('Could not create the image')
+    toast.error(t('Could not create the image'))
     return
   }
   const link = document.createElement('a')
   link.href = URL.createObjectURL(blob)
-  link.download = `${props.title} – QR code.png`
+  link.download = `${t('{title} – QR code', { title: props.title })}.png`
   link.click()
   URL.revokeObjectURL(link.href)
 }
@@ -58,7 +59,7 @@ defineExpose({ save })
   <canvas
     ref="canvas"
     role="img"
-    :aria-label="`QR code card for “${title}”`"
+    :aria-label="t('QR code card for “{title}”', { title })"
     class="h-auto rounded-lg shadow-sm"
     :width="CARD.width"
     :height="CARD.width * 1.3"

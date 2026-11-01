@@ -4,6 +4,7 @@ import { computed } from 'vue'
 
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { t } from '@/lib/i18n'
 
 import { useExplorer } from '../composables/useExplorer'
 import { usePhone } from '../composables/usePhone'
@@ -12,12 +13,12 @@ import { pickupDates } from '../lib/dates'
 const explorer = useExplorer()
 const phone = usePhone()
 const pickup = computed(() => explorer.pickup.data)
-const title = computed(() => pickup.value?.title || 'Untitled pickup')
+const title = computed(() => pickup.value?.title || t('Untitled pickup'))
 const dates = computed(() => pickupDates(pickup.value))
 const chips = computed(() =>
   [
-    { text: dates.value.readOnly, icon: LockIcon, hint: 'Then nobody adds or changes anything' },
-    { text: dates.value.deleted, icon: HourglassIcon, hint: 'Then everything is deleted' },
+    { text: dates.value.readOnly, icon: LockIcon, hint: t('Then nobody adds or changes anything') },
+    { text: dates.value.deleted, icon: HourglassIcon, hint: t('Then everything is deleted') },
   ].filter((chip) => chip.text),
 )
 </script>
@@ -57,11 +58,11 @@ const chips = computed(() =>
         <Button
           variant="outline"
           size="sm"
-          aria-label="Share"
+          :aria-label="t('Share')"
           @click="explorer.dialog = { kind: 'share' }"
         >
           <Share2Icon />
-          <span class="max-sm:hidden">Share</span>
+          <span class="max-sm:hidden">{{ t('Share') }}</span>
         </Button>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import type { Folder, Media } from '@/api/types'
+import { t } from '@/lib/i18n'
 
 /** One entry in the content pane: a folder or a file. */
 export type ExplorerItem =
@@ -58,9 +59,10 @@ export function fileItem(media: Media): ExplorerItem {
 }
 
 export function typeLabel(item: ExplorerItem): string {
-  if (item.kind === 'folder') return 'Folder'
+  if (item.kind === 'folder') return t('Folder')
   const extension = item.name.includes('.') ? item.name.split('.').pop()!.toUpperCase() : ''
-  return `${item.media.is_video ? 'Video' : 'Image'}${extension ? ` (${extension})` : ''}`
+  const kind = item.media.is_video ? t('Video') : t('Image')
+  return extension ? `${kind} (${extension})` : kind
 }
 
 const compareText = (a: string, b: string) =>

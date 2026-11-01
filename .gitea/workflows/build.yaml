@@ -93,7 +93,8 @@ jobs:
       - name: Unused dependencies
         run: uv run deptry .
 
-      # Production dependencies only; GPL, AGPL and SSPL would bind the whole app.
+      # Production dependencies only: licenses must go with Pickup's AGPL-3.0-or-later
+      # (no non-free ones, no GPL-2.0-only).
       - name: Licenses
         run: |
           LICENSE_DIR=$(mktemp -d)

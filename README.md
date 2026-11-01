@@ -250,6 +250,12 @@ docker compose exec app python manage.py pickup_password <pickup id> --remove
 - nginx sets CSP and security headers for the SPA and rate-limits the admin login and every endpoint that sends mail; personal links can be re-sent at most every two minutes.
 - The container runs read-only, unprivileged and without capabilities.
 
+## License
+
+Pickup is free software under the [GNU Affero General Public License v3.0 or later](LICENSE): you may use, change and share it, also run it as a service for others, as long as you publish the source of your version under the same license.
+
+The Docker image also contains other free software under its own license, among it [FFmpeg](https://ffmpeg.org/) (LGPL 2.1 or later, built from Debian's source package in the `ffmpeg` stage of the `Dockerfile`, which lists the enabled parts), libheif and libde265 (LGPL, via `pi-heif`), nginx, Python and Postgres client libraries. The Python and npm dependencies' licenses are checked in CI (`backend/scripts/check_licenses.py`, `frontend/scripts/check-licenses.mjs`).
+
 ## Gitea Setup
 
 1. **Branch protection on `main` with required status checks** `backend`, `frontend`, `repository` and `image` (workflow `build`). Do this first: Renovate merges minor and patch updates once checks pass, and without required checks Gitea would merge them right away.

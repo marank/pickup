@@ -12,8 +12,8 @@ from django.core.management import call_command
 from django.test import Client
 from PIL import Image
 
-from apps.pickups.management.commands import create_thumbnails
 from apps.pickups.models import Media, Member, Pickup
+from apps.pickups.services import catch_up
 from apps.pickups.services.members import delete_pickup, remove_member
 from apps.pickups.services.thumbnails import DISPLAY_SIZE, THUMBNAIL_SIZE, create_thumbnail, video_still
 
@@ -220,7 +220,7 @@ def test_backfill_stops_after_the_current_file_on_sigterm(
         os.kill(os.getpid(), signal.SIGTERM)  # docker stop while the first file is made
         return True
 
-    monkeypatch.setattr(create_thumbnails, "create_thumbnail", create_and_get_stopped)
+    monkeypatch.setattr(catch_up, "create_thumbnail", create_and_get_stopped)
     before = signal.getsignal(signal.SIGTERM)
     out = io.StringIO()
     call_command("create_thumbnails", stdout=out)

@@ -23,7 +23,7 @@ A web application for sharing images and videos without user accounts. Users cre
 
 - **Backend:** Python 3.14, Django 6.1, Django REST Framework, drf-spectacular (OpenAPI), PostgreSQL in production (SQLite for development), managed with [uv](https://docs.astral.sh/uv/)
 - **Frontend:** Vue 3, TypeScript, Vue Router, TanStack Query, openapi-fetch (types generated from the API schema), Tailwind CSS, shadcn-vue, Vite, managed with pnpm
-- **Runtime:** one hardened container (supervisord → nginx + gunicorn), Postgres, nightly backups
+- **Runtime:** one hardened container (supervisord → nginx + gunicorn + a Procrastinate job worker, its queue in Postgres), Postgres, nightly backups
 - **CI:** Gitea Actions, Renovate
 
 ## Project Structure
@@ -158,7 +158,7 @@ docker compose start app
    - *Who can see the photos?* Only participants (default), anyone with the link, or nobody (closed: only the creator still sees the contents; nobody else can look, upload or join until it is opened again).
    - *Who can join and upload?* Anyone with the link (with a new, unused name), only invited people, or nobody new.
    - *Read-only*: a day after which nobody joins, uploads or changes anything; everyone can still look and download, and the creator can still remove files. Shown next to the title.
-   - *Delete automatically*: a day after which the pickup is deleted with all files. Everyone sees the date next to the title. Expired pickups disappear at once; an hourly job in the container (`delete_expired_pickups`) frees the space.
+   - *Delete automatically*: a day after which the pickup is deleted with all files. Everyone sees the date next to the title. Expired pickups disappear at once; an hourly job of the container's worker (`delete_expired`) frees the space.
    - *Delete this pickup*: removes it with all folders and files for everyone, after a warning. It cannot be undone.
    - *Privacy mode* (default off): addresses are kept only as an HMAC fingerprint. Mails still work, because they are sent when someone types their address; the creator sees no addresses and must type an address again to resend. Turning it on deletes stored addresses.
 

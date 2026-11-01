@@ -102,6 +102,15 @@
       "problemMatcher": []
     },
     {
+      "label": "django: worker",
+      "detail": "Background jobs (mails, cleanup, catching up on previews); needs DB_TYPE=postgres in .env — with SQLite jobs run right away",
+      "type": "shell",
+      "command": "uv run python manage.py procrastinate worker",
+      "options": { "cwd": "${workspaceFolder}/backend" },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
       "label": "django: messages",
       "detail": "After changing server texts: collect them in locale/de/django.po (translate the empty ones), compile django.mo",
       "type": "shell",

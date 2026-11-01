@@ -284,9 +284,14 @@ else:
     MAILERS = {"default": {"BACKEND": "django.core.mail.backends.dummy.EmailBackend"}}
     SILENCED_SYSTEM_CHECKS += ["mail.E001"]  # mail is optional for Pickup
 DEFAULT_FROM_EMAIL = env_str("DEFAULT_FROM_EMAIL", "pickup@localhost")
-# Mails are sent in a background thread after the request's transaction is committed
-# (services/mail.py); the tests turn this off to look at mail.outbox right away.
-MAIL_IN_BACKGROUND = True
+
+
+# Background jobs (apps/pickups/tasks.py): Procrastinate keeps them in Postgres and the
+# container's worker runs them (mails with retries, cleanup, catching up on previews).
+# Without Postgres (native development with SQLite) and in the tests they run right away.
+JOBS_IN_BACKGROUND = DB_TYPE == "postgres"
+if JOBS_IN_BACKGROUND:
+    INSTALLED_APPS.append("procrastinate.contrib.django")
 
 
 # API
@@ -317,5 +322,10 @@ LOGGING = {
     "formatters": {"default": {"format": "{asctime} {levelname} {name}: {message}", "style": "{"}},
     "handlers": {"console": {"class": "logging.StreamHandler", "formatter": "default"}},
     "root": {"handlers": ["console"], "level": LOG_LEVEL},
-    "loggers": {"django": {"handlers": ["console"], "level": LOG_LEVEL, "propagate": False}},
+    "loggers": {
+        "django": {"handlers": ["console"], "level": LOG_LEVEL, "propagate": False},
+        # Say at every start which jobs exist and repeat; the jobs themselves are logged.
+        "procrastinate.periodic": {"level": "WARNING"},
+        "procrastinate.blueprints": {"level": "WARNING"},
+    },
 }

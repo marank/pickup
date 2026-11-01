@@ -363,3 +363,11 @@ def delete_pickup(pickup: Pickup) -> int:
 
     transaction.on_commit(delete_files)  # only once the rows are really gone
     return len(media)
+
+
+def delete_expired_pickups() -> list[tuple[str, int]]:
+    """Pickups whose expiry date has passed, with all their files: (id, files) of each."""
+    deleted = []
+    for pickup in Pickup.objects.filter(expires_at__lte=timezone.now()).order_by("expires_at"):
+        deleted.append((str(pickup.id), delete_pickup(pickup)))
+    return deleted

@@ -84,7 +84,7 @@ COPY --from=ffmpeg /opt/ffmpeg/bin/ffmpeg /usr/local/bin/ffmpeg
 COPY docker/nginx.conf docker/django_proxy.conf docker/security_headers.conf /etc/nginx/
 COPY docker/app.conf.template /etc/nginx/app.conf.template
 COPY docker/supervisord.conf /etc/supervisord.conf
-COPY docker/start-nginx docker/exit-on-fatal docker/healthcheck /usr/local/bin/
+COPY docker/start docker/start-nginx docker/exit-on-fatal docker/healthcheck /usr/local/bin/
 
 # Everything above is owned by root and read-only for "app"; only /data and /tmp are written.
 USER app
@@ -92,4 +92,5 @@ EXPOSE 8080
 VOLUME ["/data"]
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s \
   CMD ["python", "/usr/local/bin/healthcheck"]
-CMD ["supervisord", "-c", "/etc/supervisord.conf"]
+# Migrations, deploy checks and the first admin, then supervisord (docker/start).
+CMD ["start"]

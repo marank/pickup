@@ -3,9 +3,6 @@
 import email.message
 import email.policy
 import logging
-import threading
-from collections.abc import Callable
-from concurrent.futures import ThreadPoolExecutor
 from email.policy import Policy
 from email.utils import formataddr, parseaddr
 from pathlib import Path
@@ -13,7 +10,6 @@ from typing import Literal
 
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
-from django.db import transaction
 from django.http import HttpRequest
 from django.utils import timezone
 from django.utils.html import format_html
@@ -21,6 +17,7 @@ from django.utils.translation import gettext as _
 from django.utils.translation import gettext_noop
 
 from ..models import Member
+from .jobs import run_later
 
 logger = logging.getLogger(__name__)
 
@@ -77,34 +74,28 @@ _TEXT: dict[Reason, tuple[str, str]] = {
 }
 
 
-# Mails go out in the background, so a slow or unreachable mail server doesn't hold up the
-# request. Created on first use (after gunicorn forked its workers); its threads finish what
-# is queued before a worker exits.
-_pool: ThreadPoolExecutor | None = None
-_pool_lock = threading.Lock()  # gunicorn runs requests in threads: create the pool once
+def _send_later(message: _LinkMail) -> None:
+    """Hand a built mail to the queue (the worker retries if the mail server is away); without
+    one (tests, native development with SQLite) it goes out right away."""
+    from ..tasks import send_mail  # tasks imports this module
+
+    html = next(content for content, mimetype in message.alternatives if mimetype == "text/html")
+    run_later(
+        send_mail,
+        subject=message.subject,
+        body=message.body,
+        html=str(html),
+        sender=message.from_email,
+        to=list(message.to),
+        reply_to=list(message.reply_to),
+    )
 
 
-def _in_background(send: Callable[[], object], what: str) -> None:
-    """Run `send` in a thread once the request's transaction is committed (nothing goes out
-    for a request that fails). MAIL_IN_BACKGROUND off (tests): right away. Failures are logged."""
-
-    def run() -> None:
-        try:
-            send()
-        except Exception:
-            logger.exception("Could not send %s", what)
-
-    def start() -> None:
-        global _pool
-        with _pool_lock:
-            if _pool is None:
-                _pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="mail")
-        _pool.submit(run)
-
-    if settings.MAIL_IN_BACKGROUND:
-        transaction.on_commit(start)
-    else:
-        run()
+def deliver(*, subject: str, body: str, html: str, sender: str, to: list[str], reply_to: list[str]) -> None:
+    """Send a link mail: plain text plus HTML with the embedded logo."""
+    message = _LinkMail(subject, body, sender, to, reply_to=reply_to)
+    message.attach_alternative(html, "text/html")
+    message.send()
 
 
 # The logo (frontend/src/lib/brand.ts) as PNG at twice its size in the mail, embedded so
@@ -193,7 +184,7 @@ def send_personal_link(
     message.attach_alternative(_html(body, values["link"], button), "text/html")
     member.link_sent_at = timezone.now()
     member.save(update_fields=["link_sent_at"])
-    _in_background(message.send, f"the personal link to member {member.id}")
+    _send_later(message)
 
 
 def send_pickup_list(members: list[Member], address: str, request: HttpRequest) -> None:
@@ -256,4 +247,4 @@ def send_pickup_list(members: list[Member], address: str, request: HttpRequest) 
     message = _LinkMail(_("Your pickups"), body, settings.DEFAULT_FROM_EMAIL, [address])
     message.attach_alternative(html, "text/html")
     Member.objects.filter(id__in=[member.id for member in members]).update(link_sent_at=timezone.now())
-    _in_background(message.send, "the pickup list")
+    _send_later(message)

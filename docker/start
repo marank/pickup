@@ -1,0 +1,21 @@
+#!/bin/sh
+# Container start: bring the database up to date, then run everything under supervisord
+# (gunicorn, nginx, the job worker). Runs as the unprivileged "app" user like the rest.
+set -eu
+cd /app
+
+python manage.py check --deploy --fail-level ERROR
+
+# The database may still be starting (compose waits for it, other setups may not).
+tries=0
+until python manage.py migrate --noinput; do
+  tries=$((tries + 1))
+  if [ "$tries" -ge 15 ]; then
+    echo "start: the database is not reachable, giving up" >&2
+    exit 1
+  fi
+  sleep 2
+done
+python manage.py ensure_admin
+
+exec supervisord -c /etc/supervisord.conf

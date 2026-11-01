@@ -1,17 +1,13 @@
 from typing import Any
 
 from django.core.management.base import BaseCommand
-from django.utils import timezone
 
-from apps.pickups.models import Pickup
-from apps.pickups.services.members import delete_pickup
+from apps.pickups.services.members import delete_expired_pickups
 
 
 class Command(BaseCommand):
-    help = "Delete pickups whose expiry date has passed, with all their files."
+    help = "Delete pickups whose expiry date has passed, with all their files (the worker does it hourly)."
 
     def handle(self, *args: Any, **options: Any) -> None:
-        expired = Pickup.objects.filter(expires_at__lte=timezone.now())
-        for pickup in expired:
-            files = delete_pickup(pickup)
-            self.stdout.write(f"Deleted expired pickup {pickup.id} ({files} files)")
+        for pickup_id, files in delete_expired_pickups():
+            self.stdout.write(f"Deleted expired pickup {pickup_id} ({files} files)")

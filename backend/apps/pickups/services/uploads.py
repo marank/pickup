@@ -1,5 +1,6 @@
 """Chunked uploads: sessions, chunks and assembling the final media file."""
 
+import hashlib
 import math
 import os
 from typing import Any
@@ -10,6 +11,7 @@ from django.utils import timezone
 
 from ..models import Folder, Media, MediaChunk, UploadSession
 from ..models.media import media_type_for, stored_name
+from .duplicates import DuplicateUpload, check_duplicate
 from .thumbnails import create_thumbnail
 
 
@@ -51,6 +53,7 @@ def finalize_upload(session: UploadSession) -> Media:
     final_name = stored_name(session.file_name)
     final_path = os.path.join(upload_dir, final_name)
 
+    digest = hashlib.sha256()
     with open(final_path, "wb") as destination:
         for i in range(session.total_chunks):
             chunk_path = session.get_chunk_path(i)
@@ -59,11 +62,19 @@ def finalize_upload(session: UploadSession) -> Media:
             with open(chunk_path, "rb") as chunk:
                 while block := chunk.read(1024 * 1024):
                     destination.write(block)
+                    digest.update(block)
 
     actual_size = os.path.getsize(final_path)
     if actual_size != session.file_size:
         os.remove(final_path)
         raise ValueError(f"File size mismatch: expected {session.file_size}, got {actual_size}")
+
+    try:
+        check_duplicate(session.folder, digest.hexdigest())
+    except DuplicateUpload:
+        os.remove(final_path)
+        _close(session)
+        raise
 
     media = Media.objects.create(
         folder=session.folder,
@@ -72,11 +83,15 @@ def finalize_upload(session: UploadSession) -> Media:
         media_type=session.media_type,
         file_size=session.file_size,
         caption=session.caption,
+        sha256=digest.hexdigest(),
     )
+    _close(session)
+    create_thumbnail(media)
+    return media
 
+
+def _close(session: UploadSession) -> None:
     session.status = "complete"
     session.completed_at = timezone.now()
     session.save(update_fields=["status", "completed_at"])
     session.cleanup_chunks()
-    create_thumbnail(media)
-    return media

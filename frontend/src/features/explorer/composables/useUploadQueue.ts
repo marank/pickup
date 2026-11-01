@@ -3,7 +3,7 @@ import { computed, reactive, ref, toValue, type MaybeRefOrGetter } from 'vue'
 import { toast } from 'vue-sonner'
 
 import { api, formBody } from '@/api/client'
-import { unwrap } from '@/api/errors'
+import { ApiError, unwrap } from '@/api/errors'
 import type { Media, UploadChunkRequest, UploadMediaRequest } from '@/api/types'
 import { pickupKeys } from '@/features/pickups/queryKeys'
 
@@ -18,7 +18,8 @@ export const REFRESH_INTERVAL_MS = 3000
 /** How long the upload list stays after a batch is through. */
 export const UPLOAD_LIST_HIDE_MS = 4000
 
-type UploadStatus = 'pending' | 'uploading' | 'done' | 'error' | 'cancelled'
+// skipped: the member already has this exact file (the server answers 409).
+type UploadStatus = 'pending' | 'uploading' | 'done' | 'skipped' | 'error' | 'cancelled'
 
 export interface UploadItem {
   id: number
@@ -126,6 +127,10 @@ export function useUploadQueue(
         item.status = 'cancelled'
         return
       }
+      if (err instanceof ApiError && err.status === 409) {
+        Object.assign(item, { status: 'skipped', error: uploadErrorMessage(err) })
+        return
+      }
       Object.assign(item, { status: 'error', error: uploadErrorMessage(err) })
       toast.error(`${item.file.name}: ${item.error}`)
     }
@@ -178,7 +183,7 @@ export function useUploadQueue(
   /** Leaves only what still needs attention: uploads running, waiting or failed. */
   function clearDone() {
     items.value = items.value.filter(
-      (item) => item.status !== 'done' && item.status !== 'cancelled',
+      (item) => item.status === 'pending' || item.status === 'uploading' || item.status === 'error',
     )
   }
 

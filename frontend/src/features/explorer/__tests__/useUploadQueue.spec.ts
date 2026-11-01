@@ -126,6 +126,24 @@ describe('useUploadQueue', () => {
     expect(item.status).toBe('done')
   })
 
+  it('skips a file the member already has, without an error', async () => {
+    on('POST', '/api/pickups/:p/folders/:f/media/', {
+      status: 409,
+      body: { error: 'Already uploaded: “beach.jpg” in “Alice”.' },
+    })
+    const error = vi.spyOn(toast, 'error')
+    const queue = setup()
+    await queue.add(small(), FOLDER_ID)
+    await flushPromises()
+    expect(queue.items.value[0]).toMatchObject({
+      status: 'skipped',
+      error: 'Already uploaded: “beach.jpg” in “Alice”.',
+    })
+    expect(error).not.toHaveBeenCalled()
+    queue.clearDone()
+    expect(queue.items.value).toHaveLength(0)
+  })
+
   it('cancels waiting and running uploads', async () => {
     let release!: () => void
     on(

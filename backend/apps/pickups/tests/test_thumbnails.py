@@ -210,8 +210,8 @@ def test_member_removal_and_pickup_deletion_remove_thumbnails(
 def test_backfill_stops_after_the_current_file_on_sigterm(
     client: Client, joined: tuple[str, str], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    for _ in range(3):
-        upload(client, *joined, "photo.jpg", image_bytes((20, 20)))
+    for width in (20, 21, 22):  # three different photos (the same one twice is skipped)
+        upload(client, *joined, "photo.jpg", image_bytes((width, 20)))
     Media.objects.update(thumbnail="")
     calls: list[Media] = []
 

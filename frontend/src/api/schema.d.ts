@@ -2155,6 +2155,14 @@ export interface operations {
           'application/json': components['schemas']['Error']
         }
       }
+      409: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
       413: {
         headers: {
           [name: string]: unknown
@@ -2610,6 +2618,14 @@ export interface operations {
         }
       }
       403: {
+        headers: {
+          [name: string]: unknown
+        }
+        content: {
+          'application/json': components['schemas']['Error']
+        }
+      }
+      409: {
         headers: {
           [name: string]: unknown
         }

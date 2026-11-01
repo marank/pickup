@@ -18,7 +18,8 @@ const progress = computed(() =>
   total.value
     ? Math.round(
         queue.value.items.reduce(
-          (sum, item) => sum + (item.status === 'done' ? 100 : item.progress),
+          (sum, item) =>
+            sum + (item.status === 'done' || item.status === 'skipped' ? 100 : item.progress),
           0,
         ) / total.value,
       )
@@ -34,11 +35,13 @@ watch(tray, (el) => el || setHeight(0))
 onBeforeUnmount(() => setHeight(0))
 
 const failed = computed(() => queue.value.items.filter((item) => item.status === 'error').length)
+const skipped = computed(() => queue.value.items.filter((item) => item.status === 'skipped').length)
 const title = computed(() => {
   if (queue.value.busy) return `Uploading ${queue.value.finished + 1} of ${total.value}`
   if (failed.value === total.value)
     return failed.value === 1 ? '1 upload failed' : `${failed.value} uploads failed`
-  return `${queue.value.finished} of ${total.value} uploaded`
+  const already = skipped.value ? `, ${skipped.value} already there` : ''
+  return `${queue.value.finished} of ${total.value} uploaded${already}`
 })
 
 // A finished batch says so for a moment, then the list goes away by itself. Failed uploads

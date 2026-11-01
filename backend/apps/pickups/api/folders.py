@@ -18,6 +18,7 @@ from ..serializers import (
     UploadMediaSerializer,
 )
 from ..services.access import can_delete_folder, can_edit, can_view
+from ..services.duplicates import DuplicateUpload, check_duplicate, fingerprint
 from ..services.folders import FolderError, create_subfolder, delete_subfolder, rename_folder
 from ..services.members import get_member_from_request
 from ..services.storage import StorageError, check_room
@@ -66,7 +67,12 @@ class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
         methods=["POST"],
         operation_id="folder_media_upload",
         request={"multipart/form-data": UploadMediaSerializer},
-        responses={201: MediaSerializer, 403: ErrorSerializer, 413: ErrorSerializer},
+        responses={
+            201: MediaSerializer,
+            403: ErrorSerializer,
+            409: ErrorSerializer,  # already in the member's folders
+            413: ErrorSerializer,
+        },
     )
     @action(detail=True, methods=["get", "post"])
     def media(self, request: Request, pickup_id: str | None = None, id: str | None = None) -> Response:
@@ -95,7 +101,13 @@ class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
             check_room(folder, upload.validated_data["file"].size)
         except StorageError as exc:
             return Response({"error": str(exc)}, status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
-        media = Media.objects.create(folder=folder, **upload.validated_data)
+        file = upload.validated_data["file"]
+        sha256 = fingerprint(file.chunks())
+        try:
+            check_duplicate(folder, sha256)
+        except DuplicateUpload as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_409_CONFLICT)
+        media = Media.objects.create(folder=folder, sha256=sha256, **upload.validated_data)
         create_thumbnail(media)
         return Response(
             MediaSerializer(media, context={"member": member}).data, status=status.HTTP_201_CREATED

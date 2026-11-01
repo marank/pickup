@@ -1865,6 +1865,16 @@
                         },
                         "description": ""
                     },
+                    "409": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
                     "413": {
                         "content": {
                             "application/json": {
@@ -2660,6 +2670,16 @@
                         "description": ""
                     },
                     "403": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": ""
+                    },
+                    "409": {
                         "content": {
                             "application/json": {
                                 "schema": {

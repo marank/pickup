@@ -82,6 +82,12 @@ class Media(UUIDModel):
         blank=True,
         help_text="Large JPEG for the viewer, for formats browsers can't show (HEIC)",
     )
+    sha256 = models.CharField(
+        max_length=64,
+        blank=True,
+        db_index=True,
+        help_text="Fingerprint of the file, to skip the same file twice (services/duplicates.py)",
+    )
     uploaded_at = models.DateTimeField(default=timezone.now)
 
     # Optional metadata

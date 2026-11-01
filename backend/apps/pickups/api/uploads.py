@@ -16,6 +16,7 @@ from ..serializers import (
     UploadSessionSerializer,
 )
 from ..services.access import can_edit
+from ..services.duplicates import DuplicateUpload
 from ..services.members import get_member_from_request
 from ..services.storage import StorageError, check_room
 from ..services.uploads import create_upload_session, finalize_upload, store_chunk
@@ -114,7 +115,13 @@ class UploadSessionFinalizeView(APIView):
 
     @extend_schema(
         request=None,
-        responses={201: MediaSerializer, 400: ErrorSerializer, 403: ErrorSerializer, 413: ErrorSerializer},
+        responses={
+            201: MediaSerializer,
+            400: ErrorSerializer,
+            403: ErrorSerializer,
+            409: ErrorSerializer,  # already in the member's folders
+            413: ErrorSerializer,
+        },
     )
     def post(self, request: Request, session_id: str) -> Response:
         """Combine all chunks and create the Media object."""
@@ -141,6 +148,8 @@ class UploadSessionFinalizeView(APIView):
 
         try:
             media = finalize_upload(session)
+        except DuplicateUpload as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_409_CONFLICT)
         except (OSError, ValueError) as exc:
             logger.exception("Finalizing upload session %s failed", session.id)
             session.status = "error"

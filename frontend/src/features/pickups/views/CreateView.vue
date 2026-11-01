@@ -258,7 +258,7 @@ async function submit() {
             @submit.prevent="submit"
           >
             <div class="space-y-1">
-              <h1 class="font-heading text-2xl font-bold">{{ t('common.startAPickup') }}</h1>
+              <h1 class="font-heading text-2xl font-bold">{{ t('common.createPickup') }}</h1>
               <p class="text-muted-foreground">
                 {{ t('pickups.createView.aSharedPlaceForEveryones') }}
               </p>

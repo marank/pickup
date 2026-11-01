@@ -1,4 +1,5 @@
 export default {
+  createPickup: 'Create a pickup',
   addAnEmailForName: 'Add an email for {name}',
   added: 'Added',
   anyoneWithTheLink: 'Anyone with the link',
@@ -62,7 +63,6 @@ export default {
   size: 'Size',
   smallIcons: 'Small icons',
   sortBy: 'Sort by',
-  startAPickup: 'Start a pickup',
   theCreator: 'the creator',
   timeline: 'Timeline',
   type: 'Type',

@@ -7,6 +7,6 @@ describe('App', () => {
   it('renders the layout around the current page', async () => {
     const { wrapper } = await renderAt(App, '/')
     expect(wrapper.find('header a[href="/"] [role="img"]').attributes('aria-label')).toBe('Pickup')
-    expect(pageText()).toContain('Start a pickup')
+    expect(pageText()).toContain('Create a pickup')
   })
 })

@@ -10,14 +10,14 @@ describe('HomeView', () => {
   it('leads to the create page', async () => {
     await renderAt(HomeView, '/')
     const link = document.body.querySelector<HTMLAnchorElement>('a[href="/create"]')!
-    expect(link.textContent).toContain('Start a pickup')
+    expect(link.textContent).toContain('Create a pickup')
   })
 
   it('explains how it works and answers questions', async () => {
     await renderAt(HomeView, '/')
-    expect(pageText()).toContain('Three steps, then everyone’s in')
-    expect(pageText()).toContain('Your folder, your rules')
-    expect(pageText()).toContain('Who can change or delete things?')
+    expect(pageText()).toContain('Three steps to get started')
+    expect(pageText()).toContain('A folder for everyone')
+    expect(pageText()).toContain('Who can delete photos?')
     expect(pageText()).toContain('Beach day') // the drawn explorer preview
   })
 

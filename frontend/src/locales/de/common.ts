@@ -1,4 +1,5 @@
 export default {
+  createPickup: 'Pickup erstellen',
   addAnEmailForName: 'E-Mail-Adresse für {name} hinzufügen',
   added: 'Hinzugefügt',
   anyoneWithTheLink: 'Alle mit dem Link',
@@ -62,7 +63,6 @@ export default {
   size: 'Größe',
   smallIcons: 'Kleine Symbole',
   sortBy: 'Sortieren nach',
-  startAPickup: 'Pickup starten',
   theCreator: 'die Ersteller:in',
   timeline: 'Zeitleiste',
   type: 'Typ',

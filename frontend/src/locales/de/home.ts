@@ -16,53 +16,88 @@ export default {
     youExampleCom: 'du@beispiel.de',
   },
   homeView: {
-    bigVideosWelcome: 'Auch große Videos',
-    browseLikeOnAComputer: 'Stöbern wie am Computer',
-    comeBackAnyTime: 'Jederzeit zurückkommen',
-    doINeedAnAccount: 'Brauche ich einen Account?',
-    eachPersonGetsTheirOwn: 'Jede:r bekommt einen eigenen Ordner und lädt direkt vom Handy hoch.',
-    everyoneAddsTheirs: 'Bilder und Videos hochladen',
-    everyoneSeesEverythingButOnly:
-      'Alle sehen alles, aber nur du kannst in deinem Ordner etwas hinzufügen, umbenennen oder löschen – Unterordner inklusive.',
-    everyoneTookPicturesButGetting:
-      'Alle haben fotografiert, aber alle Bilder zusammenzubekommen, ist jedes Mal mühsam. Pickup sammelt sie an einem Ort: ein Link, und alle Gäste bekommen ihren eigenen Ordner. Ganz ohne Accounts.',
-    everyoneWhoHasTheShare:
-      'Alle, die den Teilen-Link des Pickups haben. Er steht in keiner öffentlichen Liste, und keine Suchmaschine findet ihn.',
-    folderTreeAnAddressBar:
-      'Ordnerbaum, eine Adressleiste zum Eintippen, Listen- und Vorschauansicht, Sortieren und Suchen.',
-    fromYourLastEvent: 'von eurem letzten Fest.',
-    giveItANameNo: 'Gib ihm einen Namen. Keine Anmeldung, keine App zum Installieren.',
-    iOpenedThePickupOn: 'Ich habe den Pickup auf einem anderen Handy geöffnet. Wo ist mein Ordner?',
-    inTheGroupChatBy: 'In den Gruppenchat, per E-Mail oder wohin du willst.',
-    largeFilesAreUploadedIn:
-      'Große Dateien werden in kleinen Teilen hochgeladen. Schlägt ein Teil fehl, wird er erneut gesendet – so bricht der Upload auch bei schlechter Verbindung nicht ab.',
-    madeForThePhoneToo: 'Auch fürs Handy gemacht',
-    noPublicGalleryNoTracking:
-      'Keine öffentliche Galerie, kein Tracking, keine Werbung, nichts von fremden Firmen nachgeladen.',
-    noTrackingNoThirdParty: 'Kein Tracking. Keine Inhalte von Dritten.',
-    noYouOnlyPickA: 'Nein. Du suchst dir beim Beitreten nur einen Namen aus.',
-    onlyForPeopleWithThe: 'Nur für alle mit dem Link',
-    onlyTheOwnerOfA:
-      'Nur wem ein Ordner gehört, und zwar in diesem Ordner und seinen Unterordnern. Niemand kann die Fotos von anderen löschen.',
-    openYourPersonalLinkYou:
-      'Öffne deinen persönlichen Link (du hast ihn beim Beitreten oder per E-Mail bekommen). Damit bist du auf diesem Gerät angemeldet.',
-    photosJpgPngGifWebp:
-      'Fotos (JPG, PNG, GIF, WebP, BMP) und Videos (MP4, MOV, AVI, WMV, FLV, WebM, MKV). Auch große Videos sind kein Problem.',
-    pickUpThePhotos: 'Hol dir die Fotos',
-    pickupCollectPhotosTogether: 'Pickup – Fotos gemeinsam sammeln.',
-    pickupWorksLikeTheFile: 'Pickup funktioniert wie der Dateimanager, den du schon kennst.',
-    questions: 'Fragen',
-    sendTheLink: 'Link verschicken',
-    simpleEnoughForEveryone: 'So einfach, dass alle mitmachen können',
-    tapToOpenSwipeThrough:
-      'Antippen zum Öffnen, durch die Fotos wischen, direkt aus der Galerie hochladen. Derselbe Pickup auf jedem Gerät.',
-    theShortAnswers: 'Die kurzen Antworten.',
-    threeStepsThenEveryoneS: 'Drei Schritte, und alle sind dabei',
-    whichFilesWork: 'Welche Dateien werden unterstützt?',
-    whoCanChangeOrDelete: 'Wer kann etwas ändern oder löschen?',
-    withYourPersonalLinkYou:
-      'Mit deinem persönlichen Link meldest du dich auf jedem Gerät an. Hinterlass eine E-Mail-Adresse, dann schicken wir ihn dir.',
-    yourFolderYourRules: 'Dein Ordner, deine Regeln',
+    hero: {
+      title: 'Hol dir die Fotos',
+      titleAccent: 'von eurem letzten Fest.',
+      intro:
+        'Alle haben fotografiert, aber alle Bilder zusammenzubekommen, ist jedes Mal mühsam. Pickup sammelt sie an einem Ort: ein Link, und alle Gäste bekommen ihren eigenen Ordner. Ganz ohne Accounts.',
+    },
+    steps: {
+      heading: 'Drei Schritte, um loszulegen',
+      create: 'Gib ihm einen Namen. Niemand muss sich registrieren oder eine App installieren.',
+      send: {
+        title: 'Link verschicken',
+        text: 'Teile ihn im Gruppenchat oder per E-Mail, oder zeig den QR-Code auf dem Fest.',
+      },
+      add: {
+        title: 'Alle laden hoch',
+        text: 'Jede Person bekommt einen eigenen Ordner und lädt direkt vom Handy hoch.',
+      },
+    },
+    features: {
+      heading: 'So einfach, dass alle mitmachen können',
+      subtitle: 'Ohne App, ohne Account, ohne Anleitung.',
+      ownFolder: {
+        title: 'Ein Ordner für jede Person',
+        text: 'Alle sehen alles, aber nur du änderst, was in deinem Ordner liegt.',
+      },
+      quality: {
+        title: 'In voller Qualität',
+        text: 'Fotos und Videos kommen so an, wie sie aufgenommen wurden, nicht komprimiert wie im Chat. Herunterladen einzeln oder alles auf einmal.',
+      },
+      timeline: {
+        title: 'Alles in der richtigen Reihenfolge',
+        text: 'Die Zeitleiste zeigt die Fotos aller Ordner in der Reihenfolge, in der sie aufgenommen wurden.',
+      },
+      private: {
+        title: 'Privat',
+        text: 'Nur wer den Link hat, kann mitmachen. Keine öffentliche Galerie, keine Werbung, kein Tracking.',
+      },
+      noAccount: {
+        title: 'Ohne Account',
+        text: 'Dein persönlicher Link meldet dich auf jedem Gerät an. Hinterlege eine E-Mail-Adresse, dann schicken wir ihn dir.',
+      },
+      dates: {
+        title: 'Mit Enddatum',
+        text: 'Auf Wunsch enden die Uploads an einem Tag deiner Wahl, und später wird alles gelöscht.',
+      },
+    },
+    faq: {
+      heading: 'Fragen',
+      subtitle: 'Kurz beantwortet.',
+      see: {
+        q: 'Wer kann die Fotos sehen?',
+        a: 'Nur wer über den Link mitmacht. Wer den Pickup erstellt hat, kann ihn auch für alle mit Link zum Ansehen öffnen oder ganz schließen.',
+      },
+      account: {
+        q: 'Brauche ich einen Account oder eine App?',
+        a: 'Nein. Du öffnest den Link im Browser und wählst einen Namen.',
+      },
+      quality: {
+        q: 'Werden die Fotos verkleinert?',
+        a: 'Nein. Jedes Foto und Video bleibt so, wie es hochgeladen wurde, und genau so lädst du es herunter. Nur die Vorschaubilder in der App sind kleiner.',
+      },
+      otherPhone: {
+        q: 'Wie komme ich auf einem anderen Handy wieder hinein?',
+        a: 'Öffne deinen persönlichen Link. Du hast ihn beim Mitmachen bekommen, und per E-Mail, falls du eine Adresse angegeben hast. Verloren? Gib deine Adresse auf der Seite des Pickups ein oder frag die Person, die ihn erstellt hat.',
+      },
+      delete: {
+        q: 'Wer kann Fotos löschen?',
+        a: 'Nur du, in deinem eigenen Ordner. Wer den Pickup erstellt hat, kann bei Bedarf Dateien entfernen, etwa versehentlich hochgeladene.',
+      },
+      files: {
+        q: 'Welche Dateien gehen?',
+        a: 'Fotos (JPG, PNG, HEIC, GIF, WebP) und Videos (MP4, MOV, WebM und mehr), egal wie groß.',
+      },
+      howLong: {
+        q: 'Wie lange bleiben die Fotos?',
+        a: 'Bis der Pickup gelöscht wird: von Hand oder automatisch an einem festgelegten Tag.',
+      },
+    },
+    footer: {
+      tagline: 'Pickup – Fotos gemeinsam sammeln.',
+      noTracking: 'Keine Werbung, kein Tracking.',
+    },
   },
   startPanel: {
     creatingNewPickupsIsTurned: 'Auf diesem Server können keine neuen Pickups angelegt werden.',

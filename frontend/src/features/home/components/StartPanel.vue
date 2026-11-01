@@ -29,12 +29,12 @@ function accepted(code: string) {
     @click="askCode = true"
   >
     <PlusIcon />
-    {{ t('common.startAPickup') }}
+    {{ t('common.createPickup') }}
   </Button>
   <Button v-else as-child size="lg" class="h-12 px-5 text-base">
     <RouterLink :to="{ name: 'create' }">
       <PlusIcon />
-      {{ t('common.startAPickup') }}
+      {{ t('common.createPickup') }}
     </RouterLink>
   </Button>
   <CreationCodeDialog v-model:open="askCode" @accepted="accepted" @cancel="askCode = false" />

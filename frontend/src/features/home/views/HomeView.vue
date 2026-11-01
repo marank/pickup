@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import {
+  CalendarClockIcon,
   ChevronDownIcon,
-  FolderTreeIcon,
+  ImageIcon,
+  ImagesIcon,
   KeyRoundIcon,
   LockIcon,
-  SmartphoneIcon,
   UserRoundCheckIcon,
-  VideoIcon,
 } from '@lucide/vue'
 
 import { t } from '@/lib/i18n'
@@ -17,74 +17,58 @@ import LogoIntro from '../components/LogoIntro.vue'
 import StartPanel from '../components/StartPanel.vue'
 
 const steps = [
+  { title: () => t('common.createPickup'), text: () => t('home.homeView.steps.create') },
   {
-    title: () => t('common.startAPickup'),
-    text: () => t('home.homeView.giveItANameNo'),
+    title: () => t('home.homeView.steps.send.title'),
+    text: () => t('home.homeView.steps.send.text'),
   },
   {
-    title: () => t('home.homeView.sendTheLink'),
-    text: () => t('home.homeView.inTheGroupChatBy'),
-  },
-  {
-    title: () => t('home.homeView.everyoneAddsTheirs'),
-    text: () => t('home.homeView.eachPersonGetsTheirOwn'),
+    title: () => t('home.homeView.steps.add.title'),
+    text: () => t('home.homeView.steps.add.text'),
   },
 ]
 
 const features = [
   {
     icon: UserRoundCheckIcon,
-    title: () => t('home.homeView.yourFolderYourRules'),
-    text: () => t('home.homeView.everyoneSeesEverythingButOnly'),
+    title: () => t('home.homeView.features.ownFolder.title'),
+    text: () => t('home.homeView.features.ownFolder.text'),
   },
   {
-    icon: VideoIcon,
-    title: () => t('home.homeView.bigVideosWelcome'),
-    text: () => t('home.homeView.largeFilesAreUploadedIn'),
+    icon: ImageIcon,
+    title: () => t('home.homeView.features.quality.title'),
+    text: () => t('home.homeView.features.quality.text'),
   },
   {
-    icon: FolderTreeIcon,
-    title: () => t('home.homeView.browseLikeOnAComputer'),
-    text: () => t('home.homeView.folderTreeAnAddressBar'),
-  },
-  {
-    icon: SmartphoneIcon,
-    title: () => t('home.homeView.madeForThePhoneToo'),
-    text: () => t('home.homeView.tapToOpenSwipeThrough'),
+    icon: ImagesIcon,
+    title: () => t('home.homeView.features.timeline.title'),
+    text: () => t('home.homeView.features.timeline.text'),
   },
   {
     icon: LockIcon,
-    title: () => t('home.homeView.onlyForPeopleWithThe'),
-    text: () => t('home.homeView.noPublicGalleryNoTracking'),
+    title: () => t('home.homeView.features.private.title'),
+    text: () => t('home.homeView.features.private.text'),
   },
   {
     icon: KeyRoundIcon,
-    title: () => t('home.homeView.comeBackAnyTime'),
-    text: () => t('home.homeView.withYourPersonalLinkYou'),
+    title: () => t('home.homeView.features.noAccount.title'),
+    text: () => t('home.homeView.features.noAccount.text'),
+  },
+  {
+    icon: CalendarClockIcon,
+    title: () => t('home.homeView.features.dates.title'),
+    text: () => t('home.homeView.features.dates.text'),
   },
 ]
 
 const faqs = [
-  {
-    q: () => t('common.whoCanSeeThePhotos'),
-    a: () => t('home.homeView.everyoneWhoHasTheShare'),
-  },
-  {
-    q: () => t('home.homeView.whoCanChangeOrDelete'),
-    a: () => t('home.homeView.onlyTheOwnerOfA'),
-  },
-  {
-    q: () => t('home.homeView.iOpenedThePickupOn'),
-    a: () => t('home.homeView.openYourPersonalLinkYou'),
-  },
-  {
-    q: () => t('home.homeView.whichFilesWork'),
-    a: () => t('home.homeView.photosJpgPngGifWebp'),
-  },
-  {
-    q: () => t('home.homeView.doINeedAnAccount'),
-    a: () => t('home.homeView.noYouOnlyPickA'),
-  },
+  { q: () => t('home.homeView.faq.see.q'), a: () => t('home.homeView.faq.see.a') },
+  { q: () => t('home.homeView.faq.account.q'), a: () => t('home.homeView.faq.account.a') },
+  { q: () => t('home.homeView.faq.quality.q'), a: () => t('home.homeView.faq.quality.a') },
+  { q: () => t('home.homeView.faq.otherPhone.q'), a: () => t('home.homeView.faq.otherPhone.a') },
+  { q: () => t('home.homeView.faq.delete.q'), a: () => t('home.homeView.faq.delete.a') },
+  { q: () => t('home.homeView.faq.files.q'), a: () => t('home.homeView.faq.files.a') },
+  { q: () => t('home.homeView.faq.howLong.q'), a: () => t('home.homeView.faq.howLong.a') },
 ]
 </script>
 
@@ -100,11 +84,11 @@ const faqs = [
         <!-- Centred while the picture is below, left-aligned next to it. -->
         <div class="space-y-6 text-center lg:text-left">
           <h1 class="text-5xl leading-[0.95] font-bold sm:text-6xl">
-            {{ t('home.homeView.pickUpThePhotos') }}
-            <span class="block text-tomato">{{ t('home.homeView.fromYourLastEvent') }}</span>
+            {{ t('home.homeView.hero.title') }}
+            <span class="block text-tomato">{{ t('home.homeView.hero.titleAccent') }}</span>
           </h1>
           <p class="mx-auto max-w-lg text-lg text-muted-foreground lg:mx-0">
-            {{ t('home.homeView.everyoneTookPicturesButGetting') }}
+            {{ t('home.homeView.hero.intro') }}
           </p>
           <StartPanel />
         </div>
@@ -120,7 +104,7 @@ const faqs = [
     <!-- How it works -->
     <section class="bg-ink text-paper">
       <div class="mx-auto max-w-6xl px-4 py-14">
-        <h2 class="mb-8 text-3xl font-bold">{{ t('home.homeView.threeStepsThenEveryoneS') }}</h2>
+        <h2 class="mb-8 text-3xl font-bold">{{ t('home.homeView.steps.heading') }}</h2>
         <ol class="grid gap-6 md:grid-cols-3">
           <li v-for="(step, index) in steps" :key="index" class="flex gap-4">
             <span
@@ -139,9 +123,9 @@ const faqs = [
 
     <!-- Features -->
     <section class="mx-auto max-w-6xl px-4 py-16">
-      <h2 class="mb-2 text-3xl font-bold">{{ t('home.homeView.simpleEnoughForEveryone') }}</h2>
+      <h2 class="mb-2 text-3xl font-bold">{{ t('home.homeView.features.heading') }}</h2>
       <p class="mb-8 max-w-2xl text-muted-foreground">
-        {{ t('home.homeView.pickupWorksLikeTheFile') }}
+        {{ t('home.homeView.features.subtitle') }}
       </p>
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <article
@@ -166,8 +150,8 @@ const faqs = [
     <section class="border-t bg-pane">
       <div class="mx-auto grid max-w-6xl gap-8 px-4 py-14 md:grid-cols-[1fr_2fr]">
         <div>
-          <h2 class="text-3xl font-bold">{{ t('home.homeView.questions') }}</h2>
-          <p class="mt-2 text-muted-foreground">{{ t('home.homeView.theShortAnswers') }}</p>
+          <h2 class="text-3xl font-bold">{{ t('home.homeView.faq.heading') }}</h2>
+          <p class="mt-2 text-muted-foreground">{{ t('home.homeView.faq.subtitle') }}</p>
         </div>
         <div class="divide-y rounded-xl border bg-card">
           <details v-for="(faq, index) in faqs" :key="index" class="group px-5">
@@ -186,8 +170,8 @@ const faqs = [
     <footer
       class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-6 text-sm text-muted-foreground"
     >
-      <span>{{ t('home.homeView.pickupCollectPhotosTogether') }}</span>
-      <span>{{ t('home.homeView.noTrackingNoThirdParty') }}</span>
+      <span>{{ t('home.homeView.footer.tagline') }}</span>
+      <span>{{ t('home.homeView.footer.noTracking') }}</span>
     </footer>
   </div>
 </template>

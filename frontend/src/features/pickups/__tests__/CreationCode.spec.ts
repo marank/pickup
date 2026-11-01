@@ -38,7 +38,7 @@ describe('creating pickups with a code', () => {
     mode('code')
     const { router } = await renderAt(HomeView, '/')
     await settle()
-    findButton(/Start a pickup/).click()
+    findButton(/Create a pickup/).click()
     await settle()
     expect(pageText()).toContain('Enter your code')
     const field = $<HTMLInputElement>('#creation-code')

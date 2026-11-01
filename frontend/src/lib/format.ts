@@ -12,9 +12,9 @@ export function formatRelativeDate(iso: string, now: Date = new Date()): string 
   const date = new Date(iso)
   const startOf = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
   const days = Math.round((startOf(now) - startOf(date)) / 86_400_000)
-  if (days <= 0) return t('Today')
-  if (days === 1) return t('Yesterday')
-  if (days < 7) return plural(days, '1 day ago', '{n} days ago')
+  if (days <= 0) return t('app.format.today')
+  if (days === 1) return t('app.format.yesterday')
+  if (days < 7) return plural(days, 'app.format.nDaysAgo')
   return formatDate(date, {})
 }
 

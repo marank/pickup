@@ -16,7 +16,7 @@ defineProps<{ title: string; description: string }>()
     </CardHeader>
     <CardFooter>
       <Button as-child variant="outline"
-        ><RouterLink to="/">{{ t('Go to the start page') }}</RouterLink></Button
+        ><RouterLink to="/">{{ t('common.goToTheStartPage') }}</RouterLink></Button
       >
     </CardFooter>
   </Card>

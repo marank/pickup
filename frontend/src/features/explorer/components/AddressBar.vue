@@ -22,16 +22,16 @@ const text = ref('')
 const input = ref<HTMLInputElement | null>(null)
 const crumbs = ref<HTMLElement | null>(null)
 
-const title = computed(() => explorer.pickup.data?.title || t('Untitled pickup'))
+const title = computed(() => explorer.pickup.data?.title || t('common.untitledPickup'))
 /** Segments: the pickup root, then each folder down to the current one. */
 const segments = computed(() => [
   { id: null as string | null, name: title.value },
   ...explorer.path.map((folder) => ({ id: folder.id as string | null, name: folder.name })),
 ])
 const pageNames = {
-  timeline: () => t('Timeline'),
-  settings: () => t('Settings'),
-  people: () => t('People'),
+  timeline: () => t('common.timeline'),
+  settings: () => t('common.settings'),
+  people: () => t('common.people'),
 } as const
 const pathText = computed(() => segments.value.map((segment) => segment.name).join(' / '))
 const isLast = (index: number) => index === segments.value.length - 1 && !explorer.page
@@ -45,7 +45,7 @@ async function edit() {
 
 function submit() {
   if (explorer.navigateToPath(text.value.replace(/\s*\/\s*/g, '/'))) editing.value = false
-  else toast.error(t("“{path}” doesn't exist", { path: text.value }))
+  else toast.error(t('explorer.addressBar.pathDoesntExist', { path: text.value }))
 }
 
 // Always show the deepest part of long paths: on first display, on navigation, on resize.
@@ -73,7 +73,7 @@ useEventListener(window, 'keydown', (event: KeyboardEvent) => {
       <input
         ref="input"
         v-model="text"
-        :aria-label="t('Folder path')"
+        :aria-label="t('explorer.addressBar.folderPath')"
         class="h-full min-w-0 flex-1 bg-transparent px-3 text-sm outline-none"
         spellcheck="false"
         @keydown.esc="editing = false"
@@ -90,7 +90,9 @@ useEventListener(window, 'keydown', (event: KeyboardEvent) => {
           <DropdownMenu v-if="index > 0">
             <DropdownMenuTrigger
               class="flex h-7 shrink-0 items-center rounded px-0.5 text-muted-foreground hover:bg-muted"
-              :aria-label="t('Folders in {name}', { name: segments[index - 1]!.name })"
+              :aria-label="
+                t('explorer.addressBar.foldersInName', { name: segments[index - 1]!.name })
+              "
             >
               <ChevronRightIcon class="size-3.5" />
             </DropdownMenuTrigger>
@@ -128,7 +130,7 @@ useEventListener(window, 'keydown', (event: KeyboardEvent) => {
         <!-- Clicking next to the path (or Ctrl+L) turns it into a text field. -->
         <span
           class="min-w-6 flex-1 cursor-text self-stretch"
-          :title="t('Type a path (Ctrl+L)')"
+          :title="t('explorer.addressBar.typeAPathCtrlL')"
           @click="edit"
         />
       </div>

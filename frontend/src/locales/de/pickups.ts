@@ -1,387 +1,303 @@
-import type { Messages } from '@/lib/i18n'
-
-/** German for src/features/pickups, keyed by the English text (see lib/i18n.ts). */
-const pickups: Messages = {
-  // Shared within the pickup pages
-  Back: 'Zurück',
-  Cancel: 'Abbrechen',
-  'Check your inbox for your personal link':
-    'Schau in dein Postfach, dort ist dein persönlicher Link',
-  'Could not send the mail': 'Die Mail konnte nicht gesendet werden',
-  Email: 'E-Mail',
-  'It is stored only as a hash.': 'Sie wird nur als Hash gespeichert.',
-  'Open the pickup': 'Pickup öffnen',
-  'Password of the pickup': 'Passwort des Pickups',
-  'Personal link': 'Persönlicher Link',
-  Save: 'Speichern',
-  Saved: 'Gespeichert',
-  Send: 'Senden',
-  'the creator': 'die Ersteller:in',
-  'The creator': 'Die Ersteller:in',
-  'this pickup': 'diesem Pickup',
-  'Untitled pickup': 'Pickup ohne Titel',
-  'Your email': 'Deine E-Mail-Adresse',
-  'Your name': 'Dein Name',
-  'Your personal link': 'Dein persönlicher Link',
-
-  // AccountMenu
-  Account: 'Account',
-  Appearance: 'Darstellung',
-  'Copy my personal link': 'Meinen persönlichen Link kopieren',
-  'Could not copy your link': 'Dein Link konnte nicht kopiert werden',
-  'Could not log out': 'Abmelden fehlgeschlagen',
-  'Create my folder': 'Meinen Ordner anlegen',
-  'Creator of this pickup': 'Ersteller:in dieses Pickups',
-  'Edit my details': 'Meine Angaben ändern',
-  'Email me my personal link': 'Persönlichen Link per E-Mail schicken',
-  Guest: 'Gast',
-  'How Pickup works': 'So funktioniert Pickup',
-  'Join this pickup': 'Bei diesem Pickup mitmachen',
-  'Join to add your own photos': 'Mach mit, um eigene Fotos hinzuzufügen',
-  'Log out': 'Abmelden',
-  'Log out on this device?': 'Auf diesem Gerät abmelden?',
-  'Member of this pickup': 'Teilnehmer:in dieses Pickups',
-  'People & invitations': 'Personen & Einladungen',
-  'Personal link copied': 'Persönlicher Link kopiert',
-  'Pickup settings': 'Einstellungen des Pickups',
-  'Viewing as a guest': 'Du schaust als Gast zu',
-  You: 'Du',
-  'You are logged out': 'Du bist abgemeldet',
-  'You will be logged out on this device. To log in again as the creator, open your personal link. The pickup is not changed.':
-    'Du wirst auf diesem Gerät abgemeldet. Um dich wieder als Ersteller:in anzumelden, öffne deinen persönlichen Link. Am Pickup ändert sich nichts.',
-  'You will be logged out on this device. To log in again, open your personal link (from when you joined, or from your email). Your folder and files are kept.':
-    'Du wirst auf diesem Gerät abgemeldet. Um dich wieder anzumelden, öffne deinen persönlichen Link (vom Mitmachen oder aus deiner E-Mail). Dein Ordner und deine Dateien bleiben erhalten.',
-
-  // CreationCodeDialog
-  Code: 'Code',
-  Continue: 'Weiter',
-  'Could not check the code': 'Der Code konnte nicht geprüft werden',
-  'Enter your code': 'Gib deinen Code ein',
-  'You need a code to create a pickup on this server.':
-    'Um auf diesem Server einen Pickup anzulegen, brauchst du einen Code.',
-
-  // EmailLinkDialog
-  'With your personal link you can log in on any device. We also save the address, so you can request the link again later.':
-    'Mit deinem persönlichen Link meldest du dich auf jedem Gerät an. Wir speichern auch die Adresse, damit du den Link später erneut anfordern kannst.',
-
-  // IntroDialog
-  'Add photos until {date}': 'Fotos hinzufügen bis zum {date}',
-  'After that nobody adds or changes anything; looking and downloading go on.':
-    'Danach fügt niemand mehr etwas hinzu oder ändert etwas; ansehen und herunterladen geht weiter.',
-  'Also in your inbox.': 'Auch in deinem Postfach.',
-  'Available until {date}': 'Verfügbar bis zum {date}',
-  'Download single files, whole folders, or everything as a ZIP.':
-    'Lade einzelne Dateien, ganze Ordner oder alles als ZIP herunter.',
-  'Download what you want to keep before then.': 'Lade vorher herunter, was du behalten möchtest.',
-  'Email it to me as well': 'Schick ihn mir auch per E-Mail',
-  'Everything you add goes into your own folder.':
-    'Alles, was du hinzufügst, landet in deinem eigenen Ordner.',
-  "It isn't the link you joined with.": 'Es ist nicht der Link, mit dem du mitgemacht hast.',
-  'It stays until {creator} deletes it.': 'Der Pickup bleibt, bis {creator} ihn löscht.',
-  'Keep it to yourself: whoever opens it is you here.':
-    'Behalte ihn für dich: Wer ihn öffnet, ist hier du.',
-  "Let's go": 'Los geht’s',
-  'Lost it, with no email stored? Only {creator} can give you a new one.':
-    'Verloren, und keine E-Mail gespeichert? Nur {creator} kann dir einen neuen geben.',
-  "Lost it? Have it sent to your address again from the pickup's page.":
-    'Verloren? Lass ihn dir auf der Seite des Pickups erneut an deine Adresse schicken.',
-  Next: 'Weiter',
-  'Nothing is compressed, unlike in chat apps.': 'Anders als in Chat-Apps wird nichts komprimiert.',
-  "On a new device you also need the pickup's password.":
-    'Auf einem neuen Gerät brauchst du außerdem das Passwort des Pickups.',
-  'On {date} it is deleted with everything in it.':
-    'Am {date} wird der Pickup mit allem Inhalt gelöscht.',
-  'Only for your link, so you can request it again yourself.':
-    'Nur für deinen Link, damit du ihn selbst erneut anfordern kannst.',
-  'Only you can upload, rename and delete in it, and make subfolders.':
-    'Nur du kannst darin hochladen, umbenennen, löschen und Unterordner anlegen.',
-  'Photos and videos, as they are': 'Fotos und Videos, so wie sie sind',
-  'Read-only now': 'Jetzt schreibgeschützt',
-  'Right now only {creator} can see the folders, yours included.':
-    'Gerade kann nur {creator} die Ordner sehen, deinen eingeschlossen.',
-  Share: 'Teilen',
-  "So can anyone who has the pickup's link.": 'Genauso alle, die den Link des Pickups haben.',
-  'Then the pickup is deleted with everything in it.':
-    'Dann wird der Pickup mit allem Inhalt gelöscht.',
-  'There are no accounts: this link logs you in, on any device.':
-    'Es gibt keine Accounts: Dieser Link meldet dich an, auf jedem Gerät.',
-  'This is your folder': 'Das ist dein Ordner',
-  'To invite others, use {share} at the top.': 'Um andere einzuladen, nutz oben {share}.',
-  'Upload as many as you like at once, large videos too; they keep full quality.':
-    'Lade so viele auf einmal hoch, wie du willst, auch große Videos; sie behalten ihre volle Qualität.',
-  "You can look at everyone else's folders and download from them; they can see yours.":
-    'Du kannst die Ordner aller anderen ansehen und daraus herunterladen; sie sehen deinen.',
-  'Your personal link is your key': 'Dein persönlicher Link ist dein Schlüssel',
-  '{name} can remove files if needed.': '{name} kann bei Bedarf Dateien entfernen.',
-
-  // JoinForm
-  'Ask the person who shared the link.': 'Frag die Person, die den Link geteilt hat.',
-  'Could not join the pickup': 'Mitmachen fehlgeschlagen',
-  'Email (optional)': 'E-Mail (optional)',
-  'Folder name': 'Ordnername',
-  'Join pickup': 'Mitmachen',
-  'Joining…': 'Du machst mit …',
-  'We send you your personal link, so you can log in on other devices.':
-    'Wir schicken dir deinen persönlichen Link, damit du dich auf anderen Geräten anmelden kannst.',
-  'Welcome! Your folder is ready.': 'Willkommen! Dein Ordner ist bereit.',
-
-  // JoinPanel
-  'Choose your name': 'Wähl deinen Namen',
-  Closed: 'Geschlossen',
-  'Join {title}': 'Bei {title} mitmachen',
-  'Only invited people can take part. If you were invited, use the link from your invitation.':
-    'Nur eingeladene Personen können mitmachen. Wenn du eingeladen wurdest, nutz den Link aus deiner Einladung.',
-  'Private pickup': 'Privater Pickup',
-  'Protected with a password': 'Mit Passwort geschützt',
-  'That personal link is not valid. Join below, or ask for a new link.':
-    'Dieser persönliche Link ist ungültig. Mach unten mit oder frag nach einem neuen Link.',
-  'The creator has closed this pickup. Nobody can look at or add photos right now.':
-    'Die Ersteller:in hat diesen Pickup geschlossen. Gerade kann niemand Fotos ansehen oder hinzufügen.',
-  "This pickup doesn't take new participants anymore.":
-    'Dieser Pickup nimmt keine neuen Teilnehmenden mehr auf.',
-  'This pickup is read-only now: nobody joins or adds photos anymore.':
-    'Dieser Pickup ist jetzt schreibgeschützt: Niemand macht mehr mit oder fügt Fotos hinzu.',
-  "You get your own folder for uploads and can see everyone else's photos.":
-    'Du bekommst einen eigenen Ordner zum Hochladen und siehst die Fotos aller anderen.',
-  'Your folder gets this name; everyone in “{title}” sees it.':
-    'Dein Ordner bekommt diesen Namen; alle in „{title}“ sehen ihn.',
-
-  // LinkRequestForm
-  'Already part of it on another device?': 'Auf einem anderen Gerät schon dabei?',
-  'Enter the address you gave when you joined or were invited, and we email you your personal link.':
-    'Gib die Adresse ein, die du beim Mitmachen oder bei der Einladung angegeben hast, und wir schicken dir deinen persönlichen Link.',
-  'Please check the address': 'Bitte prüf die Adresse',
-
-  // MemberDetailsDialog
-  'A new address is only saved after you confirm it with the link we send to it.':
-    'Eine neue Adresse wird erst gespeichert, wenn du sie über den Link bestätigst, den wir dorthin schicken.',
-  'Could not save': 'Speichern fehlgeschlagen',
-  'Everyone in the pickup sees your name and folder.':
-    'Alle im Pickup sehen deinen Namen und deinen Ordner.',
-  Optional: 'Optional',
-  'Saved. Enter a new address to change it': 'Gespeichert. Gib zum Ändern eine neue Adresse ein',
-  'We send you your personal link to this address.':
-    'Wir schicken dir deinen persönlichen Link an diese Adresse.',
-  'Your details': 'Deine Angaben',
-  'Your folder': 'Dein Ordner',
-
-  // MemberEmailDialog
-  'Add an email for {name}': 'E-Mail-Adresse für {name} hinzufügen',
-  'Could not save the address': 'Die Adresse konnte nicht gespeichert werden',
-  'Save and send': 'Speichern und senden',
-  'Their email': 'E-Mail-Adresse der Person',
-  'They get their personal link at this address right away, and can have it sent there again whenever they lose it. Only they can change it later.':
-    'Die Person bekommt ihren persönlichen Link sofort an diese Adresse und kann ihn sich dorthin erneut schicken lassen, wenn sie ihn verliert. Ändern kann die Adresse später nur sie selbst.',
-
-  // PackingAnimation
-  'Almost done': 'Fast fertig',
-  'Creating folders': 'Ordner werden angelegt',
-  'Creating links': 'Links werden erstellt',
-  'Creating your pickup…': 'Dein Pickup wird angelegt …',
-
-  // PeoplePanel
-  '(you)': '(du)',
-  'Add their email and send them their link':
-    'E-Mail-Adresse hinzufügen und Link an die Person schicken',
-  'Anyone with the link can join; you can also invite people by email.':
-    'Alle mit dem Link können mitmachen; du kannst auch Personen per E-Mail einladen.',
-  'Copy the personal link of {name}': 'Persönlichen Link von {name} kopieren',
-  'Copy their personal link, if they lost it':
-    'Persönlichen Link der Person kopieren, falls sie ihn verloren hat',
-  'Could not copy the link': 'Der Link konnte nicht kopiert werden',
-  'Could not remove': 'Entfernen fehlgeschlagen',
-  'Could not send the invitation': 'Die Einladung konnte nicht gesendet werden',
-  Creator: 'Ersteller:in',
-  'email stored privately': 'E-Mail privat gespeichert',
-  'Everyone with a personal link to this pickup, including invitations not accepted yet.':
-    'Alle mit einem persönlichen Link zu diesem Pickup, auch noch nicht angenommene Einladungen.',
-  'Everyone with a personal link to this pickup. Privacy mode is off: addresses are stored and shown here.':
-    'Alle mit einem persönlichen Link zu diesem Pickup. Der Privatsphäre-Modus ist aus: Adressen werden gespeichert und hier angezeigt.',
-  Invite: 'Einladen',
-  'Invite by email': 'Per E-Mail einladen',
-  'Invitation sent again to {email}': 'Einladung erneut an {email} gesendet',
-  'Invitation sent to {email}': 'Einladung an {email} gesendet',
-  'Invited person': 'Eingeladene Person',
-  'Invited, not joined yet': 'Eingeladen, noch nicht dabei',
-  invitation: 'Einladung',
-  Member: 'Teilnehmer:in',
-  'Name (optional)': 'Name (optional)',
-  'No folder yet': 'Noch kein Ordner',
-  'Nobody new can join right now.': 'Gerade kann niemand Neues mitmachen.',
-  'Only people you invite can take part.': 'Nur Personen, die du einlädst, können mitmachen.',
-  Participants: 'Teilnehmende',
-  People: 'Personen',
-  'Personal link of {name} copied': 'Persönlicher Link von {name} kopiert',
-  Remove: 'Entfernen',
-  'Remove {name}': '{name} entfernen',
-  'Remove {name}?': '{name} entfernen?',
-  'Send the invitation to {name} again': 'Einladung erneut an {name} senden',
-  'Send the link again': 'Link erneut senden',
-  'The invitation': 'Die Einladung',
-  'the invited person': 'der eingeladenen Person',
-  'Their personal link stops working, and their folder with everything in it is deleted for everyone. This cannot be undone.':
-    'Der persönliche Link der Person funktioniert dann nicht mehr, und ihr Ordner wird mit allem Inhalt für alle gelöscht. Das lässt sich nicht rückgängig machen.',
-  'They get an email with a personal link from “{sender}”. If the address is already in the pickup, the link is sent again.':
-    'Die Person bekommt eine E-Mail mit einem persönlichen Link von „{sender}“. Ist die Adresse schon im Pickup, wird der Link erneut gesendet.',
-  'this invitation': 'diese Einladung',
-  'Whoever opens it takes part as them, so only give it to them.':
-    'Wer ihn öffnet, macht als diese Person mit – gib ihn also nur ihr.',
-  'active {when}': 'aktiv {when}',
-  'added {when}': 'hinzugefügt {when}',
-  '{name} removed': '{name} entfernt',
-
-  // SettingsCard
-  Discard: 'Verwerfen',
-
-  // SettingsPanel
-  Access: 'Zugang',
-  'After {date} nobody joins, uploads or changes anything; everyone can still look and download. Everyone sees the date.':
-    'Nach dem {date} macht niemand mehr mit, lädt hoch oder ändert etwas; ansehen und herunterladen können alle weiterhin. Alle sehen das Datum.',
-  'Anyone with the link': 'Alle mit dem Link',
-  'Anyone with the share link can join and upload.':
-    'Alle mit dem Teilen-Link können mitmachen und hochladen.',
-  'Anyone with the share link sees the photos, without joining.':
-    'Alle mit dem Teilen-Link sehen die Fotos, auch ohne mitzumachen.',
-  'At the end of {date} the pickup is deleted with all photos and videos. Everyone sees the date.':
-    'Am Ende des {date} wird der Pickup mit allen Fotos und Videos gelöscht. Alle sehen das Datum.',
-  'Could not delete the pickup': 'Der Pickup konnte nicht gelöscht werden',
-  'Could not save the password': 'Das Passwort konnte nicht gespeichert werden',
-  'Could not save the settings': 'Die Einstellungen konnten nicht gespeichert werden',
-  'Current participants stay, nobody new can join.':
-    'Bisherige Teilnehmende bleiben, niemand Neues kann mitmachen.',
-  'Delete automatically': 'Automatisch löschen',
-  'Delete for good': 'Endgültig löschen',
-  'Delete pickup': 'Pickup löschen',
-  'Delete this pickup': 'Diesen Pickup löschen',
-  'Delete “{title}” for good?': '„{title}“ endgültig löschen?',
-  "Email addresses are stored only as a hash. You can't see them, and to send an invitation again you have to enter the address again. Off: addresses are stored and shown in the list of people.":
-    'E-Mail-Adressen werden nur als Hash gespeichert. Du kannst sie nicht sehen, und um eine Einladung erneut zu senden, musst du die Adresse noch einmal eingeben. Aus: Adressen werden gespeichert und in der Personenliste angezeigt.',
-  'Everyone who has the link can look at all photos, without joining.':
-    'Alle, die den Link haben, können alle Fotos ansehen, ohne mitzumachen.',
-  General: 'Allgemein',
-  'How email addresses of participants are stored.':
-    'Wie E-Mail-Adressen der Teilnehmenden gespeichert werden.',
-  'In short:': 'Kurz gesagt:',
-  'Name of the pickup': 'Name des Pickups',
-  Never: 'Nie',
-  'Never: people can add photos until the pickup is deleted.':
-    'Nie: Fotos können hinzugefügt werden, bis der Pickup gelöscht wird.',
-  'Never: the pickup stays until you delete it.': 'Nie: Der Pickup bleibt, bis du ihn löschst.',
-  'New password': 'Neues Passwort',
-  'No password set.': 'Kein Passwort gesetzt.',
-  'Nobody new': 'Niemand Neues',
-  'Only invited people': 'Nur eingeladene Personen',
-  'Only me (paused)': 'Nur ich (pausiert)',
-  'Only participants': 'Nur Teilnehmende',
-  'Only participants see the photos.': 'Nur Teilnehmende sehen die Fotos.',
-  'Only people you invite can join and upload.':
-    'Nur Personen, die du einlädst, können mitmachen und hochladen.',
-  'Only the current participants upload; nobody new joins.':
-    'Nur die bisherigen Teilnehmenden laden hoch; niemand Neues macht mit.',
-  'Only you as the creator can change these.': 'Nur du als Ersteller:in kannst sie ändern.',
-  'Only you still see the contents. Participants can’t look or upload, and nobody can join, until you open it again.':
-    'Nur du siehst noch den Inhalt. Teilnehmende können nichts ansehen oder hochladen, und niemand kann mitmachen, bis du ihn wieder öffnest.',
-  Password: 'Passwort',
-  'Password removed': 'Passwort entfernt',
-  'Password saved': 'Passwort gespeichert',
-  'Paused: only you see the photos, and nobody joins or uploads.':
-    'Pausiert: Nur du siehst die Fotos, und niemand macht mit oder lädt hoch.',
-  'People pick a new name and get their own folder.':
-    'Personen wählen einen neuen Namen und bekommen einen eigenen Ordner.',
-  'People without a login need it to join or to log in with their personal link.':
-    'Wer nicht angemeldet ist, braucht es, um mitzumachen oder sich mit dem persönlichen Link anzumelden.',
-  Privacy: 'Privatsphäre',
-  'Privacy mode for email addresses': 'Privatsphäre-Modus für E-Mail-Adressen',
-  'Read-only': 'Schreibgeschützt',
-  'Recommended. Others with the link see the name of the pickup and how to join.':
-    'Empfohlen. Andere mit dem Link sehen den Namen des Pickups und wie sie mitmachen können.',
-  'Remove password': 'Passwort entfernen',
-  'Removes the pickup with every folder, photo and video for everyone. This cannot be undone.':
-    'Entfernt den Pickup mit allen Ordnern, Fotos und Videos für alle. Das lässt sich nicht rückgängig machen.',
-  'Saving deletes all stored addresses of this pickup now.':
-    'Beim Speichern werden alle gespeicherten Adressen dieses Pickups sofort gelöscht.',
-  'Saving logs everyone else out of this pickup. They need their personal link and the password to come back. If you forget it, the server operator can remove it.':
-    'Beim Speichern werden alle anderen von diesem Pickup abgemeldet. Um zurückzukommen, brauchen sie ihren persönlichen Link und das Passwort. Wenn du es vergisst, kann die Betreiber:in des Servers es entfernen.',
-  Settings: 'Einstellungen',
-  Storage: 'Speicherplatz',
-  'Storage used': 'Belegter Speicherplatz',
-  'The name everyone sees, and when the pickup goes away.':
-    'Der Name, den alle sehen, und wann der Pickup gelöscht wird.',
-  'The pickup': 'Der Pickup',
-  'The server operator sets these limits. Ask them if you need more space.':
-    'Diese Grenzen legt die Betreiber:in des Servers fest. Frag sie, wenn du mehr Platz brauchst.',
-  'This pickup is protected with a password.': 'Dieser Pickup ist mit einem Passwort geschützt.',
-  'Who can join and upload?': 'Wer kann mitmachen und hochladen?',
-  'Who can see the photos?': 'Wer kann die Fotos sehen?',
-  'Who sees the photos, and who can join with a folder of their own.':
-    'Wer die Fotos sieht und wer mit einem eigenen Ordner mitmachen kann.',
-  'With a password, only participants see the photos.':
-    'Mit Passwort sehen nur Teilnehmende die Fotos.',
-  'You invite people by email; each gets a personal link.':
-    'Du lädst Personen per E-Mail ein; alle bekommen einen persönlichen Link.',
-  '{folders} and {files} are deleted for everyone, and all links stop working. There is no way to get them back.':
-    '{folders} und {files} werden für alle gelöscht, und alle Links funktionieren nicht mehr. Es gibt keinen Weg, sie zurückzuholen.',
-  '{n} files': ['1 Datei', '{n} Dateien'],
-  '{n} folders': ['1 Ordner', '{n} Ordner'],
-  '{size} used': '{size} belegt',
-  '{title} was deleted': '{title} wurde gelöscht',
-  '{used} of {limit} used': '{used} von {limit} belegt',
-
-  // ConfirmEmailView
-  'Address confirmed': 'Adresse bestätigt',
-  'Confirming your address…': 'Deine Adresse wird bestätigt …',
-  'Could not confirm the address': 'Die Adresse konnte nicht bestätigt werden',
-  'Not confirmed': 'Nicht bestätigt',
-
-  // CreateView
-  '(optional)': '(optional)',
-  "A shared place for everyone's photos and videos. Nobody needs an account.":
-    'Ein gemeinsamer Ort für die Fotos und Videos aller. Niemand braucht einen Account.',
-  'Could not create the pickup': 'Der Pickup konnte nicht angelegt werden',
-  'Create pickup': 'Pickup anlegen',
-  'Creating pickups is turned off on this server.':
-    'Das Anlegen von Pickups ist auf diesem Server ausgeschaltet.',
-  Details: 'Details',
-  'e.g. Anna & Mark’s wedding': 'z. B. Hochzeit von Anna & Mark',
-  'Everyone with the link picks a name and gets a folder.':
-    'Alle mit dem Link wählen einen Namen und bekommen einen Ordner.',
-  Links: 'Links',
-  'New pickup': 'Neuer Pickup',
-  'Only participants see the photos. You can change this and more later in the settings.':
-    'Nur Teilnehmende sehen die Fotos. Das und mehr kannst du später in den Einstellungen ändern.',
-  'Only people I invite': 'Nur Personen, die ich einlade',
-  'Save QR card': 'QR-Karte speichern',
-  'Send it to your guests, or print the QR card.':
-    'Schick ihn deinen Gästen oder druck die QR-Karte aus.',
-  'Share link': 'Teilen-Link',
-  'Start a pickup': 'Pickup starten',
-  Steps: 'Schritte',
-  'We also emailed it to you.': 'Wir haben ihn dir auch per E-Mail geschickt.',
-  'We send you your link to get back in.':
-    'Wir schicken dir deinen Link, damit du wieder hineinkommst.',
-  'Who can join?': 'Wer kann mitmachen?',
-  'With this link you log in as the creator on any device; keep it to yourself. You can copy it again from the account menu.':
-    'Mit diesem Link meldest du dich auf jedem Gerät als Ersteller:in an; behalte ihn für dich. Du kannst ihn im Account-Menü jederzeit wieder kopieren.',
-  'You get a folder with this name right away.':
-    'Du bekommst sofort einen Ordner mit diesem Namen.',
-  'You get two links.': 'Du bekommst zwei Links.',
-  'Your pickup is ready': 'Dein Pickup ist bereit',
-  '— for your guests': '– für deine Gäste',
-  '— only for you': '– nur für dich',
-  '“{title}” is ready': '„{title}“ ist bereit',
-
-  // JoinView
-  'Check the link you got, or ask for a new one.':
-    'Prüf den Link, den du bekommen hast, oder frag nach einem neuen.',
-  'Pickup not found': 'Pickup nicht gefunden',
-
-  // MemberLinkView
-  'Could not log in': 'Anmelden fehlgeschlagen',
-  'Log in': 'Anmelden',
-  'This logs you in on this device.': 'Damit meldest du dich auf diesem Gerät an.',
-  'You are {name}, the creator.': 'Du bist {name}, die Ersteller:in.',
-  'You are {name}.': 'Du bist {name}.',
-  'Your personal link for': 'Dein persönlicher Link für',
-}
-
-export default pickups
+export default {
+  accountMenu: {
+    account: 'Account',
+    copyMyPersonalLink: 'Meinen persönlichen Link kopieren',
+    couldNotCopyYourLink: 'Dein Link konnte nicht kopiert werden',
+    couldNotLogOut: 'Abmelden fehlgeschlagen',
+    createMyFolder: 'Meinen Ordner anlegen',
+    creatorOfThisPickup: 'Ersteller:in dieses Pickups',
+    editMyDetails: 'Meine Angaben ändern',
+    guest: 'Gast',
+    howPickupWorks: 'So funktioniert Pickup',
+    joinThisPickup: 'Bei diesem Pickup mitmachen',
+    joinToAddYourOwn: 'Mach mit, um eigene Fotos hinzuzufügen',
+    logOut: 'Abmelden',
+    logOutOnThisDevice: 'Auf diesem Gerät abmelden?',
+    memberOfThisPickup: 'Teilnehmer:in dieses Pickups',
+    peopleInvitations: 'Personen & Einladungen',
+    personalLinkCopied: 'Persönlicher Link kopiert',
+    pickupSettings: 'Einstellungen des Pickups',
+    viewingAsAGuest: 'Du schaust als Gast zu',
+    youAreLoggedOut: 'Du bist abgemeldet',
+    youWillBeLoggedOut:
+      'Du wirst auf diesem Gerät abgemeldet. Um dich wieder anzumelden, öffne deinen persönlichen Link (vom Mitmachen oder aus deiner E-Mail). Dein Ordner und deine Dateien bleiben erhalten.',
+    youWillBeLoggedOut2:
+      'Du wirst auf diesem Gerät abgemeldet. Um dich wieder als Ersteller:in anzumelden, öffne deinen persönlichen Link. Am Pickup ändert sich nichts.',
+  },
+  confirmEmailView: {
+    addressConfirmed: 'Adresse bestätigt',
+    confirmingYourAddress: 'Deine Adresse wird bestätigt …',
+    couldNotConfirmTheAddress: 'Die Adresse konnte nicht bestätigt werden',
+    notConfirmed: 'Nicht bestätigt',
+  },
+  createView: {
+    aSharedPlaceForEveryones:
+      'Ein gemeinsamer Ort für die Fotos und Videos aller. Niemand braucht einen Account.',
+    couldNotCreateThePickup: 'Der Pickup konnte nicht angelegt werden',
+    createPickup: 'Pickup anlegen',
+    creatingPickupsIsTurnedOff: 'Das Anlegen von Pickups ist auf diesem Server ausgeschaltet.',
+    eGAnnaMarkS: 'z. B. Hochzeit von Anna & Mark',
+    everyoneWithTheLinkPicks: 'Alle mit dem Link wählen einen Namen und bekommen einen Ordner.',
+    forYourGuests: '– für deine Gäste',
+    links: 'Links',
+    newPickup: 'Neuer Pickup',
+    onlyForYou: '– nur für dich',
+    onlyParticipantsSeeThePhotos:
+      'Nur Teilnehmende sehen die Fotos. Das und mehr kannst du später in den Einstellungen ändern.',
+    onlyPeopleIInvite: 'Nur Personen, die ich einlade',
+    optional: '(optional)',
+    sendItToYourGuests: 'Schick ihn deinen Gästen oder druck die QR-Karte aus.',
+    steps: 'Schritte',
+    titleIsReady: '„{title}“ ist bereit',
+    weAlsoEmailedItTo: 'Wir haben ihn dir auch per E-Mail geschickt.',
+    weSendYouYourLink: 'Wir schicken dir deinen Link, damit du wieder hineinkommst.',
+    whoCanJoin: 'Wer kann mitmachen?',
+    withThisLinkYouLog:
+      'Mit diesem Link meldest du dich auf jedem Gerät als Ersteller:in an; behalte ihn für dich. Du kannst ihn im Account-Menü jederzeit wieder kopieren.',
+    youGetAFolderWith: 'Du bekommst sofort einen Ordner mit diesem Namen.',
+    youGetTwoLinks: 'Du bekommst zwei Links.',
+    yourPickupIsReady: 'Dein Pickup ist bereit',
+  },
+  creationCodeDialog: {
+    code: 'Code',
+    continue: 'Weiter',
+    couldNotCheckTheCode: 'Der Code konnte nicht geprüft werden',
+    enterYourCode: 'Gib deinen Code ein',
+    youNeedACodeTo: 'Um auf diesem Server einen Pickup anzulegen, brauchst du einen Code.',
+  },
+  emailLinkDialog: {
+    withYourPersonalLinkYou:
+      'Mit deinem persönlichen Link meldest du dich auf jedem Gerät an. Wir speichern auch die Adresse, damit du den Link später erneut anfordern kannst.',
+  },
+  introDialog: {
+    addPhotosUntilDate: 'Fotos hinzufügen bis zum {date}',
+    afterThatNobodyAddsOr:
+      'Danach fügt niemand mehr etwas hinzu oder ändert etwas; ansehen und herunterladen geht weiter.',
+    alsoInYourInbox: 'Auch in deinem Postfach.',
+    availableUntilDate: 'Verfügbar bis zum {date}',
+    downloadSingleFilesWholeFolders:
+      'Lade einzelne Dateien, ganze Ordner oder alles als ZIP herunter.',
+    downloadWhatYouWantTo: 'Lade vorher herunter, was du behalten möchtest.',
+    emailItToMeAs: 'Schick ihn mir auch per E-Mail',
+    everythingYouAddGoesInto: 'Alles, was du hinzufügst, landet in deinem eigenen Ordner.',
+    itIsntTheLinkYou: 'Es ist nicht der Link, mit dem du mitgemacht hast.',
+    itStaysUntilCreatorDeletes: 'Der Pickup bleibt, bis {creator} ihn löscht.',
+    keepItToYourselfWhoever: 'Behalte ihn für dich: Wer ihn öffnet, ist hier du.',
+    letsGo: 'Los geht’s',
+    lostItHaveItSent:
+      'Verloren? Lass ihn dir auf der Seite des Pickups erneut an deine Adresse schicken.',
+    lostItWithNoEmail:
+      'Verloren, und keine E-Mail gespeichert? Nur {creator} kann dir einen neuen geben.',
+    nameCanRemoveFilesIf: '{name} kann bei Bedarf Dateien entfernen.',
+    nothingIsCompressedUnlikeIn: 'Anders als in Chat-Apps wird nichts komprimiert.',
+    onANewDeviceYou: 'Auf einem neuen Gerät brauchst du außerdem das Passwort des Pickups.',
+    onDateItIsDeleted: 'Am {date} wird der Pickup mit allem Inhalt gelöscht.',
+    onlyForYourLinkSo: 'Nur für deinen Link, damit du ihn selbst erneut anfordern kannst.',
+    onlyYouCanUploadRename:
+      'Nur du kannst darin hochladen, umbenennen, löschen und Unterordner anlegen.',
+    photosAndVideosAsThey: 'Fotos und Videos, so wie sie sind',
+    readOnlyNow: 'Jetzt schreibgeschützt',
+    rightNowOnlyCreatorCan: 'Gerade kann nur {creator} die Ordner sehen, deinen eingeschlossen.',
+    soCanAnyoneWhoHas: 'Genauso alle, die den Link des Pickups haben.',
+    theCreator: 'Die Ersteller:in',
+    thenThePickupIsDeleted: 'Dann wird der Pickup mit allem Inhalt gelöscht.',
+    thereAreNoAccountsThis: 'Es gibt keine Accounts: Dieser Link meldet dich an, auf jedem Gerät.',
+    thisIsYourFolder: 'Das ist dein Ordner',
+    toInviteOthersUseShare: 'Um andere einzuladen, nutz oben {share}.',
+    uploadAsManyAsYou:
+      'Lade so viele auf einmal hoch, wie du willst, auch große Videos; sie behalten ihre volle Qualität.',
+    youCanLookAtEveryone:
+      'Du kannst die Ordner aller anderen ansehen und daraus herunterladen; sie sehen deinen.',
+    yourPersonalLinkIsYour: 'Dein persönlicher Link ist dein Schlüssel',
+  },
+  joinForm: {
+    askThePersonWhoShared: 'Frag die Person, die den Link geteilt hat.',
+    couldNotJoinThePickup: 'Mitmachen fehlgeschlagen',
+    emailOptional: 'E-Mail (optional)',
+    folderName: 'Ordnername',
+    joinPickup: 'Mitmachen',
+    joining: 'Du machst mit …',
+    weSendYouYourPersonal:
+      'Wir schicken dir deinen persönlichen Link, damit du dich auf anderen Geräten anmelden kannst.',
+    welcomeYourFolderIsReady: 'Willkommen! Dein Ordner ist bereit.',
+  },
+  joinPanel: {
+    chooseYourName: 'Wähl deinen Namen',
+    closed: 'Geschlossen',
+    joinTitle: 'Bei {title} mitmachen',
+    onlyInvitedPeopleCanTake:
+      'Nur eingeladene Personen können mitmachen. Wenn du eingeladen wurdest, nutz den Link aus deiner Einladung.',
+    privatePickup: 'Privater Pickup',
+    protectedWithAPassword: 'Mit Passwort geschützt',
+    thatPersonalLinkIsNot:
+      'Dieser persönliche Link ist ungültig. Mach unten mit oder frag nach einem neuen Link.',
+    theCreatorHasClosedThis:
+      'Die Ersteller:in hat diesen Pickup geschlossen. Gerade kann niemand Fotos ansehen oder hinzufügen.',
+    thisPickup: 'diesem Pickup',
+    thisPickupDoesntTakeNew: 'Dieser Pickup nimmt keine neuen Teilnehmenden mehr auf.',
+    thisPickupIsReadOnly:
+      'Dieser Pickup ist jetzt schreibgeschützt: Niemand macht mehr mit oder fügt Fotos hinzu.',
+    youGetYourOwnFolder:
+      'Du bekommst einen eigenen Ordner zum Hochladen und siehst die Fotos aller anderen.',
+    yourFolderGetsThisName: 'Dein Ordner bekommt diesen Namen; alle in „{title}“ sehen ihn.',
+  },
+  linkRequestForm: {
+    alreadyPartOfItOn: 'Auf einem anderen Gerät schon dabei?',
+    enterTheAddressYouGave:
+      'Gib die Adresse ein, die du beim Mitmachen oder bei der Einladung angegeben hast, und wir schicken dir deinen persönlichen Link.',
+  },
+  memberDetailsDialog: {
+    aNewAddressIsOnly:
+      'Eine neue Adresse wird erst gespeichert, wenn du sie über den Link bestätigst, den wir dorthin schicken.',
+    couldNotSave: 'Speichern fehlgeschlagen',
+    everyoneInThePickupSees: 'Alle im Pickup sehen deinen Namen und deinen Ordner.',
+    optional: 'Optional',
+    savedEnterANewAddress: 'Gespeichert. Gib zum Ändern eine neue Adresse ein',
+    weSendYouYourPersonal: 'Wir schicken dir deinen persönlichen Link an diese Adresse.',
+    yourDetails: 'Deine Angaben',
+  },
+  memberEmailDialog: {
+    couldNotSaveTheAddress: 'Die Adresse konnte nicht gespeichert werden',
+    saveAndSend: 'Speichern und senden',
+    theirEmail: 'E-Mail-Adresse der Person',
+    theyGetTheirPersonalLink:
+      'Die Person bekommt ihren persönlichen Link sofort an diese Adresse und kann ihn sich dorthin erneut schicken lassen, wenn sie ihn verliert. Ändern kann die Adresse später nur sie selbst.',
+  },
+  memberLinkView: {
+    couldNotLogIn: 'Anmelden fehlgeschlagen',
+    logIn: 'Anmelden',
+    thisLogsYouInOn: 'Damit meldest du dich auf diesem Gerät an.',
+    youAreName: 'Du bist {name}.',
+    youAreNameTheCreator: 'Du bist {name}, die Ersteller:in.',
+    yourPersonalLinkFor: 'Dein persönlicher Link für',
+  },
+  packingAnimation: {
+    almostDone: 'Fast fertig',
+    creatingFolders: 'Ordner werden angelegt',
+    creatingLinks: 'Links werden erstellt',
+    creatingYourPickup: 'Dein Pickup wird angelegt …',
+  },
+  peoplePanel: {
+    activeWhen: 'aktiv {when}',
+    addTheirEmailAndSend: 'E-Mail-Adresse hinzufügen und Link an die Person schicken',
+    addedWhen: 'hinzugefügt {when}',
+    anyoneWithTheLinkCan:
+      'Alle mit dem Link können mitmachen; du kannst auch Personen per E-Mail einladen.',
+    copyThePersonalLinkOf: 'Persönlichen Link von {name} kopieren',
+    copyTheirPersonalLinkIf: 'Persönlichen Link der Person kopieren, falls sie ihn verloren hat',
+    couldNotCopyTheLink: 'Der Link konnte nicht kopiert werden',
+    couldNotRemove: 'Entfernen fehlgeschlagen',
+    couldNotSendTheInvitation: 'Die Einladung konnte nicht gesendet werden',
+    creator: 'Ersteller:in',
+    emailStoredPrivately: 'E-Mail privat gespeichert',
+    everyoneWithAPersonalLink:
+      'Alle mit einem persönlichen Link zu diesem Pickup. Der Privatsphäre-Modus ist aus: Adressen werden gespeichert und hier angezeigt.',
+    everyoneWithAPersonalLink2:
+      'Alle mit einem persönlichen Link zu diesem Pickup, auch noch nicht angenommene Einladungen.',
+    invitation: 'Einladung',
+    invitationSentAgainToEmail: 'Einladung erneut an {email} gesendet',
+    invitationSentToEmail: 'Einladung an {email} gesendet',
+    invite: 'Einladen',
+    inviteByEmail: 'Per E-Mail einladen',
+    invitedNotJoinedYet: 'Eingeladen, noch nicht dabei',
+    invitedPerson: 'Eingeladene Person',
+    member: 'Teilnehmer:in',
+    nameOptional: 'Name (optional)',
+    nameRemoved: '{name} entfernt',
+    noFolderYet: 'Noch kein Ordner',
+    onlyPeopleYouInviteCan: 'Nur Personen, die du einlädst, können mitmachen.',
+    participants: 'Teilnehmende',
+    personalLinkOfNameCopied: 'Persönlicher Link von {name} kopiert',
+    remove: 'Entfernen',
+    removeName: '{name} entfernen?',
+    removeName2: '{name} entfernen',
+    sendTheInvitationToName: 'Einladung erneut an {name} senden',
+    sendTheLinkAgain: 'Link erneut senden',
+    theInvitation: 'Die Einladung',
+    theInvitedPerson: 'der eingeladenen Person',
+    theirPersonalLinkStopsWorking:
+      'Der persönliche Link der Person funktioniert dann nicht mehr, und ihr Ordner wird mit allem Inhalt für alle gelöscht. Das lässt sich nicht rückgängig machen.',
+    theyGetAnEmailWith:
+      'Die Person bekommt eine E-Mail mit einem persönlichen Link von „{sender}“. Ist die Adresse schon im Pickup, wird der Link erneut gesendet.',
+    thisInvitation: 'diese Einladung',
+    whoeverOpensItTakesPart: 'Wer ihn öffnet, macht als diese Person mit – gib ihn also nur ihr.',
+    you: '(du)',
+  },
+  settingsCard: {
+    discard: 'Verwerfen',
+  },
+  settingsPanel: {
+    access: 'Zugang',
+    afterDateNobodyJoinsUploads:
+      'Nach dem {date} macht niemand mehr mit, lädt hoch oder ändert etwas; ansehen und herunterladen können alle weiterhin. Alle sehen das Datum.',
+    anyoneWithTheShareLink: 'Alle mit dem Teilen-Link sehen die Fotos, auch ohne mitzumachen.',
+    anyoneWithTheShareLink2: 'Alle mit dem Teilen-Link können mitmachen und hochladen.',
+    atTheEndOfDate:
+      'Am Ende des {date} wird der Pickup mit allen Fotos und Videos gelöscht. Alle sehen das Datum.',
+    couldNotDeleteThePickup: 'Der Pickup konnte nicht gelöscht werden',
+    couldNotSaveThePassword: 'Das Passwort konnte nicht gespeichert werden',
+    couldNotSaveTheSettings: 'Die Einstellungen konnten nicht gespeichert werden',
+    currentParticipantsStayNobodyNew:
+      'Bisherige Teilnehmende bleiben, niemand Neues kann mitmachen.',
+    deleteAutomatically: 'Automatisch löschen',
+    deleteForGood: 'Endgültig löschen',
+    deletePickup: 'Pickup löschen',
+    deleteThisPickup: 'Diesen Pickup löschen',
+    deleteTitleForGood: '„{title}“ endgültig löschen?',
+    emailAddressesAreStoredOnly:
+      'E-Mail-Adressen werden nur als Hash gespeichert. Du kannst sie nicht sehen, und um eine Einladung erneut zu senden, musst du die Adresse noch einmal eingeben. Aus: Adressen werden gespeichert und in der Personenliste angezeigt.',
+    everyoneWhoHasTheLink: 'Alle, die den Link haben, können alle Fotos ansehen, ohne mitzumachen.',
+    foldersAndFilesAreDeleted:
+      '{folders} und {files} werden für alle gelöscht, und alle Links funktionieren nicht mehr. Es gibt keinen Weg, sie zurückzuholen.',
+    general: 'Allgemein',
+    howEmailAddressesOfParticipants: 'Wie E-Mail-Adressen der Teilnehmenden gespeichert werden.',
+    inShort: 'Kurz gesagt:',
+    never: 'Nie',
+    neverPeopleCanAddPhotos: 'Nie: Fotos können hinzugefügt werden, bis der Pickup gelöscht wird.',
+    neverThePickupStaysUntil: 'Nie: Der Pickup bleibt, bis du ihn löschst.',
+    newPassword: 'Neues Passwort',
+    noPasswordSet: 'Kein Passwort gesetzt.',
+    nobodyNew: 'Niemand Neues',
+    onlyInvitedPeople: 'Nur eingeladene Personen',
+    onlyMePaused: 'Nur ich (pausiert)',
+    onlyParticipants: 'Nur Teilnehmende',
+    onlyParticipantsSeeThePhotos: 'Nur Teilnehmende sehen die Fotos.',
+    onlyPeopleYouInviteCan: 'Nur Personen, die du einlädst, können mitmachen und hochladen.',
+    onlyTheCurrentParticipantsUpload:
+      'Nur die bisherigen Teilnehmenden laden hoch; niemand Neues macht mit.',
+    onlyYouAsTheCreator: 'Nur du als Ersteller:in kannst sie ändern.',
+    onlyYouStillSeeThe:
+      'Nur du siehst noch den Inhalt. Teilnehmende können nichts ansehen oder hochladen, und niemand kann mitmachen, bis du ihn wieder öffnest.',
+    password: 'Passwort',
+    passwordRemoved: 'Passwort entfernt',
+    passwordSaved: 'Passwort gespeichert',
+    pausedOnlyYouSeeThe: 'Pausiert: Nur du siehst die Fotos, und niemand macht mit oder lädt hoch.',
+    peoplePickANewName: 'Personen wählen einen neuen Namen und bekommen einen eigenen Ordner.',
+    peopleWithoutALoginNeed:
+      'Wer nicht angemeldet ist, braucht es, um mitzumachen oder sich mit dem persönlichen Link anzumelden.',
+    privacy: 'Privatsphäre',
+    privacyModeForEmailAddresses: 'Privatsphäre-Modus für E-Mail-Adressen',
+    recommendedOthersWithTheLink:
+      'Empfohlen. Andere mit dem Link sehen den Namen des Pickups und wie sie mitmachen können.',
+    removePassword: 'Passwort entfernen',
+    removesThePickupWithEvery:
+      'Entfernt den Pickup mit allen Ordnern, Fotos und Videos für alle. Das lässt sich nicht rückgängig machen.',
+    savingDeletesAllStoredAddresses:
+      'Beim Speichern werden alle gespeicherten Adressen dieses Pickups sofort gelöscht.',
+    savingLogsEveryoneElseOut:
+      'Beim Speichern werden alle anderen von diesem Pickup abgemeldet. Um zurückzukommen, brauchen sie ihren persönlichen Link und das Passwort. Wenn du es vergisst, kann die Betreiber:in des Servers es entfernen.',
+    sizeUsed: '{size} belegt',
+    storage: 'Speicherplatz',
+    storageUsed: 'Belegter Speicherplatz',
+    theNameEveryoneSeesAnd: 'Der Name, den alle sehen, und wann der Pickup gelöscht wird.',
+    thePickup: 'Der Pickup',
+    theServerOperatorSetsThese:
+      'Diese Grenzen legt die Betreiber:in des Servers fest. Frag sie, wenn du mehr Platz brauchst.',
+    thisPickupIsProtectedWith: 'Dieser Pickup ist mit einem Passwort geschützt.',
+    titleWasDeleted: '{title} wurde gelöscht',
+    usedOfLimitUsed: '{used} von {limit} belegt',
+    whoCanJoinAndUpload: 'Wer kann mitmachen und hochladen?',
+    whoSeesThePhotosAnd: 'Wer die Fotos sieht und wer mit einem eigenen Ordner mitmachen kann.',
+    withAPasswordOnlyParticipants: 'Mit Passwort sehen nur Teilnehmende die Fotos.',
+  },
+} as const

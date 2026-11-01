@@ -59,11 +59,11 @@ async function submit() {
       const { message } = await setEmail.mutateAsync(email)
       toast.success(message)
     } else {
-      toast.success(t('Saved'))
+      toast.success(t('common.saved'))
     }
     open.value = false
   } catch (err) {
-    toast.error(apiErrorMessage(err, t('Could not save')))
+    toast.error(apiErrorMessage(err, t('pickups.memberDetailsDialog.couldNotSave')))
   } finally {
     saving.value = false
   }
@@ -75,13 +75,13 @@ async function submit() {
     <DialogContent class="sm:max-w-md">
       <form class="space-y-4" @submit.prevent="submit">
         <DialogHeader>
-          <DialogTitle>{{ t('Your details') }}</DialogTitle>
+          <DialogTitle>{{ t('pickups.memberDetailsDialog.yourDetails') }}</DialogTitle>
           <DialogDescription>{{
-            t('Everyone in the pickup sees your name and folder.')
+            t('pickups.memberDetailsDialog.everyoneInThePickupSees')
           }}</DialogDescription>
         </DialogHeader>
         <div class="space-y-1.5">
-          <Label for="details-name">{{ t('Your name') }}</Label>
+          <Label for="details-name">{{ t('common.yourName') }}</Label>
           <Input
             id="details-name"
             v-model="form.name"
@@ -91,30 +91,34 @@ async function submit() {
           />
         </div>
         <div v-if="folderName !== null" class="space-y-1.5">
-          <Label for="details-folder">{{ t('Your folder') }}</Label>
+          <Label for="details-folder">{{ t('common.yourFolder') }}</Label>
           <Input id="details-folder" v-model="form.folder" required maxlength="100" />
         </div>
         <div class="space-y-1.5">
-          <Label for="details-email">{{ t('Email') }}</Label>
+          <Label for="details-email">{{ t('common.email') }}</Label>
           <Input
             id="details-email"
             v-model="form.email"
             type="email"
             autocomplete="email"
-            :placeholder="hasEmail ? t('Saved. Enter a new address to change it') : t('Optional')"
+            :placeholder="
+              hasEmail
+                ? t('pickups.memberDetailsDialog.savedEnterANewAddress')
+                : t('pickups.memberDetailsDialog.optional')
+            "
           />
           <p class="text-xs text-muted-foreground">
             <template v-if="hasEmail">
-              {{
-                t('A new address is only saved after you confirm it with the link we send to it.')
-              }}
+              {{ t('pickups.memberDetailsDialog.aNewAddressIsOnly') }}
             </template>
-            <template v-else>{{ t('We send you your personal link to this address.') }}</template>
+            <template v-else>{{ t('pickups.memberDetailsDialog.weSendYouYourPersonal') }}</template>
           </p>
         </div>
         <DialogFooter>
-          <Button type="button" variant="outline" @click="open = false">{{ t('Cancel') }}</Button>
-          <Button type="submit" :disabled="saving">{{ t('Save') }}</Button>
+          <Button type="button" variant="outline" @click="open = false">{{
+            t('common.cancel')
+          }}</Button>
+          <Button type="submit" :disabled="saving">{{ t('common.save') }}</Button>
         </DialogFooter>
       </form>
     </DialogContent>

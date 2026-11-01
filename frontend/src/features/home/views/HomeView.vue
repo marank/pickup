@@ -18,99 +18,72 @@ import StartPanel from '../components/StartPanel.vue'
 
 const steps = [
   {
-    title: () => t('Start a pickup'),
-    text: () => t('Give it a name. No sign-up, no app to install.'),
+    title: () => t('common.startAPickup'),
+    text: () => t('home.homeView.giveItANameNo'),
   },
   {
-    title: () => t('Send the link'),
-    text: () => t('In the group chat, by email or anywhere else.'),
+    title: () => t('home.homeView.sendTheLink'),
+    text: () => t('home.homeView.inTheGroupChatBy'),
   },
   {
-    title: () => t('Everyone adds theirs'),
-    text: () => t('Each person gets their own folder and uploads straight from their phone.'),
+    title: () => t('home.homeView.everyoneAddsTheirs'),
+    text: () => t('home.homeView.eachPersonGetsTheirOwn'),
   },
 ]
 
 const features = [
   {
     icon: UserRoundCheckIcon,
-    title: () => t('Your folder, your rules'),
-    text: () =>
-      t(
-        'Everyone sees everything, but only you can add, rename or delete in your folder — subfolders included.',
-      ),
+    title: () => t('home.homeView.yourFolderYourRules'),
+    text: () => t('home.homeView.everyoneSeesEverythingButOnly'),
   },
   {
     icon: VideoIcon,
-    title: () => t('Big videos welcome'),
-    text: () =>
-      t(
-        'Large files are uploaded in small parts. A part that fails is sent again, so a bad connection doesn’t break the upload.',
-      ),
+    title: () => t('home.homeView.bigVideosWelcome'),
+    text: () => t('home.homeView.largeFilesAreUploadedIn'),
   },
   {
     icon: FolderTreeIcon,
-    title: () => t('Browse like on a computer'),
-    text: () =>
-      t(
-        'Folder tree, an address bar you can type into, list and preview views, sorting and search.',
-      ),
+    title: () => t('home.homeView.browseLikeOnAComputer'),
+    text: () => t('home.homeView.folderTreeAnAddressBar'),
   },
   {
     icon: SmartphoneIcon,
-    title: () => t('Made for the phone, too'),
-    text: () =>
-      t(
-        'Tap to open, swipe through photos, upload from the camera roll. Same pickup on every device.',
-      ),
+    title: () => t('home.homeView.madeForThePhoneToo'),
+    text: () => t('home.homeView.tapToOpenSwipeThrough'),
   },
   {
     icon: LockIcon,
-    title: () => t('Only for people with the link'),
-    text: () => t('No public gallery, no tracking, no ads, nothing loaded from other companies.'),
+    title: () => t('home.homeView.onlyForPeopleWithThe'),
+    text: () => t('home.homeView.noPublicGalleryNoTracking'),
   },
   {
     icon: KeyRoundIcon,
-    title: () => t('Come back any time'),
-    text: () =>
-      t(
-        'With your personal link you can log in on any device. Leave an email address and we send it to you.',
-      ),
+    title: () => t('home.homeView.comeBackAnyTime'),
+    text: () => t('home.homeView.withYourPersonalLinkYou'),
   },
 ]
 
 const faqs = [
   {
-    q: () => t('Who can see the photos?'),
-    a: () =>
-      t(
-        'Everyone who has the share link of the pickup. There is no public listing and no search engine can find it.',
-      ),
+    q: () => t('common.whoCanSeeThePhotos'),
+    a: () => t('home.homeView.everyoneWhoHasTheShare'),
   },
   {
-    q: () => t('Who can change or delete things?'),
-    a: () =>
-      t(
-        'Only the owner of a folder, in their own folder and its subfolders. Nobody can delete someone else’s photos.',
-      ),
+    q: () => t('home.homeView.whoCanChangeOrDelete'),
+    a: () => t('home.homeView.onlyTheOwnerOfA'),
   },
   {
-    q: () => t('I opened the pickup on a different phone. Where is my folder?'),
-    a: () =>
-      t(
-        'Open your personal link (you got it when you joined, or by email). It logs you in on that device.',
-      ),
+    q: () => t('home.homeView.iOpenedThePickupOn'),
+    a: () => t('home.homeView.openYourPersonalLinkYou'),
   },
   {
-    q: () => t('Which files work?'),
-    a: () =>
-      t(
-        'Photos (JPG, PNG, GIF, WebP, BMP) and videos (MP4, MOV, AVI, WMV, FLV, WebM, MKV). Large videos are fine.',
-      ),
+    q: () => t('home.homeView.whichFilesWork'),
+    a: () => t('home.homeView.photosJpgPngGifWebp'),
   },
   {
-    q: () => t('Do I need an account?'),
-    a: () => t('No. You only pick a name when you join.'),
+    q: () => t('home.homeView.doINeedAnAccount'),
+    a: () => t('home.homeView.noYouOnlyPickA'),
   },
 ]
 </script>
@@ -127,15 +100,11 @@ const faqs = [
         <!-- Centred while the picture is below, left-aligned next to it. -->
         <div class="space-y-6 text-center lg:text-left">
           <h1 class="text-5xl leading-[0.95] font-bold sm:text-6xl">
-            {{ t('Pick up the photos') }}
-            <span class="block text-tomato">{{ t('from your last event.') }}</span>
+            {{ t('home.homeView.pickUpThePhotos') }}
+            <span class="block text-tomato">{{ t('home.homeView.fromYourLastEvent') }}</span>
           </h1>
           <p class="mx-auto max-w-lg text-lg text-muted-foreground lg:mx-0">
-            {{
-              t(
-                'Everyone took pictures, but getting them all is always a hassle. Pickup collects them in one place: one link, and every guest gets their own folder. No accounts.',
-              )
-            }}
+            {{ t('home.homeView.everyoneTookPicturesButGetting') }}
           </p>
           <StartPanel />
         </div>
@@ -151,7 +120,7 @@ const faqs = [
     <!-- How it works -->
     <section class="bg-ink text-paper">
       <div class="mx-auto max-w-6xl px-4 py-14">
-        <h2 class="mb-8 text-3xl font-bold">{{ t('Three steps, then everyone’s in') }}</h2>
+        <h2 class="mb-8 text-3xl font-bold">{{ t('home.homeView.threeStepsThenEveryoneS') }}</h2>
         <ol class="grid gap-6 md:grid-cols-3">
           <li v-for="(step, index) in steps" :key="index" class="flex gap-4">
             <span
@@ -170,9 +139,9 @@ const faqs = [
 
     <!-- Features -->
     <section class="mx-auto max-w-6xl px-4 py-16">
-      <h2 class="mb-2 text-3xl font-bold">{{ t('Simple enough for everyone') }}</h2>
+      <h2 class="mb-2 text-3xl font-bold">{{ t('home.homeView.simpleEnoughForEveryone') }}</h2>
       <p class="mb-8 max-w-2xl text-muted-foreground">
-        {{ t('Pickup works like the file browser you already know.') }}
+        {{ t('home.homeView.pickupWorksLikeTheFile') }}
       </p>
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <article
@@ -197,8 +166,8 @@ const faqs = [
     <section class="border-t bg-pane">
       <div class="mx-auto grid max-w-6xl gap-8 px-4 py-14 md:grid-cols-[1fr_2fr]">
         <div>
-          <h2 class="text-3xl font-bold">{{ t('Questions') }}</h2>
-          <p class="mt-2 text-muted-foreground">{{ t('The short answers.') }}</p>
+          <h2 class="text-3xl font-bold">{{ t('home.homeView.questions') }}</h2>
+          <p class="mt-2 text-muted-foreground">{{ t('home.homeView.theShortAnswers') }}</p>
         </div>
         <div class="divide-y rounded-xl border bg-card">
           <details v-for="(faq, index) in faqs" :key="index" class="group px-5">
@@ -217,8 +186,8 @@ const faqs = [
     <footer
       class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-6 text-sm text-muted-foreground"
     >
-      <span>{{ t('Pickup — collect photos together.') }}</span>
-      <span>{{ t('No tracking. No third-party content.') }}</span>
+      <span>{{ t('home.homeView.pickupCollectPhotosTogether') }}</span>
+      <span>{{ t('home.homeView.noTrackingNoThirdParty') }}</span>
     </footer>
   </div>
 </template>

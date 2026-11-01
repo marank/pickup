@@ -42,7 +42,7 @@ async function submit() {
     sentOpen.value = true
     email.value = ''
   } catch (err) {
-    toast.error(apiErrorMessage(err, t('Please check the address')))
+    toast.error(apiErrorMessage(err, t('common.pleaseCheckTheAddress')))
   } finally {
     sending.value = false
   }
@@ -54,13 +54,9 @@ async function submit() {
   <section class="bg-ink text-paper">
     <div class="mx-auto grid max-w-6xl gap-6 px-4 py-14 md:grid-cols-[1fr_1fr] md:items-center">
       <div>
-        <h2 class="text-3xl font-bold">{{ t('Lost your links?') }}</h2>
+        <h2 class="text-3xl font-bold">{{ t('home.findPickups.lostYourLinks') }}</h2>
         <p class="mt-2 text-paper/75">
-          {{
-            t(
-              'Enter your email address. We send you a list of the pickups it belongs to, each with your personal link.',
-            )
-          }}
+          {{ t('home.findPickups.enterYourEmailAddressWe') }}
         </p>
       </div>
       <form class="flex gap-2" @submit.prevent="submit">
@@ -68,8 +64,8 @@ async function submit() {
           v-model="email"
           type="email"
           required
-          :placeholder="t('you@example.com')"
-          :aria-label="t('Your email')"
+          :placeholder="t('home.findPickups.youExampleCom')"
+          :aria-label="t('common.yourEmail')"
           class="border-paper/20 bg-paper text-ink placeholder:text-ink/50 dark:bg-paper"
           :disabled="sending"
         />
@@ -79,12 +75,12 @@ async function submit() {
           class="w-24 shrink-0 transition-transform active:scale-95"
           :class="sending && 'scale-95'"
           :disabled="sending"
-          :aria-label="sending ? t('Sending') : undefined"
+          :aria-label="sending ? t('home.findPickups.sending') : undefined"
         >
           <Loader2Icon v-if="sending" class="animate-spin" />
           <template v-else>
             <MailIcon />
-            {{ t('Send') }}
+            {{ t('common.send') }}
           </template>
         </Button>
       </form>
@@ -93,11 +89,11 @@ async function submit() {
     <Dialog v-model:open="sentOpen">
       <DialogContent class="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{{ t('Check your inbox') }}</DialogTitle>
+          <DialogTitle>{{ t('home.findPickups.checkYourInbox') }}</DialogTitle>
           <DialogDescription>{{ sentMessage }}</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button @click="sentOpen = false">{{ t('OK') }}</Button>
+          <Button @click="sentOpen = false">{{ t('home.findPickups.ok') }}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

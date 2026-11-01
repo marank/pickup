@@ -67,11 +67,11 @@ function onKeydown(event: KeyboardEvent) {
 
 const emptyMessage = computed(() => {
   if (explorer.search) return null
-  if (explorer.folderId === null) return t('Nobody has joined yet.')
+  if (explorer.folderId === null) return t('explorer.contentPane.nobodyHasJoinedYet')
   return explorer.canEditHere
-    ? t('Drop photos and videos here, or use Upload.')
-    : t("{name} hasn't added anything here yet.", {
-        name: explorer.current?.user_name ?? t('The owner'),
+    ? t('explorer.contentPane.dropPhotosAndVideosHere')
+    : t('explorer.contentPane.nameHasntAddedAnythingHere', {
+        name: explorer.current?.user_name ?? t('explorer.contentPane.theOwner'),
       })
 })
 </script>
@@ -81,7 +81,7 @@ const emptyMessage = computed(() => {
     ref="pane"
     class="relative min-h-0 flex-1 overflow-y-auto p-2 outline-none sm:p-3"
     tabindex="0"
-    :aria-label="t('Contents')"
+    :aria-label="t('explorer.contentPane.contents')"
     data-testid="content-pane"
     @keydown="onKeydown"
     @click.capture="marquee.onClickCapture"
@@ -100,14 +100,14 @@ const emptyMessage = computed(() => {
       class="mb-2 flex items-center gap-2 rounded-lg bg-butter/40 px-3 py-2 text-xs"
     >
       <LockIcon class="size-3.5 shrink-0" />
-      {{ t('Read-only now: you can look and download, but nobody adds anything anymore.') }}
+      {{ t('explorer.contentPane.readOnlyNowYouCan') }}
     </p>
 
     <div v-if="explorer.missingFolder" class="flex flex-col items-center gap-3 py-16 text-center">
       <FolderXIcon class="size-10 text-muted-foreground" />
-      <p class="font-medium">{{ t("This folder doesn't exist anymore.") }}</p>
+      <p class="font-medium">{{ t('explorer.contentPane.thisFolderDoesntExistAnymore') }}</p>
       <Button variant="outline" size="sm" @click="explorer.navigate(null)">{{
-        t('Back to the pickup')
+        t('explorer.contentPane.backToThePickup')
       }}</Button>
     </div>
 
@@ -129,19 +129,17 @@ const emptyMessage = computed(() => {
       @click.self="explorer.selection.clear()"
     >
       <ImagePlusIcon class="size-12 text-tomato" />
-      <p class="text-lg font-semibold">{{ t('Nothing here yet') }}</p>
+      <p class="text-lg font-semibold">{{ t('explorer.contentPane.nothingHereYet') }}</p>
       <p class="text-sm text-muted-foreground">
         {{
           phone
-            ? t('Add your photos and videos, several at once. They keep their full quality.')
-            : t(
-                'Drop them here or add your photos and videos, several at once. They keep their full quality.',
-              )
+            ? t('explorer.contentPane.addYourPhotosAndVideos')
+            : t('explorer.contentPane.dropThemHereOrAdd')
         }}
       </p>
       <Button @click="explorer.fileInput?.click()">
         <UploadIcon />
-        {{ t('Upload photos and videos') }}
+        {{ t('explorer.contentPane.uploadPhotosAndVideos') }}
       </Button>
     </div>
 
@@ -152,14 +150,14 @@ const emptyMessage = computed(() => {
     >
       <template v-if="explorer.search">
         <SearchXIcon class="size-10" />
-        <p>{{ t('Nothing here matches “{search}”.', { search: explorer.search }) }}</p>
+        <p>{{ t('explorer.contentPane.nothingHereMatchesSearch', { search: explorer.search }) }}</p>
       </template>
       <template v-else>
         <FolderOpenIcon class="size-10" />
         <p>{{ emptyMessage }}</p>
         <Button v-if="explorer.uploadTarget" size="sm" @click="explorer.fileInput?.click()">
           <UploadIcon />
-          {{ t('Upload') }}
+          {{ t('common.upload') }}
         </Button>
       </template>
     </div>
@@ -182,7 +180,11 @@ const emptyMessage = computed(() => {
     >
       <UploadIcon class="size-10" />
       <p class="font-heading text-lg font-semibold">
-        {{ t('Drop to upload into “{name}”', { name: explorer.uploadTarget?.name ?? '' }) }}
+        {{
+          t('explorer.contentPane.dropToUploadIntoName', {
+            name: explorer.uploadTarget?.name ?? '',
+          })
+        }}
       </p>
     </div>
   </section>

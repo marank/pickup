@@ -7,10 +7,10 @@ import { t } from '@/lib/i18n'
 // A drawn, non-interactive preview of the explorer for the start page.
 const folders = [
   { name: () => 'Alice', color: 'var(--owner-1)', open: true },
-  { name: () => t('Beach day'), color: 'var(--owner-1)', depth: 1, current: true },
+  { name: () => t('home.explorerMock.beachDay'), color: 'var(--owner-1)', depth: 1, current: true },
   { name: () => 'Ben', color: 'var(--owner-2)' },
   { name: () => 'Chloé', color: 'var(--owner-3)' },
-  { name: () => t('Grandma'), color: 'var(--owner-5)' },
+  { name: () => t('home.explorerMock.grandma'), color: 'var(--owner-5)' },
 ]
 const tiles = [
   'from-[oklch(0.8_0.1_60)] to-[oklch(0.65_0.15_35)]',
@@ -35,15 +35,15 @@ const tiles = [
         class="ml-2 flex flex-1 items-center gap-1 rounded-md border bg-card px-2 py-1 text-muted-foreground"
       >
         <PickupMark class="size-3" />
-        {{ t('Summer party') }} <span>›</span> Alice <span>›</span>
-        <span class="font-semibold text-foreground">{{ t('Beach day') }}</span>
+        {{ t('home.explorerMock.summerParty') }} <span>›</span> Alice <span>›</span>
+        <span class="font-semibold text-foreground">{{ t('home.explorerMock.beachDay') }}</span>
       </div>
     </div>
     <div class="flex">
       <div class="w-32 shrink-0 space-y-0.5 border-r bg-pane p-2 max-sm:hidden">
         <div class="flex items-center gap-1 px-1 py-0.5 font-medium">
           <PickupMark class="size-3" />
-          {{ t('Summer party') }}
+          {{ t('home.explorerMock.summerParty') }}
         </div>
         <div
           v-for="(folder, index) in folders"
@@ -75,8 +75,8 @@ const tiles = [
       </div>
     </div>
     <div class="flex justify-between border-t bg-pane px-2.5 py-1 text-muted-foreground">
-      <span>{{ t('6 items · 1 selected') }}</span>
-      <span>{{ t('You: {name}', { name: 'Alice' }) }}</span>
+      <span>{{ t('home.explorerMock.n6Items1Selected') }}</span>
+      <span>{{ t('home.explorerMock.youName', { name: 'Alice' }) }}</span>
     </div>
   </div>
 </template>

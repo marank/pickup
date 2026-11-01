@@ -13,19 +13,21 @@ defineProps<{ items: UploadItem[] }>()
 const emit = defineEmits<{ retry: [item: UploadItem]; cancel: [item: UploadItem]; clear: [] }>()
 
 const statusText: Record<UploadItem['status'], () => string> = {
-  pending: () => t('Waiting'),
-  uploading: () => t('Uploading'),
-  done: () => t('Done'),
-  skipped: () => t('Already there'),
-  error: () => t('Failed'),
-  cancelled: () => t('Cancelled'),
+  pending: () => t('explorer.uploadQueueList.waiting'),
+  uploading: () => t('explorer.uploadQueueList.uploading'),
+  done: () => t('explorer.uploadQueueList.done'),
+  skipped: () => t('explorer.uploadQueueList.alreadyThere'),
+  error: () => t('explorer.uploadQueueList.failed'),
+  cancelled: () => t('explorer.uploadQueueList.cancelled'),
 }
 </script>
 
 <template>
   <div class="space-y-2">
     <div class="flex justify-end">
-      <Button variant="ghost" size="xs" @click="emit('clear')">{{ t('Clear finished') }}</Button>
+      <Button variant="ghost" size="xs" @click="emit('clear')">{{
+        t('explorer.uploadQueueList.clearFinished')
+      }}</Button>
     </div>
     <ul class="space-y-2">
       <li v-for="item in items" :key="item.id" class="rounded-md border bg-background p-3">
@@ -38,7 +40,9 @@ const statusText: Record<UploadItem['status'], () => string> = {
           />
           <CircleXIcon v-else-if="item.status === 'error'" class="size-4 text-destructive" />
           <span class="min-w-0 flex-1 truncate">{{ item.file.name }}</span>
-          <Badge v-if="item.chunked" variant="outline">{{ t('chunked') }}</Badge>
+          <Badge v-if="item.chunked" variant="outline">{{
+            t('explorer.uploadQueueList.chunked')
+          }}</Badge>
           <span class="text-muted-foreground">{{ formatFileSize(item.file.size) }}</span>
           <span class="w-24 text-right text-muted-foreground">{{ statusText[item.status]() }}</span>
           <Button
@@ -47,7 +51,7 @@ const statusText: Record<UploadItem['status'], () => string> = {
             variant="outline"
             @click="emit('retry', item)"
           >
-            {{ t('Retry') }}
+            {{ t('explorer.uploadQueueList.retry') }}
           </Button>
           <Button
             v-if="item.status === 'uploading' || item.status === 'pending'"
@@ -55,7 +59,7 @@ const statusText: Record<UploadItem['status'], () => string> = {
             variant="ghost"
             @click="emit('cancel', item)"
           >
-            {{ t('Cancel') }}
+            {{ t('common.cancel') }}
           </Button>
         </div>
         <Progress v-if="item.status === 'uploading'" :model-value="item.progress" class="mt-2" />

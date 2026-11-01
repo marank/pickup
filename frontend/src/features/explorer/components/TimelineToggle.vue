@@ -24,10 +24,14 @@ function toggle() {
     :variant="on ? 'secondary' : 'ghost'"
     :size="compact ? 'icon-sm' : 'sm'"
     :aria-pressed="on"
-    :title="on ? t('Back to the folders') : t('All photos by the time they were taken')"
+    :title="
+      on
+        ? t('explorer.timelineToggle.backToTheFolders')
+        : t('explorer.timelineToggle.allPhotosByTheTime')
+    "
     @click="toggle"
   >
     <ImagesIcon :class="!on && 'text-tomato'" />
-    <span :class="compact && 'sr-only'">{{ t('Timeline') }}</span>
+    <span :class="compact && 'sr-only'">{{ t('common.timeline') }}</span>
   </Button>
 </template>

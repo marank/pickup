@@ -30,9 +30,9 @@ const askOpen = ref(false)
 const description = computed(() => {
   const data = pickup.data.value
   if (data?.is_member) {
-    return t('You stay logged in on this device. Open the pickup’s link to come back.')
+    return t('app.homeLink.youStayLoggedInOn')
   }
-  return t('Open the pickup’s link to come back.')
+  return t('app.homeLink.openThePickupSLink')
 })
 
 function click(event: MouseEvent) {
@@ -51,19 +51,24 @@ function goHome() {
 </script>
 
 <template>
-  <a href="/" class="flex h-7 items-center" :aria-label="t('Pickup start page')" @click="click">
+  <a
+    href="/"
+    class="flex h-7 items-center"
+    :aria-label="t('app.homeLink.pickupStartPage')"
+    @click="click"
+  >
     <PickupLogo :compact="pickupId !== ''" />
   </a>
 
   <AlertDialog v-model:open="askOpen">
     <AlertDialogContent>
       <AlertDialogHeader>
-        <AlertDialogTitle>{{ t('Leave the pickup?') }}</AlertDialogTitle>
+        <AlertDialogTitle>{{ t('app.homeLink.leaveThePickup') }}</AlertDialogTitle>
         <AlertDialogDescription>{{ description }}</AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
-        <AlertDialogCancel>{{ t('Stay here') }}</AlertDialogCancel>
-        <AlertDialogAction @click="goHome">{{ t('Go to the start page') }}</AlertDialogAction>
+        <AlertDialogCancel>{{ t('app.homeLink.stayHere') }}</AlertDialogCancel>
+        <AlertDialogAction @click="goHome">{{ t('common.goToTheStartPage') }}</AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>
   </AlertDialog>

@@ -59,7 +59,9 @@ function submit() {
           />
         </div>
         <DialogFooter>
-          <Button type="button" variant="outline" @click="open = false">{{ t('Cancel') }}</Button>
+          <Button type="button" variant="outline" @click="open = false">{{
+            t('common.cancel')
+          }}</Button>
           <Button type="submit" :disabled="pending || (!allowEmpty && !value.trim())">{{
             confirmLabel
           }}</Button>

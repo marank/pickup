@@ -79,18 +79,16 @@ const isCreator = computed(() => pickup.data.value?.is_creator ?? false)
 /** This browser is signed in as a member (with a folder, or as the creator). */
 const signedIn = computed(() => pickup.data.value?.is_member ?? false)
 const name = computed(() =>
-  signedIn.value ? pickup.data.value?.member_name || t('You') : t('Guest'),
+  signedIn.value
+    ? pickup.data.value?.member_name || t('common.you')
+    : t('pickups.accountMenu.guest'),
 )
 const color = computed(() => (ownFolder.value ? ownerColor(name.value) : 'var(--muted-foreground)'))
 
 const leaveDescription = computed(() =>
   isCreator.value
-    ? t(
-        'You will be logged out on this device. To log in again as the creator, open your personal link. The pickup is not changed.',
-      )
-    : t(
-        'You will be logged out on this device. To log in again, open your personal link (from when you joined, or from your email). Your folder and files are kept.',
-      ),
+    ? t('pickups.accountMenu.youWillBeLoggedOut2')
+    : t('pickups.accountMenu.youWillBeLoggedOut'),
 )
 
 const client = useQueryClient()
@@ -102,19 +100,19 @@ async function copyPersonalLink() {
         .fetchQuery(personalLinkQuery(props.pickupId))
         .then(({ member_url }) => `${window.location.origin}${member_url}`),
     )
-    toast.success(t('Personal link copied'))
+    toast.success(t('pickups.accountMenu.personalLinkCopied'))
   } catch (err) {
-    toast.error(apiErrorMessage(err, t('Could not copy your link')))
+    toast.error(apiErrorMessage(err, t('pickups.accountMenu.couldNotCopyYourLink')))
   }
 }
 
 async function confirmLeave() {
   try {
     await leave.mutateAsync()
-    toast.success(t('You are logged out'))
+    toast.success(t('pickups.accountMenu.youAreLoggedOut'))
     await router.push({ name: 'home' })
   } catch (err) {
-    toast.error(apiErrorMessage(err, t('Could not log out')))
+    toast.error(apiErrorMessage(err, t('pickups.accountMenu.couldNotLogOut')))
   }
 }
 </script>
@@ -123,7 +121,7 @@ async function confirmLeave() {
   <DropdownMenu>
     <DropdownMenuTrigger
       class="flex h-9 items-center gap-2 rounded-full border bg-card py-1 pr-2 pl-1 text-sm shadow-xs hover:bg-muted"
-      :aria-label="t('Account')"
+      :aria-label="t('pickups.accountMenu.account')"
     >
       <span
         class="flex size-7 items-center justify-center rounded-full text-xs font-semibold text-paper"
@@ -137,11 +135,13 @@ async function confirmLeave() {
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end" class="min-w-60">
       <DropdownMenuLabel class="font-normal">
-        <p class="font-medium">{{ signedIn ? name : t('Viewing as a guest') }}</p>
+        <p class="font-medium">{{ signedIn ? name : t('pickups.accountMenu.viewingAsAGuest') }}</p>
         <p class="text-xs text-muted-foreground">
-          <template v-if="isCreator">{{ t('Creator of this pickup') }}</template>
-          <template v-else-if="ownFolder">{{ t('Member of this pickup') }}</template>
-          <template v-else>{{ t('Join to add your own photos') }}</template>
+          <template v-if="isCreator">{{ t('pickups.accountMenu.creatorOfThisPickup') }}</template>
+          <template v-else-if="ownFolder">{{
+            t('pickups.accountMenu.memberOfThisPickup')
+          }}</template>
+          <template v-else>{{ t('pickups.accountMenu.joinToAddYourOwn') }}</template>
         </p>
       </DropdownMenuLabel>
       <DropdownMenuSeparator />
@@ -154,38 +154,42 @@ async function confirmLeave() {
         @select="router.push({ name: 'pickup-join', params: { pickupId } })"
       >
         <UserPlusIcon />
-        {{ signedIn ? t('Create my folder') : t('Join this pickup') }}
+        {{
+          signedIn
+            ? t('pickups.accountMenu.createMyFolder')
+            : t('pickups.accountMenu.joinThisPickup')
+        }}
       </DropdownMenuItem>
       <DropdownMenuItem v-if="signedIn" @select="detailsOpen = true">
         <UserPenIcon />
-        {{ t('Edit my details') }}
+        {{ t('pickups.accountMenu.editMyDetails') }}
       </DropdownMenuItem>
       <DropdownMenuItem v-if="signedIn" @select="copyPersonalLink">
         <KeyRoundIcon />
-        {{ t('Copy my personal link') }}
+        {{ t('pickups.accountMenu.copyMyPersonalLink') }}
       </DropdownMenuItem>
       <DropdownMenuItem v-if="signedIn" @select="emailOpen = true">
         <MailIcon />
-        {{ t('Email me my personal link') }}
+        {{ t('common.emailMeMyPersonalLink') }}
       </DropdownMenuItem>
       <DropdownMenuItem v-if="signedIn" @select="introOpen = true">
         <CircleHelpIcon />
-        {{ t('How Pickup works') }}
+        {{ t('pickups.accountMenu.howPickupWorks') }}
       </DropdownMenuItem>
       <template v-if="isCreator">
         <DropdownMenuSeparator />
         <DropdownMenuItem @select="openPage('people')">
           <UsersIcon />
-          {{ t('People & invitations') }}
+          {{ t('pickups.accountMenu.peopleInvitations') }}
         </DropdownMenuItem>
         <DropdownMenuItem @select="openPage('settings')">
           <SettingsIcon />
-          {{ t('Pickup settings') }}
+          {{ t('pickups.accountMenu.pickupSettings') }}
         </DropdownMenuItem>
       </template>
       <DropdownMenuSeparator />
       <DropdownMenuLabel class="text-xs text-muted-foreground">{{
-        t('Appearance')
+        t('common.appearance')
       }}</DropdownMenuLabel>
       <DropdownMenuRadioGroup v-model="theme">
         <ThemeOptions />
@@ -196,7 +200,7 @@ async function confirmLeave() {
         <DropdownMenuSeparator />
         <DropdownMenuItem variant="destructive" @select="confirmOpen = true">
           <LogOutIcon />
-          {{ t('Log out') }}
+          {{ t('pickups.accountMenu.logOut') }}
         </DropdownMenuItem>
       </template>
     </DropdownMenuContent>
@@ -219,9 +223,9 @@ async function confirmLeave() {
 
   <ConfirmDialog
     v-model:open="confirmOpen"
-    :title="t('Log out on this device?')"
+    :title="t('pickups.accountMenu.logOutOnThisDevice')"
     :description="leaveDescription"
-    :confirm-label="t('Log out')"
+    :confirm-label="t('pickups.accountMenu.logOut')"
     @confirm="confirmLeave"
   />
 </template>

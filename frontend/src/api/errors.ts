@@ -6,7 +6,7 @@ export class ApiError extends Error {
     readonly status: number,
     readonly body: unknown,
   ) {
-    super(messageFrom(body) ?? t('Request failed ({status})', { status }))
+    super(messageFrom(body) ?? t('app.errors.requestFailedStatus', { status }))
   }
 }
 

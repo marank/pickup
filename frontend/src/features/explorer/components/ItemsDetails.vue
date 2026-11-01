@@ -16,18 +16,18 @@ const explorer = useExplorer()
 const { onPointerDown, onClick, onDoubleClick } = useItemPointer()
 
 const columns: { key: SortKey; label: () => string; class: string }[] = [
-  { key: 'name', label: () => t('Name'), class: 'w-full' },
-  { key: 'owner', label: () => t('Owner'), class: 'max-sm:hidden w-36' },
-  { key: 'date', label: () => t('Added'), class: 'max-md:hidden w-32' },
-  { key: 'type', label: () => t('Type'), class: 'max-lg:hidden w-32' },
-  { key: 'size', label: () => t('Size'), class: 'w-24 text-right' },
+  { key: 'name', label: () => t('common.name'), class: 'w-full' },
+  { key: 'owner', label: () => t('common.owner'), class: 'max-sm:hidden w-36' },
+  { key: 'date', label: () => t('common.added'), class: 'max-md:hidden w-32' },
+  { key: 'type', label: () => t('common.type'), class: 'max-lg:hidden w-32' },
+  { key: 'size', label: () => t('common.size'), class: 'w-24 text-right' },
 ]
 </script>
 
 <template>
   <table
     class="w-full table-fixed text-sm"
-    :aria-label="t('Folder contents')"
+    :aria-label="t('common.folderContents')"
     aria-multiselectable="true"
   >
     <thead class="sticky top-0 z-10 bg-card text-left text-xs text-muted-foreground">
@@ -59,7 +59,7 @@ const columns: { key: SortKey; label: () => string; class: string }[] = [
           </button>
         </th>
         <th class="w-10">
-          <span class="sr-only">{{ t('Actions') }}</span>
+          <span class="sr-only">{{ t('explorer.itemsDetails.actions') }}</span>
         </th>
       </tr>
     </thead>

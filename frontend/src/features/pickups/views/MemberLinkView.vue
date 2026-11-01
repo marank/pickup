@@ -34,19 +34,19 @@ const preview = ref<{
 } | null>(null)
 const password = ref('')
 const entering = ref(false)
-const title = computed(() => preview.value?.title || t('Untitled pickup'))
+const title = computed(() => preview.value?.title || t('common.untitledPickup'))
 /** A creator who gave no name is called "Creator". */
 const unnamedCreator = computed(
   () => preview.value?.is_creator === true && preview.value.user_name === 'Creator',
 )
 const name = computed(() =>
-  unnamedCreator.value ? t('the creator') : (preview.value?.user_name ?? ''),
+  unnamedCreator.value ? t('common.theCreator') : (preview.value?.user_name ?? ''),
 )
 /** The sentence around the name, which is set in bold. */
 const youAre = computed(() =>
   (preview.value?.is_creator && !unnamedCreator.value
-    ? t('You are {name}, the creator.')
-    : t('You are {name}.')
+    ? t('pickups.memberLinkView.youAreNameTheCreator')
+    : t('pickups.memberLinkView.youAreName')
   ).split('{name}'),
 )
 
@@ -82,7 +82,7 @@ async function enter() {
     // The plain pickup URL replaces this one, so the key doesn't linger in the history.
     await router.replace({ name: 'explorer', params: { pickupId: props.pickupId } })
   } catch (err) {
-    toast.error(apiErrorMessage(err, t('Could not log in')))
+    toast.error(apiErrorMessage(err, t('pickups.memberLinkView.couldNotLogIn')))
     entering.value = false
   }
 }
@@ -100,9 +100,11 @@ async function enter() {
         <section
           class="mt-10 rounded-2xl border bg-card p-6 text-center shadow-sm transition duration-500 motion-reduce:transition-none"
           :class="preview ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'"
-          :aria-label="t('Your personal link')"
+          :aria-label="t('common.yourPersonalLink')"
         >
-          <p class="text-sm text-muted-foreground">{{ t('Your personal link for') }}</p>
+          <p class="text-sm text-muted-foreground">
+            {{ t('pickups.memberLinkView.yourPersonalLinkFor') }}
+          </p>
           <h1 class="mt-1 font-heading text-2xl font-bold break-words">{{ title }}</h1>
           <p class="mt-4">
             {{ youAre[0] }}<strong>{{ name }}</strong
@@ -110,7 +112,7 @@ async function enter() {
           </p>
           <form class="mt-6 space-y-3 text-left" @submit.prevent="enter">
             <div v-if="preview?.password_required" class="space-y-1.5">
-              <Label for="link-password">{{ t('Password of the pickup') }}</Label>
+              <Label for="link-password">{{ t('common.passwordOfThePickup') }}</Label>
               <Input
                 id="link-password"
                 v-model="password"
@@ -122,13 +124,13 @@ async function enter() {
             <Button type="submit" size="lg" class="w-full" :disabled="entering || !preview">
               <Loader2Icon v-if="entering" class="animate-spin" />
               <template v-else>
-                {{ t('Log in') }}
+                {{ t('pickups.memberLinkView.logIn') }}
                 <ArrowRightIcon />
               </template>
             </Button>
           </form>
           <p class="mt-3 text-xs text-muted-foreground">
-            {{ t('This logs you in on this device.') }}
+            {{ t('pickups.memberLinkView.thisLogsYouInOn') }}
           </p>
         </section>
       </div>

@@ -27,7 +27,7 @@ const explorer = useExplorer()
       class="flex h-full flex-col items-center justify-center gap-2 text-center text-muted-foreground"
     >
       <LockIcon class="size-6" />
-      <p>{{ t('Only the creator of this pickup can open this.') }}</p>
+      <p>{{ t('explorer.pagePane.onlyTheCreatorOfThis') }}</p>
     </div>
   </main>
 </template>

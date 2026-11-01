@@ -50,7 +50,7 @@ const color = computed(() => ownerColor(props.item.owner))
       class="absolute right-1.5 bottom-1.5 flex items-center gap-1 rounded-full bg-ink/75 px-1.5 py-0.5 text-[10px] font-medium text-paper"
     >
       <PlayIcon class="size-3" fill="currentColor" />
-      {{ t('Video') }}
+      {{ t('common.video') }}
     </span>
   </div>
 </template>

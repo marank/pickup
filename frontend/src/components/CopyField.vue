@@ -20,9 +20,9 @@ async function copyValue() {
     await navigator.clipboard.writeText(props.value)
     copied.value = true
     setTimeout(() => (copied.value = false), 1500)
-    toast.success(t('{label} copied', { label: props.label }))
+    toast.success(t('app.copyField.labelCopied', { label: props.label }))
   } catch {
-    toast.error(t('Could not copy the {label}', { label: inSentence(props.label) }))
+    toast.error(t('app.copyField.couldNotCopyTheLabel', { label: inSentence(props.label) }))
   }
 }
 
@@ -42,7 +42,7 @@ function selectAll(event: FocusEvent) {
     />
     <Button
       variant="outline"
-      :aria-label="t('Copy {label}', { label: inSentence(label) })"
+      :aria-label="t('app.copyField.copyLabel', { label: inSentence(label) })"
       @click="copyValue"
     >
       <CheckIcon v-if="copied" />

@@ -41,29 +41,31 @@ const sender = computed(
 
 const status = (member: Member) =>
   member.is_creator
-    ? t('Creator')
+    ? t('pickups.peoplePanel.creator')
     : member.has_folder
-      ? t('Member')
+      ? t('pickups.peoplePanel.member')
       : member.invited
-        ? t('Invited, not joined yet')
-        : t('No folder yet')
+        ? t('pickups.peoplePanel.invitedNotJoinedYet')
+        : t('pickups.peoplePanel.noFolderYet')
 
 async function invite() {
   try {
     await admin.invite.mutateAsync({ email: form.email.trim(), name: form.name.trim() })
-    toast.success(t('Invitation sent to {email}', { email: form.email.trim() }))
+    toast.success(t('pickups.peoplePanel.invitationSentToEmail', { email: form.email.trim() }))
     Object.assign(form, { email: '', name: '' })
   } catch (err) {
-    toast.error(apiErrorMessage(err, t('Could not send the invitation')))
+    toast.error(apiErrorMessage(err, t('pickups.peoplePanel.couldNotSendTheInvitation')))
   }
 }
 
 async function resend(member: Member) {
   try {
     await admin.resend.mutateAsync(member.id)
-    toast.success(t('Invitation sent again to {email}', { email: member.email ?? '' }))
+    toast.success(
+      t('pickups.peoplePanel.invitationSentAgainToEmail', { email: member.email ?? '' }),
+    )
   } catch (err) {
-    toast.error(apiErrorMessage(err, t('Could not send the invitation')))
+    toast.error(apiErrorMessage(err, t('pickups.peoplePanel.couldNotSendTheInvitation')))
   }
 }
 
@@ -71,11 +73,13 @@ async function copyLink(member: Member) {
   try {
     await copyText(admin.memberLink(member.id))
     toast.success(
-      t('Personal link of {name} copied', { name: member.user_name || t('the invited person') }),
-      { description: t('Whoever opens it takes part as them, so only give it to them.') },
+      t('pickups.peoplePanel.personalLinkOfNameCopied', {
+        name: member.user_name || t('pickups.peoplePanel.theInvitedPerson'),
+      }),
+      { description: t('pickups.peoplePanel.whoeverOpensItTakesPart') },
     )
   } catch (err) {
-    toast.error(apiErrorMessage(err, t('Could not copy the link')))
+    toast.error(apiErrorMessage(err, t('pickups.peoplePanel.couldNotCopyTheLink')))
   }
 }
 
@@ -89,9 +93,13 @@ async function remove() {
   if (!member) return
   try {
     await admin.remove.mutateAsync(member.id)
-    toast.success(t('{name} removed', { name: member.user_name || t('The invitation') }))
+    toast.success(
+      t('pickups.peoplePanel.nameRemoved', {
+        name: member.user_name || t('pickups.peoplePanel.theInvitation'),
+      }),
+    )
   } catch (err) {
-    toast.error(apiErrorMessage(err, t('Could not remove')))
+    toast.error(apiErrorMessage(err, t('pickups.peoplePanel.couldNotRemove')))
   }
 }
 </script>
@@ -99,32 +107,25 @@ async function remove() {
 <template>
   <div class="@container max-w-4xl space-y-6">
     <div>
-      <h2 class="font-heading text-xl font-semibold">{{ t('People') }}</h2>
+      <h2 class="font-heading text-xl font-semibold">{{ t('common.people') }}</h2>
       <p class="text-sm text-muted-foreground">
         <template v-if="pickup.join_policy === 'invite'">{{
-          t('Only people you invite can take part.')
+          t('pickups.peoplePanel.onlyPeopleYouInviteCan')
         }}</template>
         <template v-else-if="pickup.join_policy === 'closed'">{{
-          t('Nobody new can join right now.')
+          t('common.nobodyNewCanJoinRight')
         }}</template>
-        <template v-else>{{
-          t('Anyone with the link can join; you can also invite people by email.')
-        }}</template>
+        <template v-else>{{ t('pickups.peoplePanel.anyoneWithTheLinkCan') }}</template>
       </p>
     </div>
 
     <SettingsCard
-      :title="t('Invite by email')"
-      :description="
-        t(
-          'They get an email with a personal link from “{sender}”. If the address is already in the pickup, the link is sent again.',
-          { sender },
-        )
-      "
+      :title="t('pickups.peoplePanel.inviteByEmail')"
+      :description="t('pickups.peoplePanel.theyGetAnEmailWith', { sender })"
     >
       <form class="grid gap-2 @lg:grid-cols-[1fr_1fr_auto]" @submit.prevent="invite">
         <div>
-          <Label for="invite-email" class="sr-only">{{ t('Email') }}</Label>
+          <Label for="invite-email" class="sr-only">{{ t('common.email') }}</Label>
           <Input
             id="invite-email"
             v-model="form.email"
@@ -134,29 +135,34 @@ async function remove() {
           />
         </div>
         <div>
-          <Label for="invite-name" class="sr-only">{{ t('Name (optional)') }}</Label>
-          <Input id="invite-name" v-model="form.name" :placeholder="t('Name (optional)')" />
+          <Label for="invite-name" class="sr-only">{{
+            t('pickups.peoplePanel.nameOptional')
+          }}</Label>
+          <Input
+            id="invite-name"
+            v-model="form.name"
+            :placeholder="t('pickups.peoplePanel.nameOptional')"
+          />
         </div>
         <Button type="submit" :disabled="admin.invite.isPending.value">
           <MailIcon />
-          {{ t('Invite') }}
+          {{ t('pickups.peoplePanel.invite') }}
         </Button>
       </form>
     </SettingsCard>
 
     <SettingsCard
-      :title="t('Participants')"
+      :title="t('pickups.peoplePanel.participants')"
       :description="
         pickup.email_privacy
-          ? t(
-              'Everyone with a personal link to this pickup, including invitations not accepted yet.',
-            )
-          : t(
-              'Everyone with a personal link to this pickup. Privacy mode is off: addresses are stored and shown here.',
-            )
+          ? t('pickups.peoplePanel.everyoneWithAPersonalLink2')
+          : t('pickups.peoplePanel.everyoneWithAPersonalLink')
       "
     >
-      <ul class="divide-y overflow-hidden rounded-lg border" :aria-label="t('Participants')">
+      <ul
+        class="divide-y overflow-hidden rounded-lg border"
+        :aria-label="t('pickups.peoplePanel.participants')"
+      >
         <li v-for="member in members" :key="member.id" class="flex items-center gap-3 px-3 py-2.5">
           <span
             class="flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-paper"
@@ -170,20 +176,26 @@ async function remove() {
           </span>
           <div class="min-w-0 flex-1">
             <p class="truncate text-sm font-medium">
-              {{ member.user_name || t('Invited person') }}
+              {{ member.user_name || t('pickups.peoplePanel.invitedPerson') }}
               <span v-if="member.is_you" class="font-normal text-muted-foreground">{{
-                t('(you)')
+                t('pickups.peoplePanel.you')
               }}</span>
             </p>
             <p class="truncate text-xs text-muted-foreground">
               {{ status(member) }}
               <template v-if="member.email"> · {{ member.email }}</template>
-              <template v-else-if="member.has_email"> · {{ t('email stored privately') }}</template>
+              <template v-else-if="member.has_email">
+                · {{ t('pickups.peoplePanel.emailStoredPrivately') }}</template
+              >
               ·
               {{
                 member.has_folder
-                  ? t('active {when}', { when: formatRelativeDate(member.last_active_at) })
-                  : t('added {when}', { when: formatRelativeDate(member.created_at) })
+                  ? t('pickups.peoplePanel.activeWhen', {
+                      when: formatRelativeDate(member.last_active_at),
+                    })
+                  : t('pickups.peoplePanel.addedWhen', {
+                      when: formatRelativeDate(member.created_at),
+                    })
               }}
             </p>
           </div>
@@ -192,11 +204,11 @@ async function remove() {
             variant="ghost"
             size="icon-sm"
             :aria-label="
-              t('Copy the personal link of {name}', {
-                name: member.user_name || t('the invited person'),
+              t('pickups.peoplePanel.copyThePersonalLinkOf', {
+                name: member.user_name || t('pickups.peoplePanel.theInvitedPerson'),
               })
             "
-            :title="t('Copy their personal link, if they lost it')"
+            :title="t('pickups.peoplePanel.copyTheirPersonalLinkIf')"
             @click="copyLink(member)"
           >
             <LinkIcon />
@@ -205,8 +217,8 @@ async function remove() {
             v-if="!member.has_email && !member.is_you"
             variant="ghost"
             size="icon-sm"
-            :aria-label="t('Add an email for {name}', { name: member.user_name })"
-            :title="t('Add their email and send them their link')"
+            :aria-label="t('common.addAnEmailForName', { name: member.user_name })"
+            :title="t('pickups.peoplePanel.addTheirEmailAndSend')"
             @click="askEmail(member)"
           >
             <MailPlusIcon />
@@ -216,11 +228,11 @@ async function remove() {
             variant="ghost"
             size="icon-sm"
             :aria-label="
-              t('Send the invitation to {name} again', {
+              t('pickups.peoplePanel.sendTheInvitationToName', {
                 name: member.user_name || member.email || '',
               })
             "
-            :title="t('Send the link again')"
+            :title="t('pickups.peoplePanel.sendTheLinkAgain')"
             @click="resend(member)"
           >
             <MailIcon />
@@ -230,7 +242,11 @@ async function remove() {
             variant="ghost"
             size="icon-sm"
             class="text-destructive hover:text-destructive"
-            :aria-label="t('Remove {name}', { name: member.user_name || t('invitation') })"
+            :aria-label="
+              t('pickups.peoplePanel.removeName2', {
+                name: member.user_name || t('pickups.peoplePanel.invitation'),
+              })
+            "
             @click="askRemove(member)"
           >
             <Trash2Icon />
@@ -244,13 +260,13 @@ async function remove() {
 
   <ConfirmDialog
     v-model:open="confirmOpen"
-    :title="t('Remove {name}?', { name: removing?.user_name || t('this invitation') })"
-    :description="
-      t(
-        'Their personal link stops working, and their folder with everything in it is deleted for everyone. This cannot be undone.',
-      )
+    :title="
+      t('pickups.peoplePanel.removeName', {
+        name: removing?.user_name || t('pickups.peoplePanel.thisInvitation'),
+      })
     "
-    :confirm-label="t('Remove')"
+    :description="t('pickups.peoplePanel.theirPersonalLinkStopsWorking')"
+    :confirm-label="t('pickups.peoplePanel.remove')"
     @confirm="remove"
   />
 </template>

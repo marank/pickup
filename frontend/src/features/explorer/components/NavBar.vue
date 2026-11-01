@@ -33,8 +33,8 @@ const refresh = () => client.invalidateQueries({ queryKey: pickupKeys.all(explor
         <Button
           variant="ghost"
           size="icon"
-          :aria-label="t('Back')"
-          :title="t('Back')"
+          :aria-label="t('common.back')"
+          :title="t('common.back')"
           :disabled="!explorer.canGoBack"
           @click="explorer.goBack()"
         >
@@ -43,8 +43,8 @@ const refresh = () => client.invalidateQueries({ queryKey: pickupKeys.all(explor
         <Button
           variant="ghost"
           size="icon"
-          :aria-label="t('Forward')"
-          :title="t('Forward')"
+          :aria-label="t('explorer.navBar.forward')"
+          :title="t('explorer.navBar.forward')"
           :disabled="!explorer.canGoForward"
           @click="explorer.goForward()"
         >
@@ -53,8 +53,8 @@ const refresh = () => client.invalidateQueries({ queryKey: pickupKeys.all(explor
         <Button
           variant="ghost"
           size="icon"
-          :aria-label="t('Up one level')"
-          :title="t('Up one level (Backspace)')"
+          :aria-label="t('common.upOneLevel')"
+          :title="t('explorer.navBar.upOneLevelBackspace')"
           :disabled="explorer.folderId === null && !explorer.page"
           @click="explorer.goUp()"
         >
@@ -65,8 +65,8 @@ const refresh = () => client.invalidateQueries({ queryKey: pickupKeys.all(explor
         <Button
           variant="ghost"
           size="icon"
-          :aria-label="t('Refresh')"
-          :title="t('Refresh')"
+          :aria-label="t('common.refresh')"
+          :title="t('common.refresh')"
           @click="refresh"
         >
           <RefreshCwIcon />
@@ -74,13 +74,13 @@ const refresh = () => client.invalidateQueries({ queryKey: pickupKeys.all(explor
         <label
           v-if="!explorer.page"
           class="relative flex h-9 items-center max-md:hidden md:w-48 lg:w-64"
-          :aria-label="t('Search this folder')"
+          :aria-label="t('common.searchThisFolder')"
         >
           <SearchIcon class="pointer-events-none absolute left-2.5 size-4 text-muted-foreground" />
           <input
             v-model="explorer.search"
             type="search"
-            :placeholder="t('Search this folder')"
+            :placeholder="t('common.searchThisFolder')"
             class="h-full w-full rounded-lg border bg-card pr-2 pl-8 text-sm shadow-xs outline-none focus:ring-2 focus:ring-ring/40"
           />
         </label>
@@ -89,7 +89,7 @@ const refresh = () => client.invalidateQueries({ queryKey: pickupKeys.all(explor
           variant="ghost"
           size="icon"
           class="md:hidden"
-          :aria-label="searchOpen ? t('Close search') : t('Search')"
+          :aria-label="searchOpen ? t('common.closeSearch') : t('common.search')"
           @click="searchOpen = !searchOpen"
         >
           <XIcon v-if="searchOpen" />
@@ -102,8 +102,8 @@ const refresh = () => client.invalidateQueries({ queryKey: pickupKeys.all(explor
       <input
         v-model="explorer.search"
         type="search"
-        :placeholder="t('Search this folder')"
-        :aria-label="t('Search this folder')"
+        :placeholder="t('common.searchThisFolder')"
+        :aria-label="t('common.searchThisFolder')"
         class="h-full w-full rounded-lg border bg-card pr-2 pl-8 text-sm outline-none focus:ring-2 focus:ring-ring/40"
       />
     </label>

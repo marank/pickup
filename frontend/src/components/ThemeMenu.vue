@@ -24,12 +24,12 @@ const icon = computed(() => ({ system: MonitorIcon, light: SunIcon, dark: MoonIc
 <template>
   <DropdownMenu>
     <DropdownMenuTrigger as-child>
-      <Button variant="ghost" size="icon" :aria-label="t('Colour scheme')">
+      <Button variant="ghost" size="icon" :aria-label="t('app.themeMenu.colourScheme')">
         <component :is="icon" />
       </Button>
     </DropdownMenuTrigger>
     <DropdownMenuContent align="end" class="min-w-44">
-      <DropdownMenuLabel>{{ t('Appearance') }}</DropdownMenuLabel>
+      <DropdownMenuLabel>{{ t('common.appearance') }}</DropdownMenuLabel>
       <DropdownMenuRadioGroup v-model="theme">
         <ThemeOptions />
       </DropdownMenuRadioGroup>

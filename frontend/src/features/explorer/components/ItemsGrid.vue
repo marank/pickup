@@ -22,7 +22,7 @@ function subtitle(item: ExplorerItem): string {
   return count(item)
 }
 const count = (item: Extract<ExplorerItem, { kind: 'folder' }>) =>
-  plural(item.folder.subfolder_count + item.folder.media_count, '1 item', '{n} items')
+  plural(item.folder.subfolder_count + item.folder.media_count, 'common.nItems')
 
 const layout = computed(
   () =>
@@ -36,7 +36,12 @@ const layout = computed(
 </script>
 
 <template>
-  <ul :class="layout" role="listbox" aria-multiselectable="true" :aria-label="t('Folder contents')">
+  <ul
+    :class="layout"
+    role="listbox"
+    aria-multiselectable="true"
+    :aria-label="t('common.folderContents')"
+  >
     <ItemContextMenu v-for="item in explorer.items" :key="item.id" :item="item">
       <li
         role="option"

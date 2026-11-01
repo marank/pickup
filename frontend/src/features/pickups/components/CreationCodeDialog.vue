@@ -52,7 +52,7 @@ async function submit() {
     emit('accepted', code.value.trim())
     open.value = false
   } catch (err) {
-    error.value = apiErrorMessage(err, t('Could not check the code'))
+    error.value = apiErrorMessage(err, t('pickups.creationCodeDialog.couldNotCheckTheCode'))
   } finally {
     checking.value = false
   }
@@ -69,13 +69,13 @@ function onOpenChange(isOpen: boolean) {
     <DialogContent class="sm:max-w-md">
       <form class="space-y-4" @submit.prevent="submit">
         <DialogHeader>
-          <DialogTitle>{{ t('Enter your code') }}</DialogTitle>
+          <DialogTitle>{{ t('pickups.creationCodeDialog.enterYourCode') }}</DialogTitle>
           <DialogDescription>
-            {{ t('You need a code to create a pickup on this server.') }}
+            {{ t('pickups.creationCodeDialog.youNeedACodeTo') }}
           </DialogDescription>
         </DialogHeader>
         <div class="space-y-1.5">
-          <Label for="creation-code">{{ t('Code') }}</Label>
+          <Label for="creation-code">{{ t('pickups.creationCodeDialog.code') }}</Label>
           <Input
             id="creation-code"
             v-model="code"
@@ -87,10 +87,12 @@ function onOpenChange(isOpen: boolean) {
           <p v-if="error" class="text-sm text-destructive" role="alert">{{ error }}</p>
         </div>
         <DialogFooter>
-          <Button type="button" variant="outline" @click="emit('cancel')">{{ t('Cancel') }}</Button>
+          <Button type="button" variant="outline" @click="emit('cancel')">{{
+            t('common.cancel')
+          }}</Button>
           <Button type="submit" :disabled="checking" class="min-w-24">
             <Loader2Icon v-if="checking" class="animate-spin" />
-            <template v-else>{{ t('Continue') }}</template>
+            <template v-else>{{ t('pickups.creationCodeDialog.continue') }}</template>
           </Button>
         </DialogFooter>
       </form>

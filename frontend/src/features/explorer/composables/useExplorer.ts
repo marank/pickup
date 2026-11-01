@@ -114,7 +114,7 @@ function createExplorer(
 
   /** Typed path in the address bar; returns false if it doesn't exist. */
   function navigateToPath(text: string): boolean {
-    const title = pickup.data.value?.title || t('Untitled pickup')
+    const title = pickup.data.value?.title || t('common.untitledPickup')
     const trimmed = text.trim().replace(/^\/+/, '')
     // The address bar shows the pickup title as first segment; accept it but don't require it.
     const withoutTitle = trimmed.toLowerCase().startsWith(title.toLowerCase())
@@ -163,7 +163,7 @@ function createExplorer(
   function addFiles(list: File[]) {
     const target = uploadTarget.value
     if (!target) {
-      toast.error(t('You can only upload into your own folders.'))
+      toast.error(t('explorer.explorer.youCanOnlyUploadInto'))
       return
     }
     let free = freeSpace()
@@ -173,10 +173,10 @@ function createExplorer(
         file.type.startsWith('image/') ||
         file.type.startsWith('video/') ||
         /\.(heic|heif)$/i.test(file.name)
-      if (!ok) toast.error(t('{name} is not a photo or video', { name: file.name }))
+      if (!ok) toast.error(t('explorer.explorer.nameIsNotAPhoto', { name: file.name }))
       else if (free !== null && file.size > free) {
         toast.error(
-          t("{name} doesn't fit: {free} of storage left", {
+          t('explorer.explorer.nameDoesntFitFreeOf', {
             name: file.name,
             free: formatFileSize(Math.max(free, 0)),
           }),
@@ -252,14 +252,14 @@ function createExplorer(
       if (item.kind === 'folder') {
         await run(
           mutations.deleteFolder.mutateAsync(item.id),
-          t('“{name}” deleted', { name: item.name }),
-          t('Could not delete the folder'),
+          t('explorer.explorer.nameDeleted', { name: item.name }),
+          t('explorer.explorer.couldNotDeleteTheFolder'),
         )
       } else {
         await run(
           mutations.deleteMedia.mutateAsync(item.media),
-          t('“{name}” deleted', { name: item.name }),
-          t('Could not delete the file'),
+          t('explorer.explorer.nameDeleted', { name: item.name }),
+          t('explorer.explorer.couldNotDeleteTheFile'),
         )
       }
     }

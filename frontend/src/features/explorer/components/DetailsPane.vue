@@ -26,14 +26,14 @@ const people = computed(() => childrenOf(explorer.tree, null).length)
 <template>
   <aside
     class="flex w-72 shrink-0 flex-col gap-4 overflow-y-auto border-l bg-pane p-4"
-    :aria-label="t('Details')"
+    :aria-label="t('common.details')"
   >
     <template v-if="selected.length > 1">
       <p class="font-heading text-lg font-semibold">
-        {{ t('{n} items selected', { n: selected.length }) }}
+        {{ t('explorer.detailsPane.nItemsSelected', { n: selected.length }) }}
       </p>
       <p v-if="totalSize" class="text-sm text-muted-foreground">
-        {{ t('{size} in files', { size: formatFileSize(totalSize) }) }}
+        {{ t('explorer.detailsPane.sizeInFiles', { size: formatFileSize(totalSize) }) }}
       </p>
     </template>
 
@@ -49,7 +49,7 @@ const people = computed(() => childrenOf(explorer.tree, null).length)
         <p class="text-sm text-muted-foreground">{{ typeLabel(shown) }}</p>
       </div>
       <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-sm">
-        <dt class="text-muted-foreground">{{ t('Owner') }}</dt>
+        <dt class="text-muted-foreground">{{ t('common.owner') }}</dt>
         <dd class="flex min-w-0 items-center gap-1.5">
           <span
             class="size-2 shrink-0 rounded-full"
@@ -57,28 +57,28 @@ const people = computed(() => childrenOf(explorer.tree, null).length)
           />
           <span class="truncate">{{ shown.owner }}</span>
         </dd>
-        <dt class="text-muted-foreground">{{ t('Added') }}</dt>
+        <dt class="text-muted-foreground">{{ t('common.added') }}</dt>
         <dd>{{ fullDate(shown.date) }}</dd>
         <template v-if="shown.kind === 'file'">
-          <dt class="text-muted-foreground">{{ t('Size') }}</dt>
+          <dt class="text-muted-foreground">{{ t('common.size') }}</dt>
           <dd>{{ formatFileSize(shown.size) }}</dd>
         </template>
         <template v-else>
-          <dt class="text-muted-foreground">{{ t('Contains') }}</dt>
+          <dt class="text-muted-foreground">{{ t('explorer.detailsPane.contains') }}</dt>
           <dd>
-            {{ plural(shown.folder.subfolder_count, '1 folder', '{n} folders') }},
-            {{ plural(shown.folder.media_count, '1 file', '{n} files') }}
+            {{ plural(shown.folder.subfolder_count, 'common.nFolders') }},
+            {{ plural(shown.folder.media_count, 'common.nFiles') }}
           </dd>
         </template>
       </dl>
       <div v-if="shown.kind === 'file'" class="space-y-1.5">
         <div class="flex items-center justify-between">
-          <p class="text-sm font-medium">{{ t('Caption') }}</p>
+          <p class="text-sm font-medium">{{ t('common.caption') }}</p>
           <Button
             v-if="shown.editable"
             variant="ghost"
             size="icon-xs"
-            :aria-label="t('Edit caption')"
+            :aria-label="t('common.editCaption')"
             @click="explorer.requestRename(shown)"
           >
             <PencilIcon />
@@ -88,33 +88,29 @@ const people = computed(() => childrenOf(explorer.tree, null).length)
           class="text-sm whitespace-pre-line"
           :class="!shown.media.caption && 'text-muted-foreground'"
         >
-          {{ shown.media.caption || t('No caption') }}
+          {{ shown.media.caption || t('explorer.detailsPane.noCaption') }}
         </p>
         <Button variant="outline" size="sm" class="mt-2 w-full" @click="explorer.download([shown])">
           <DownloadIcon />
-          {{ t('Download') }}
+          {{ t('common.download') }}
         </Button>
       </div>
     </template>
 
     <template v-else-if="explorer.pickup.data">
       <h2 class="text-lg font-semibold">
-        {{ explorer.pickup.data.title || t('Untitled pickup') }}
+        {{ explorer.pickup.data.title || t('common.untitledPickup') }}
       </h2>
       <dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-sm">
-        <dt class="text-muted-foreground">{{ t('People') }}</dt>
+        <dt class="text-muted-foreground">{{ t('common.people') }}</dt>
         <dd>{{ people }}</dd>
-        <dt class="text-muted-foreground">{{ t('Files') }}</dt>
+        <dt class="text-muted-foreground">{{ t('explorer.detailsPane.files') }}</dt>
         <dd>{{ explorer.pickup.data.media_count }}</dd>
-        <dt class="text-muted-foreground">{{ t('Started') }}</dt>
+        <dt class="text-muted-foreground">{{ t('explorer.detailsPane.started') }}</dt>
         <dd>{{ fullDate(explorer.pickup.data.created_at) }}</dd>
       </dl>
       <p class="text-sm text-muted-foreground">
-        {{
-          t(
-            'Everyone who joins gets a folder in their colour. Select something to see its details.',
-          )
-        }}
+        {{ t('explorer.detailsPane.everyoneWhoJoinsGetsA') }}
       </p>
     </template>
   </aside>

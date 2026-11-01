@@ -22,10 +22,14 @@ function toggleTree() {
   <Button
     variant="ghost"
     size="icon-sm"
-    :aria-label="wide && explorer.prefs.treePane ? t('Hide folders') : t('Show folders')"
+    :aria-label="
+      wide && explorer.prefs.treePane
+        ? t('explorer.treeToggle.hideFolders')
+        : t('explorer.treeToggle.showFolders')
+    "
     :aria-pressed="wide ? explorer.prefs.treePane : undefined"
     :class="wide && explorer.prefs.treePane && 'bg-muted'"
-    :title="t('Folders')"
+    :title="t('common.folders')"
     @click="toggleTree"
   >
     <FolderTreeIcon />

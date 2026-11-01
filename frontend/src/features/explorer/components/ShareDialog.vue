@@ -30,25 +30,18 @@ const canShare = typeof navigator.share === 'function'
 /** What this link lets people do, after the pickup's visibility and join policy. */
 const description = computed(() => {
   const looks = props.visibility === 'link'
-  if (props.visibility === 'creator')
-    return t(
-      'The pickup is closed: with this link people only see that it exists. Open it again in Settings.',
-    )
+  if (props.visibility === 'creator') return t('explorer.shareDialog.thePickupIsClosedWith')
   if (props.joinPolicy === 'invite')
     return looks
-      ? t(
-          'Only invited people can take part — invite them under People. With this link others can look at the photos.',
-        )
-      : t(
-          'Only invited people can take part — invite them under People. With this link others only see that the pickup exists.',
-        )
+      ? t('explorer.shareDialog.onlyInvitedPeopleCanTake2')
+      : t('explorer.shareDialog.onlyInvitedPeopleCanTake')
   if (props.joinPolicy === 'closed')
     return looks
-      ? t('Nobody new can join right now. Everyone with this link can look at the photos.')
-      : t('Nobody new can join right now.')
+      ? t('explorer.shareDialog.nobodyNewCanJoinRight')
+      : t('common.nobodyNewCanJoinRight')
   return looks
-    ? t('Everyone with this link can join with their own folder and look at the photos.')
-    : t('Everyone with this link can join with their own folder.')
+    ? t('explorer.shareDialog.everyoneWithThisLinkCan2')
+    : t('explorer.shareDialog.everyoneWithThisLinkCan')
 })
 
 const qr = ref<InstanceType<typeof QrCard> | null>(null)
@@ -57,7 +50,7 @@ async function share() {
   try {
     await navigator.share({
       title: props.title,
-      text: t('Add your photos to “{title}”', { title: props.title }),
+      text: t('explorer.shareDialog.addYourPhotosToTitle', { title: props.title }),
       url: url.value,
     })
   } catch {
@@ -70,7 +63,7 @@ async function share() {
   <Dialog v-model:open="open">
     <DialogContent class="sm:max-w-md">
       <DialogHeader>
-        <DialogTitle>{{ t('Invite people') }}</DialogTitle>
+        <DialogTitle>{{ t('explorer.shareDialog.invitePeople') }}</DialogTitle>
         <DialogDescription>
           {{ description }}
         </DialogDescription>
@@ -78,28 +71,30 @@ async function share() {
       <div class="space-y-1.5">
         <p class="flex items-center gap-1.5 text-sm font-medium">
           <UsersIcon class="size-4 text-muted-foreground" />
-          {{ t('Share link') }}
-          <span class="font-normal text-muted-foreground">{{ t('— for everyone') }}</span>
+          {{ t('common.shareLink') }}
+          <span class="font-normal text-muted-foreground">{{
+            t('explorer.shareDialog.forEveryone')
+          }}</span>
         </p>
-        <CopyField :value="url" :label="t('Share link')" />
+        <CopyField :value="url" :label="t('common.shareLink')" />
       </div>
       <div class="flex flex-col items-center gap-3 rounded-xl border bg-pane p-4 text-center">
         <QrCard ref="qr" :value="url" :title="title" class="w-44" />
         <p class="text-sm text-muted-foreground">
-          {{ t('Scan to open the pickup. Save the card as an image to print or share it.') }}
+          {{ t('explorer.shareDialog.scanToOpenThePickup') }}
         </p>
         <Button variant="outline" size="sm" @click="qr?.save()">
           <DownloadIcon />
-          {{ t('Save QR card') }}
+          {{ t('common.saveQrCard') }}
         </Button>
       </div>
       <Button v-if="canShare" class="w-full" @click="share">
         <Share2Icon />
-        {{ t('Share via …') }}
+        {{ t('explorer.shareDialog.shareVia') }}
       </Button>
       <p v-if="member" class="flex gap-1.5 text-xs text-muted-foreground">
         <KeyRoundIcon class="mt-px size-3.5 shrink-0" />
-        {{ t("Don't send your personal link instead: it is only for you and logs in as you.") }}
+        {{ t('explorer.shareDialog.dontSendYourPersonalLink') }}
       </p>
     </DialogContent>
   </Dialog>

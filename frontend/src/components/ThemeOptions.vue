@@ -5,9 +5,9 @@ import { DropdownMenuRadioItem } from '@/components/ui/dropdown-menu'
 import { t } from '@/lib/i18n'
 
 const options = [
-  { value: 'system', label: () => t('System'), icon: MonitorIcon },
-  { value: 'light', label: () => t('Light'), icon: SunIcon },
-  { value: 'dark', label: () => t('Dark'), icon: MoonIcon },
+  { value: 'system', label: () => t('app.themeOptions.system'), icon: MonitorIcon },
+  { value: 'light', label: () => t('app.themeOptions.light'), icon: SunIcon },
+  { value: 'dark', label: () => t('app.themeOptions.dark'), icon: MoonIcon },
 ]
 </script>
 

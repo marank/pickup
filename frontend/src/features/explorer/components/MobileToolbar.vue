@@ -60,20 +60,20 @@ const searchOpen = ref(false)
 
 // The same icons as in CommandBar's view menu.
 const views: { mode: ViewMode; label: () => string; icon: unknown }[] = [
-  { mode: 'details', label: () => t('Details'), icon: ListIcon },
-  { mode: 'content', label: () => t('Content'), icon: RowsIcon },
-  { mode: 'small', label: () => t('Small icons'), icon: LayoutGridIcon },
-  { mode: 'large', label: () => t('Large icons'), icon: SquareIcon },
+  { mode: 'details', label: () => t('common.details'), icon: ListIcon },
+  { mode: 'content', label: () => t('common.content'), icon: RowsIcon },
+  { mode: 'small', label: () => t('common.smallIcons'), icon: LayoutGridIcon },
+  { mode: 'large', label: () => t('common.largeIcons'), icon: SquareIcon },
 ]
 const currentView = computed(
   () => views.find((view) => view.mode === explorer.prefs.view) ?? views[0]!,
 )
 const sorts: { key: SortKey; label: () => string }[] = [
-  { key: 'name', label: () => t('Name') },
-  { key: 'date', label: () => t('Date added') },
-  { key: 'size', label: () => t('Size') },
-  { key: 'type', label: () => t('Type') },
-  { key: 'owner', label: () => t('Owner') },
+  { key: 'name', label: () => t('common.name') },
+  { key: 'date', label: () => t('common.dateAdded') },
+  { key: 'size', label: () => t('common.size') },
+  { key: 'type', label: () => t('common.type') },
+  { key: 'owner', label: () => t('common.owner') },
 ]
 
 const selected = computed(() => explorer.selectedItems)
@@ -85,14 +85,14 @@ const canJoin = computed(
     explorer.folders.isSuccess &&
     (explorer.pickup.data?.is_member || explorer.pickup.data?.join_policy === 'open'),
 )
-const count = computed(() => plural(explorer.items.length, '1 item', '{n} items'))
+const count = computed(() => plural(explorer.items.length, 'common.nItems'))
 const own = computed(() => {
   const storage = explorer.pickup.data?.storage
   if (!explorer.isMember || !storage || storage.own_used === null) return ''
   const used = formatFileSize(storage.own_used)
   return storage.own_limit === null
     ? used
-    : t('{used} of {limit}', { used, limit: formatFileSize(storage.own_limit) })
+    : t('common.usedOfLimit', { used, limit: formatFileSize(storage.own_limit) })
 })
 const dates = computed(() => pickupDates(explorer.pickup.data))
 
@@ -106,12 +106,12 @@ function toggleSearch() {
 
 <template>
   <div class="space-y-1.5">
-    <div class="flex items-center gap-0.5" role="toolbar" :aria-label="t('Commands')">
+    <div class="flex items-center gap-0.5" role="toolbar" :aria-label="t('common.commands')">
       <TreeToggle @open-tree="emit('openTree')" />
       <Button
         variant="ghost"
         size="icon-sm"
-        :aria-label="t('Up one level')"
+        :aria-label="t('common.upOneLevel')"
         :disabled="explorer.folderId === null && !explorer.page"
         @click="explorer.goUp()"
       >
@@ -123,7 +123,7 @@ function toggleSearch() {
         <Button
           variant="ghost"
           size="icon-sm"
-          :aria-label="searchOpen ? t('Close search') : t('Search')"
+          :aria-label="searchOpen ? t('common.closeSearch') : t('common.search')"
           @click="toggleSearch"
         >
           <XIcon v-if="searchOpen" />
@@ -131,22 +131,22 @@ function toggleSearch() {
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
-            <Button variant="ghost" size="icon-sm" :aria-label="t('More')">
+            <Button variant="ghost" size="icon-sm" :aria-label="t('explorer.mobileToolbar.more')">
               <EllipsisVerticalIcon />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" class="min-w-56">
             <template v-if="selected.length">
               <DropdownMenuLabel class="text-xs text-muted-foreground">
-                {{ t('{n} selected', { n: selected.length }) }}
+                {{ t('common.nSelected', { n: selected.length }) }}
               </DropdownMenuLabel>
               <DropdownMenuItem v-if="single?.editable" @select="explorer.requestRename(single)">
                 <PencilIcon />
-                {{ single.kind === 'folder' ? t('Rename') : t('Edit caption') }}
+                {{ single.kind === 'folder' ? t('common.rename') : t('common.editCaption') }}
               </DropdownMenuItem>
               <DropdownMenuItem @select="explorer.download(selected)">
                 <DownloadIcon />
-                {{ t('Download selected') }}
+                {{ t('explorer.mobileToolbar.downloadSelected') }}
               </DropdownMenuItem>
               <DropdownMenuItem
                 v-if="explorer.canDelete(selected)"
@@ -154,26 +154,30 @@ function toggleSearch() {
                 @select="explorer.requestDelete(selected)"
               >
                 <Trash2Icon />
-                {{ t('Delete selected') }}
+                {{ t('explorer.mobileToolbar.deleteSelected') }}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
             </template>
             <DropdownMenuItem v-if="explorer.canEditHere" @select="explorer.requestNewFolder()">
               <FolderPlusIcon />
-              {{ t('New folder') }}
+              {{ t('common.newFolder') }}
             </DropdownMenuItem>
             <DropdownMenuItem v-if="canJoin" @select="join">
               <UserPlusIcon />
-              {{ explorer.pickup.data?.is_member ? t('Create your folder') : t('Join to upload') }}
+              {{
+                explorer.pickup.data?.is_member
+                  ? t('common.createYourFolder')
+                  : t('common.joinToUpload')
+              }}
             </DropdownMenuItem>
             <DropdownMenuItem v-if="explorer.items.length" @select="explorer.downloadAll()">
               <DownloadIcon />
-              {{ explorer.folderId ? t('Download folder') : t('Download all') }}
+              {{ explorer.folderId ? t('common.downloadFolder') : t('common.downloadAll') }}
             </DropdownMenuItem>
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>
                 <ArrowDownWideNarrowIcon />
-                {{ t('Sort by') }}
+                {{ t('common.sortBy') }}
               </DropdownMenuSubTrigger>
               <DropdownMenuSubContent class="min-w-44">
                 <DropdownMenuRadioGroup v-model="explorer.prefs.sortKey">
@@ -183,15 +187,19 @@ function toggleSearch() {
                 </DropdownMenuRadioGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuRadioGroup v-model="explorer.prefs.sortDirection">
-                  <DropdownMenuRadioItem value="asc">{{ t('Ascending') }}</DropdownMenuRadioItem>
-                  <DropdownMenuRadioItem value="desc">{{ t('Descending') }}</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="asc">{{
+                    t('common.ascending')
+                  }}</DropdownMenuRadioItem>
+                  <DropdownMenuRadioItem value="desc">{{
+                    t('common.descending')
+                  }}</DropdownMenuRadioItem>
                 </DropdownMenuRadioGroup>
               </DropdownMenuSubContent>
             </DropdownMenuSub>
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>
                 <component :is="currentView.icon" />
-                {{ t('View') }}
+                {{ t('common.view') }}
               </DropdownMenuSubTrigger>
               <DropdownMenuSubContent class="min-w-44">
                 <DropdownMenuRadioGroup v-model="explorer.prefs.view">
@@ -204,17 +212,17 @@ function toggleSearch() {
             </DropdownMenuSub>
             <DropdownMenuItem @select="refresh">
               <RefreshCwIcon />
-              {{ t('Refresh') }}
+              {{ t('common.refresh') }}
             </DropdownMenuItem>
             <!-- What the status bar shows on larger screens. -->
             <DropdownMenuSeparator />
             <DropdownMenuLabel class="space-y-0.5 text-xs font-normal text-muted-foreground">
               <span class="block">{{ count }}</span>
               <span v-if="explorer.isMember" class="block truncate">
-                {{ t('Your folder: {name}', { name: explorer.ownFolder?.name ?? '' })
+                {{ t('common.yourFolderName', { name: explorer.ownFolder?.name ?? '' })
                 }}<template v-if="own"> · {{ own }}</template>
               </span>
-              <span v-else class="block">{{ t('Viewing only') }}</span>
+              <span v-else class="block">{{ t('common.viewingOnly') }}</span>
               <span v-if="dates.readOnly" class="flex items-center gap-1">
                 <LockIcon class="size-3" />
                 {{ dates.readOnly }}
@@ -233,8 +241,8 @@ function toggleSearch() {
       <input
         v-model="explorer.search"
         type="search"
-        :placeholder="t('Search this folder')"
-        :aria-label="t('Search this folder')"
+        :placeholder="t('common.searchThisFolder')"
+        :aria-label="t('common.searchThisFolder')"
         class="h-full w-full rounded-lg border bg-card pr-2 pl-8 text-sm outline-none focus:ring-2 focus:ring-ring/40"
       />
     </label>

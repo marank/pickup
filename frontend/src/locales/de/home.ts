@@ -1,94 +1,70 @@
-import type { Messages } from '@/lib/i18n'
-
-/** German for src/features/home, keyed by the English text (see lib/i18n.ts). */
-const home: Messages = {
-  // HomeView: hero
-  'Pick up the photos': 'Hol dir die Fotos',
-  'from your last event.': 'von eurem letzten Fest.',
-  'Everyone took pictures, but getting them all is always a hassle. Pickup collects them in one place: one link, and every guest gets their own folder. No accounts.':
-    'Alle haben fotografiert, aber alle Bilder zusammenzubekommen, ist jedes Mal mühsam. Pickup sammelt sie an einem Ort: ein Link, und alle Gäste bekommen ihren eigenen Ordner. Ganz ohne Accounts.',
-
-  // HomeView: three steps
-  'Three steps, then everyone’s in': 'Drei Schritte, und alle sind dabei',
-  'Give it a name. No sign-up, no app to install.':
-    'Gib ihm einen Namen. Keine Anmeldung, keine App zum Installieren.',
-  'Send the link': 'Link verschicken',
-  'In the group chat, by email or anywhere else.':
-    'In den Gruppenchat, per E-Mail oder wohin du willst.',
-  'Everyone adds theirs': 'Alle legen ihre dazu',
-  'Each person gets their own folder and uploads straight from their phone.':
-    'Jede:r bekommt einen eigenen Ordner und lädt direkt vom Handy hoch.',
-
-  // HomeView: features
-  'Simple enough for everyone': 'So einfach, dass alle mitmachen können',
-  'Pickup works like the file browser you already know.':
-    'Pickup funktioniert wie der Dateimanager, den du schon kennst.',
-  'Your folder, your rules': 'Dein Ordner, deine Regeln',
-  'Everyone sees everything, but only you can add, rename or delete in your folder — subfolders included.':
-    'Alle sehen alles, aber nur du kannst in deinem Ordner etwas hinzufügen, umbenennen oder löschen – Unterordner inklusive.',
-  'Big videos welcome': 'Auch große Videos',
-  'Large files are uploaded in small parts. A part that fails is sent again, so a bad connection doesn’t break the upload.':
-    'Große Dateien werden in kleinen Teilen hochgeladen. Schlägt ein Teil fehl, wird er erneut gesendet – so bricht der Upload auch bei schlechter Verbindung nicht ab.',
-  'Browse like on a computer': 'Stöbern wie am Computer',
-  'Folder tree, an address bar you can type into, list and preview views, sorting and search.':
-    'Ordnerbaum, eine Adressleiste zum Eintippen, Listen- und Vorschauansicht, Sortieren und Suchen.',
-  'Made for the phone, too': 'Auch fürs Handy gemacht',
-  'Tap to open, swipe through photos, upload from the camera roll. Same pickup on every device.':
-    'Antippen zum Öffnen, durch die Fotos wischen, direkt aus der Galerie hochladen. Derselbe Pickup auf jedem Gerät.',
-  'Only for people with the link': 'Nur für alle mit dem Link',
-  'No public gallery, no tracking, no ads, nothing loaded from other companies.':
-    'Keine öffentliche Galerie, kein Tracking, keine Werbung, nichts von fremden Firmen nachgeladen.',
-  'Come back any time': 'Jederzeit zurückkommen',
-  'With your personal link you can log in on any device. Leave an email address and we send it to you.':
-    'Mit deinem persönlichen Link meldest du dich auf jedem Gerät an. Hinterlass eine E-Mail-Adresse, dann schicken wir ihn dir.',
-
-  // HomeView: FAQ
-  Questions: 'Fragen',
-  'The short answers.': 'Die kurzen Antworten.',
-  'Who can see the photos?': 'Wer kann die Fotos sehen?',
-  'Everyone who has the share link of the pickup. There is no public listing and no search engine can find it.':
-    'Alle, die den Teilen-Link des Pickups haben. Er steht in keiner öffentlichen Liste, und keine Suchmaschine findet ihn.',
-  'Who can change or delete things?': 'Wer kann etwas ändern oder löschen?',
-  'Only the owner of a folder, in their own folder and its subfolders. Nobody can delete someone else’s photos.':
-    'Nur wem ein Ordner gehört, und zwar in diesem Ordner und seinen Unterordnern. Niemand kann die Fotos von anderen löschen.',
-  'I opened the pickup on a different phone. Where is my folder?':
-    'Ich habe den Pickup auf einem anderen Handy geöffnet. Wo ist mein Ordner?',
-  'Open your personal link (you got it when you joined, or by email). It logs you in on that device.':
-    'Öffne deinen persönlichen Link (du hast ihn beim Beitreten oder per E-Mail bekommen). Damit bist du auf diesem Gerät angemeldet.',
-  'Which files work?': 'Welche Dateien werden unterstützt?',
-  'Photos (JPG, PNG, GIF, WebP, BMP) and videos (MP4, MOV, AVI, WMV, FLV, WebM, MKV). Large videos are fine.':
-    'Fotos (JPG, PNG, GIF, WebP, BMP) und Videos (MP4, MOV, AVI, WMV, FLV, WebM, MKV). Auch große Videos sind kein Problem.',
-  'Do I need an account?': 'Brauche ich einen Account?',
-  'No. You only pick a name when you join.':
-    'Nein. Du suchst dir beim Beitreten nur einen Namen aus.',
-
-  // HomeView: footer
-  'Pickup — collect photos together.': 'Pickup – Fotos gemeinsam sammeln.',
-  'No tracking. No third-party content.': 'Kein Tracking. Keine Inhalte von Dritten.',
-
-  // StartPanel
-  'Start a pickup': 'Pickup starten',
-  'Creating new pickups is turned off on this server.':
-    'Auf diesem Server können keine neuen Pickups angelegt werden.',
-
-  // ExplorerMock (the drawn preview)
-  'Summer party': 'Sommerfest',
-  'Beach day': 'Strandtag',
-  Grandma: 'Oma',
-  '6 items · 1 selected': '6 Elemente · 1 ausgewählt',
-  'You: {name}': 'Du: {name}',
-
-  // FindPickups
-  'Lost your links?': 'Links verloren?',
-  'Enter your email address. We send you a list of the pickups it belongs to, each with your personal link.':
-    'Gib deine E-Mail-Adresse ein. Wir schicken dir eine Liste der Pickups, zu denen sie gehört – jeweils mit deinem persönlichen Link.',
-  'you@example.com': 'du@beispiel.de',
-  'Your email': 'Deine E-Mail-Adresse',
-  Sending: 'Wird gesendet',
-  Send: 'Senden',
-  'Check your inbox': 'Schau in dein Postfach',
-  OK: 'OK',
-  'Please check the address': 'Bitte prüf die Adresse',
-}
-
-export default home
+export default {
+  explorerMock: {
+    beachDay: 'Strandtag',
+    grandma: 'Oma',
+    n6Items1Selected: '6 Elemente · 1 ausgewählt',
+    summerParty: 'Sommerfest',
+    youName: 'Du: {name}',
+  },
+  findPickups: {
+    checkYourInbox: 'Schau in dein Postfach',
+    enterYourEmailAddressWe:
+      'Gib deine E-Mail-Adresse ein. Wir schicken dir eine Liste der Pickups, zu denen sie gehört – jeweils mit deinem persönlichen Link.',
+    lostYourLinks: 'Links verloren?',
+    ok: 'OK',
+    sending: 'Wird gesendet',
+    youExampleCom: 'du@beispiel.de',
+  },
+  homeView: {
+    bigVideosWelcome: 'Auch große Videos',
+    browseLikeOnAComputer: 'Stöbern wie am Computer',
+    comeBackAnyTime: 'Jederzeit zurückkommen',
+    doINeedAnAccount: 'Brauche ich einen Account?',
+    eachPersonGetsTheirOwn: 'Jede:r bekommt einen eigenen Ordner und lädt direkt vom Handy hoch.',
+    everyoneAddsTheirs: 'Bilder und Videos hochladen',
+    everyoneSeesEverythingButOnly:
+      'Alle sehen alles, aber nur du kannst in deinem Ordner etwas hinzufügen, umbenennen oder löschen – Unterordner inklusive.',
+    everyoneTookPicturesButGetting:
+      'Alle haben fotografiert, aber alle Bilder zusammenzubekommen, ist jedes Mal mühsam. Pickup sammelt sie an einem Ort: ein Link, und alle Gäste bekommen ihren eigenen Ordner. Ganz ohne Accounts.',
+    everyoneWhoHasTheShare:
+      'Alle, die den Teilen-Link des Pickups haben. Er steht in keiner öffentlichen Liste, und keine Suchmaschine findet ihn.',
+    folderTreeAnAddressBar:
+      'Ordnerbaum, eine Adressleiste zum Eintippen, Listen- und Vorschauansicht, Sortieren und Suchen.',
+    fromYourLastEvent: 'von eurem letzten Fest.',
+    giveItANameNo: 'Gib ihm einen Namen. Keine Anmeldung, keine App zum Installieren.',
+    iOpenedThePickupOn: 'Ich habe den Pickup auf einem anderen Handy geöffnet. Wo ist mein Ordner?',
+    inTheGroupChatBy: 'In den Gruppenchat, per E-Mail oder wohin du willst.',
+    largeFilesAreUploadedIn:
+      'Große Dateien werden in kleinen Teilen hochgeladen. Schlägt ein Teil fehl, wird er erneut gesendet – so bricht der Upload auch bei schlechter Verbindung nicht ab.',
+    madeForThePhoneToo: 'Auch fürs Handy gemacht',
+    noPublicGalleryNoTracking:
+      'Keine öffentliche Galerie, kein Tracking, keine Werbung, nichts von fremden Firmen nachgeladen.',
+    noTrackingNoThirdParty: 'Kein Tracking. Keine Inhalte von Dritten.',
+    noYouOnlyPickA: 'Nein. Du suchst dir beim Beitreten nur einen Namen aus.',
+    onlyForPeopleWithThe: 'Nur für alle mit dem Link',
+    onlyTheOwnerOfA:
+      'Nur wem ein Ordner gehört, und zwar in diesem Ordner und seinen Unterordnern. Niemand kann die Fotos von anderen löschen.',
+    openYourPersonalLinkYou:
+      'Öffne deinen persönlichen Link (du hast ihn beim Beitreten oder per E-Mail bekommen). Damit bist du auf diesem Gerät angemeldet.',
+    photosJpgPngGifWebp:
+      'Fotos (JPG, PNG, GIF, WebP, BMP) und Videos (MP4, MOV, AVI, WMV, FLV, WebM, MKV). Auch große Videos sind kein Problem.',
+    pickUpThePhotos: 'Hol dir die Fotos',
+    pickupCollectPhotosTogether: 'Pickup – Fotos gemeinsam sammeln.',
+    pickupWorksLikeTheFile: 'Pickup funktioniert wie der Dateimanager, den du schon kennst.',
+    questions: 'Fragen',
+    sendTheLink: 'Link verschicken',
+    simpleEnoughForEveryone: 'So einfach, dass alle mitmachen können',
+    tapToOpenSwipeThrough:
+      'Antippen zum Öffnen, durch die Fotos wischen, direkt aus der Galerie hochladen. Derselbe Pickup auf jedem Gerät.',
+    theShortAnswers: 'Die kurzen Antworten.',
+    threeStepsThenEveryoneS: 'Drei Schritte, und alle sind dabei',
+    whichFilesWork: 'Welche Dateien werden unterstützt?',
+    whoCanChangeOrDelete: 'Wer kann etwas ändern oder löschen?',
+    withYourPersonalLinkYou:
+      'Mit deinem persönlichen Link meldest du dich auf jedem Gerät an. Hinterlass eine E-Mail-Adresse, dann schicken wir ihn dir.',
+    yourFolderYourRules: 'Dein Ordner, deine Regeln',
+  },
+  startPanel: {
+    creatingNewPickupsIsTurned: 'Auf diesem Server können keine neuen Pickups angelegt werden.',
+  },
+} as const

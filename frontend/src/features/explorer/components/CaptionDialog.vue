@@ -59,12 +59,12 @@ function cancel() {
       </template>
       <Textarea
         v-model="text"
-        :placeholder="t('Add a caption…')"
+        :placeholder="t('explorer.captionDialog.addACaption')"
         rows="3"
-        :aria-label="t('Caption')"
+        :aria-label="t('common.caption')"
       />
       <DialogFooter>
-        <Button variant="outline" @click="cancel">{{ cancelLabel || t('Cancel') }}</Button>
+        <Button variant="outline" @click="cancel">{{ cancelLabel || t('common.cancel') }}</Button>
         <Button :disabled="pending" @click="emit('confirm', text.trim())">{{
           confirmLabel
         }}</Button>

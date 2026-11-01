@@ -38,8 +38,8 @@ function openRoot() {
 }
 
 const pages: { page: ExplorerPage; label: () => string; icon: unknown }[] = [
-  { page: 'people', label: () => t('People'), icon: UsersIcon },
-  { page: 'settings', label: () => t('Settings'), icon: SettingsIcon },
+  { page: 'people', label: () => t('common.people'), icon: UsersIcon },
+  { page: 'settings', label: () => t('common.settings'), icon: SettingsIcon },
 ]
 function openPage(page: ExplorerPage) {
   explorer.openPage(page)
@@ -49,7 +49,7 @@ function openPage(page: ExplorerPage) {
 
 <template>
   <div class="flex flex-col gap-2">
-    <nav :aria-label="t('Folders')" class="text-sm">
+    <nav :aria-label="t('common.folders')" class="text-sm">
       <button
         type="button"
         class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left font-medium hover:bg-muted"
@@ -57,7 +57,9 @@ function openPage(page: ExplorerPage) {
         @click="openRoot"
       >
         <PickupMark class="size-4 shrink-0" />
-        <span class="truncate">{{ explorer.pickup.data?.title || t('Untitled pickup') }}</span>
+        <span class="truncate">{{
+          explorer.pickup.data?.title || t('common.untitledPickup')
+        }}</span>
       </button>
       <div v-if="explorer.folders.isPending" class="mt-2 space-y-1.5 px-2">
         <Skeleton v-for="n in 4" :key="n" class="h-6" />
@@ -77,7 +79,7 @@ function openPage(page: ExplorerPage) {
         v-if="explorer.folders.isSuccess && !childrenOf(explorer.tree, null).length"
         class="px-3 py-2 text-xs text-muted-foreground"
       >
-        {{ t('No folders yet.') }}
+        {{ t('explorer.folderTree.noFoldersYet') }}
       </p>
     </nav>
     <!-- At the bottom: the timeline for everyone, below the line the creator's pages. -->
@@ -90,11 +92,11 @@ function openPage(page: ExplorerPage) {
       @click="openPage('timeline')"
     >
       <ImagesIcon class="size-4 shrink-0 text-tomato" />
-      {{ t('Timeline') }}
+      {{ t('common.timeline') }}
     </button>
     <nav
       v-if="explorer.pickup.data?.is_creator"
-      :aria-label="t('Pickup')"
+      :aria-label="t('explorer.folderTree.pickup')"
       class="space-y-0.5 border-t pt-2 text-sm"
       :class="!explorer.canView && 'mt-auto'"
     >

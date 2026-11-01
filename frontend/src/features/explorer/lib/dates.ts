@@ -12,10 +12,12 @@ export function pickupDates(
 ) {
   return {
     readOnly: pickup?.is_read_only
-      ? t('Read-only')
+      ? t('common.readOnly')
       : pickup?.read_only_at
-        ? t('Uploads until {date}', { date: day(pickup.read_only_at) })
+        ? t('explorer.dates.uploadsUntilDate', { date: day(pickup.read_only_at) })
         : '',
-    deleted: pickup?.expires_at ? t('Deleted after {date}', { date: day(pickup.expires_at) }) : '',
+    deleted: pickup?.expires_at
+      ? t('explorer.dates.deletedAfterDate', { date: day(pickup.expires_at) })
+      : '',
   }
 }

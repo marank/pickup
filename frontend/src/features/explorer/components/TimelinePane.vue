@@ -54,8 +54,8 @@ const summary = computed(() => {
       : formatDateRange(first, last, long)
   const owners = new Set(list.map((item) => item.owner)).size
   return [
-    plural(list.length, '1 photo or video', '{n} photos and videos'),
-    plural(owners, 'by 1 person', 'by {n} people'),
+    plural(list.length, 'explorer.timelinePane.nPhotosAndVideos'),
+    plural(owners, 'explorer.timelinePane.byNPeople'),
     when,
   ].join(' · ')
 })
@@ -114,14 +114,14 @@ const ownFolder = computed(() => explorer.ownFolder)
       <div class="min-w-0 flex-1">
         <header class="pt-4 pb-2 sm:pt-6">
           <h2 class="font-heading text-2xl font-bold tracking-tight sm:text-3xl">
-            {{ t('Timeline') }}
+            {{ t('common.timeline') }}
           </h2>
           <p v-if="summary" class="mt-0.5 text-sm text-muted-foreground">{{ summary }}</p>
           <div
             v-if="people.length > 1"
             class="-mx-3 mt-3 flex gap-1.5 overflow-x-auto px-3 pb-1 sm:mx-0 sm:flex-wrap sm:px-0"
             role="group"
-            :aria-label="t('Show photos of')"
+            :aria-label="t('explorer.timelinePane.showPhotosOf')"
           >
             <button
               v-for="person in people"
@@ -150,7 +150,7 @@ const ownFolder = computed(() => explorer.ownFolder)
               class="shrink-0 rounded-full px-2.5 py-1 text-xs text-muted-foreground hover:text-foreground"
               @click="chosen = new Set()"
             >
-              {{ t('Show everyone') }}
+              {{ t('explorer.timelinePane.showEveryone') }}
             </button>
           </div>
         </header>
@@ -167,20 +167,16 @@ const ownFolder = computed(() => explorer.ownFolder)
           class="mx-auto flex max-w-sm flex-col items-center gap-3 py-16 text-center"
         >
           <ImagesIcon class="size-12 text-tomato" />
-          <p class="text-lg font-semibold">{{ t('No photos yet') }}</p>
+          <p class="text-lg font-semibold">{{ t('explorer.timelinePane.noPhotosYet') }}</p>
           <p class="text-sm text-muted-foreground">
-            {{
-              t(
-                'As soon as someone uploads, everything shows up here in the order it was taken, from all folders.',
-              )
-            }}
+            {{ t('explorer.timelinePane.asSoonAsSomeoneUploads') }}
           </p>
           <Button
             v-if="ownFolder && !explorer.pickup.data?.is_read_only"
             @click="explorer.navigate(ownFolder.id)"
           >
             <FolderOpenIcon />
-            {{ t('Go to my folder') }}
+            {{ t('explorer.timelinePane.goToMyFolder') }}
           </Button>
         </div>
 
@@ -198,7 +194,7 @@ const ownFolder = computed(() => explorer.ownFolder)
                 dayTitle(day)
               }}</span>
               <span class="text-xs whitespace-nowrap text-muted-foreground">
-                {{ plural(day.count, '1 photo or video', '{n} photos and videos') }}
+                {{ plural(day.count, 'explorer.timelinePane.nPhotosAndVideos') }}
               </span>
               <span class="ml-auto flex -space-x-1.5" aria-hidden="true">
                 <span
@@ -231,7 +227,7 @@ const ownFolder = computed(() => explorer.ownFolder)
                     type="button"
                     class="group relative block aspect-square size-full overflow-hidden rounded-md bg-muted outline-none focus-visible:ring-2 focus-visible:ring-tomato focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:rounded-lg"
                     :aria-label="
-                      t('{name}, by {owner}, {time}', {
+                      t('explorer.timelinePane.nameByOwnerTime', {
                         name: item.name,
                         owner: item.owner,
                         time: formatTime(takenAt(item)),
@@ -267,7 +263,7 @@ const ownFolder = computed(() => explorer.ownFolder)
       <nav
         v-if="days.length > 1"
         class="sticky top-0 hidden max-h-[80vh] w-36 shrink-0 self-start overflow-y-auto pt-24 pl-2 lg:block"
-        :aria-label="t('Days')"
+        :aria-label="t('explorer.timelinePane.days')"
       >
         <ol class="space-y-0.5 border-l pl-3 text-xs">
           <li v-for="day in days" :key="day.key">

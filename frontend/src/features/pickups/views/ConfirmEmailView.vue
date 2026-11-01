@@ -27,7 +27,7 @@ onMounted(async () => {
     message.value = result.message
     state.value = 'done'
   } catch (err) {
-    message.value = apiErrorMessage(err, t('Could not confirm the address'))
+    message.value = apiErrorMessage(err, t('pickups.confirmEmailView.couldNotConfirmTheAddress'))
     state.value = 'failed'
   }
 })
@@ -36,7 +36,7 @@ onMounted(async () => {
 <template>
   <div class="mx-auto max-w-md space-y-4 rounded-2xl border bg-card p-6 text-center shadow-sm">
     <p v-if="state === 'pending'" class="text-muted-foreground" role="status">
-      {{ t('Confirming your address…') }}
+      {{ t('pickups.confirmEmailView.confirmingYourAddress') }}
     </p>
     <template v-else>
       <component
@@ -45,12 +45,16 @@ onMounted(async () => {
         :class="state === 'done' ? 'text-sage' : 'text-destructive'"
       />
       <h1 class="font-heading text-2xl font-bold">
-        {{ state === 'done' ? t('Address confirmed') : t('Not confirmed') }}
+        {{
+          state === 'done'
+            ? t('pickups.confirmEmailView.addressConfirmed')
+            : t('pickups.confirmEmailView.notConfirmed')
+        }}
       </h1>
       <p class="text-muted-foreground">{{ message }}</p>
       <Button as-child class="w-full">
         <RouterLink :to="{ name: 'explorer', params: { pickupId } }">{{
-          t('Open the pickup')
+          t('common.openThePickup')
         }}</RouterLink>
       </Button>
     </template>

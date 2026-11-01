@@ -27,7 +27,7 @@ const actions = computed(() => itemActions(explorer, props.item))
       <Button
         variant="ghost"
         size="icon-xs"
-        :aria-label="t('Actions for {name}', { name: item.name })"
+        :aria-label="t('explorer.itemMenu.actionsForName', { name: item.name })"
         class="text-muted-foreground"
         @click.stop
         @dblclick.stop

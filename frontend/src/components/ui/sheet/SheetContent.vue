@@ -50,7 +50,7 @@ const forwarded = useForwardPropsEmits(delegatedProps, emits)
       <DialogClose v-if="showCloseButton" data-slot="sheet-close" as-child>
         <Button variant="ghost" class="absolute top-3 right-3" size="icon-sm">
           <XIcon />
-          <span class="sr-only">{{ t('Close') }}</span>
+          <span class="sr-only">{{ t('common.close') }}</span>
         </Button>
       </DialogClose>
     </DialogContent>

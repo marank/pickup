@@ -1,18 +1,43 @@
 import { computed, ref, watch } from 'vue'
 
+import en from '@/locales/en'
+
 import { readPreference, writePreference } from './storage'
 
 /**
- * German and English. The English text is the key: `t('Upload')`, `t('Hello {name}', { name })`.
- * German comes from `src/locales/de.ts` (loaded only when needed); a text missing there stays
- * English. Plurals: `plural(n, '1 item', '{n} items')`, keyed by the second form.
+ * German and English. Texts are named by where they appear: `t('explorer.contentPane.nothingHereYet')`,
+ * with `{name}` placeholders filled from the second argument. English lives in
+ * `src/locales/en/` (always loaded, and the fallback), German in `src/locales/de/` with the
+ * same keys, loaded only when needed. Plurals: `plural(n, 'common.nFiles')` picks the
+ * `[one, other]` pair. The keys are typed: a misspelt key is a type error.
  * The language follows the browser unless chosen in the account menu.
  */
 const LOCALES = ['auto', 'en', 'de'] as const
 type Choice = (typeof LOCALES)[number]
 export type Locale = Exclude<Choice, 'auto'>
 type Params = Record<string, string | number>
-export type Messages = Record<string, string | readonly [one: string, other: string]>
+type English = typeof en
+
+/** Dotted paths to the texts of `T` whose value is `Leaf`. */
+type Paths<T, Leaf, Prefix extends string = ''> = {
+  [K in keyof T & string]: T[K] extends Leaf
+    ? `${Prefix}${K}`
+    : T[K] extends string | readonly unknown[]
+      ? never
+      : Paths<T[K], Leaf, `${Prefix}${K}.`>
+}[keyof T & string]
+export type TextKey = Paths<English, string>
+export type PluralKey = Paths<English, readonly [string, string]>
+
+/** A translation: the same keys as English, any wording. */
+export type Messages = {
+  [K in keyof English]: Shape<English[K]>
+}
+type Shape<T> = T extends readonly [string, string]
+  ? readonly [string, string]
+  : T extends string
+    ? string
+    : { [K in keyof T]: Shape<T[K]> }
 
 const choice = ref<Choice>(readPreference('pickup.locale', LOCALES, 'auto'))
 const browser = (): Locale =>
@@ -21,10 +46,10 @@ const browser = (): Locale =>
     : 'en'
 /** The language in use. */
 export const locale = computed<Locale>(() => (choice.value === 'auto' ? browser() : choice.value))
-const messages = ref<Messages>({})
+const messages = ref<Messages | null>(null)
 
 async function load(target: Locale): Promise<void> {
-  messages.value = target === 'de' ? (await import('../locales/de')).default : {}
+  messages.value = target === 'de' ? (await import('../locales/de')).default : null
   document.documentElement.lang = target
 }
 
@@ -52,17 +77,27 @@ function fill(text: string, params?: Params): string {
     : text
 }
 
-/** The text in the current language, with `{name}` placeholders filled in. */
-export function t(text: string, params?: Params): string {
-  const found = messages.value[text]
-  return fill(typeof found === 'string' ? found : text, params)
+function lookup(source: unknown, key: string): unknown {
+  return key
+    .split('.')
+    .reduce<unknown>(
+      (node, part) =>
+        node && typeof node === 'object' ? (node as Record<string, unknown>)[part] : undefined,
+      source,
+    )
 }
 
-/** `one` for exactly 1, else `other`; `{n}` is the count. */
-export function plural(n: number, one: string, other: string, params?: Params): string {
-  const found = messages.value[other]
-  const [single, many] = Array.isArray(found) ? found : [one, other]
-  return fill(n === 1 ? single : many, { n, ...params })
+/** The text in the current language (English if a translation lacks it), placeholders filled. */
+export function t(key: TextKey, params?: Params): string {
+  const found = lookup(messages.value, key) ?? lookup(en, key)
+  return fill(typeof found === 'string' ? found : key, params)
+}
+
+/** The singular for exactly 1, else the plural; `{n}` is the count. */
+export function plural(n: number, key: PluralKey, params?: Params): string {
+  const found = lookup(messages.value, key) ?? lookup(en, key)
+  const [one, other] = Array.isArray(found) ? (found as [string, string]) : [key, key]
+  return fill(n === 1 ? one : other, { n, ...params })
 }
 
 /** A time of day in the current language, e.g. 18:30 or 6:30 PM. */

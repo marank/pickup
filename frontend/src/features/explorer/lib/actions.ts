@@ -37,7 +37,7 @@ export function itemActions(explorer: Explorer, item: ExplorerItem): ItemAction[
   if (single) {
     actions.push({
       id: 'open',
-      label: t('Open'),
+      label: t('explorer.actions.open'),
       icon: item.kind === 'folder' ? FolderOpenIcon : ImageIcon,
       shortcut: 'Enter',
       run: () => explorer.openItem(item),
@@ -47,9 +47,9 @@ export function itemActions(explorer: Explorer, item: ExplorerItem): ItemAction[
     id: 'download',
     label: single
       ? item.kind === 'folder'
-        ? t('Download as ZIP')
-        : t('Download')
-      : t('Download {n} items as ZIP', { n: targets.length }),
+        ? t('explorer.actions.downloadAsZip')
+        : t('common.download')
+      : t('explorer.actions.downloadNItemsAsZip', { n: targets.length }),
     icon: DownloadIcon,
     run: () => explorer.download(targets),
   })
@@ -58,14 +58,14 @@ export function itemActions(explorer: Explorer, item: ExplorerItem): ItemAction[
       item.kind === 'folder'
         ? {
             id: 'rename',
-            label: t('Rename'),
+            label: t('common.rename'),
             icon: PencilIcon,
             shortcut: 'F2',
             run: () => explorer.requestRename(item),
           }
         : {
             id: 'caption',
-            label: t('Edit caption'),
+            label: t('common.editCaption'),
             icon: TextIcon,
             shortcut: 'F2',
             run: () => explorer.requestRename(item),
@@ -75,7 +75,9 @@ export function itemActions(explorer: Explorer, item: ExplorerItem): ItemAction[
   if (explorer.canDelete(targets)) {
     actions.push({
       id: 'delete',
-      label: single ? t('Delete') : t('Delete {n} items', { n: targets.length }),
+      label: single
+        ? t('common.delete')
+        : t('explorer.actions.deleteNItems', { n: targets.length }),
       icon: Trash2Icon,
       shortcut: 'Del',
       destructive: true,

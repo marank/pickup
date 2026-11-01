@@ -59,9 +59,9 @@ export function fileItem(media: Media): ExplorerItem {
 }
 
 export function typeLabel(item: ExplorerItem): string {
-  if (item.kind === 'folder') return t('Folder')
+  if (item.kind === 'folder') return t('explorer.items.folder')
   const extension = item.name.includes('.') ? item.name.split('.').pop()!.toUpperCase() : ''
-  const kind = item.media.is_video ? t('Video') : t('Image')
+  const kind = item.media.is_video ? t('common.video') : t('explorer.items.image')
   return extension ? `${kind} (${extension})` : kind
 }
 

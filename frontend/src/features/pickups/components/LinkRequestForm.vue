@@ -19,20 +19,16 @@ async function submit() {
   try {
     sent.value = (await request.mutateAsync(email.value.trim())).message
   } catch (err) {
-    toast.error(apiErrorMessage(err, t('Please check the address')))
+    toast.error(apiErrorMessage(err, t('common.pleaseCheckTheAddress')))
   }
 }
 </script>
 
 <template>
   <form class="space-y-2" @submit.prevent="submit">
-    <p class="text-sm font-medium">{{ t('Already part of it on another device?') }}</p>
+    <p class="text-sm font-medium">{{ t('pickups.linkRequestForm.alreadyPartOfItOn') }}</p>
     <p class="text-sm text-muted-foreground">
-      {{
-        t(
-          'Enter the address you gave when you joined or were invited, and we email you your personal link.',
-        )
-      }}
+      {{ t('pickups.linkRequestForm.enterTheAddressYouGave') }}
     </p>
     <div class="flex gap-2">
       <Input
@@ -40,11 +36,11 @@ async function submit() {
         type="email"
         required
         placeholder="you@example.com"
-        :aria-label="t('Your email')"
+        :aria-label="t('common.yourEmail')"
       />
       <Button type="submit" variant="secondary" :disabled="request.isPending.value">
         <MailIcon />
-        {{ t('Send') }}
+        {{ t('common.send') }}
       </Button>
     </div>
     <p v-if="sent" class="text-sm text-muted-foreground" role="status">{{ sent }}</p>

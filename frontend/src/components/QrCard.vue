@@ -42,12 +42,12 @@ async function toPng(): Promise<Blob | null> {
 async function save() {
   const blob = await toPng()
   if (!blob) {
-    toast.error(t('Could not create the image'))
+    toast.error(t('app.qrCard.couldNotCreateTheImage'))
     return
   }
   const link = document.createElement('a')
   link.href = URL.createObjectURL(blob)
-  link.download = `${t('{title} – QR code', { title: props.title })}.png`
+  link.download = `${t('app.qrCard.titleQrCode', { title: props.title })}.png`
   link.click()
   URL.revokeObjectURL(link.href)
 }
@@ -59,7 +59,7 @@ defineExpose({ save })
   <canvas
     ref="canvas"
     role="img"
-    :aria-label="t('QR code card for “{title}”', { title })"
+    :aria-label="t('app.qrCard.qrCodeCardForTitle', { title })"
     class="h-auto rounded-lg shadow-sm"
     :width="CARD.width"
     :height="CARD.width * 1.3"

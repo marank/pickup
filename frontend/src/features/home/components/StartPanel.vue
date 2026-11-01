@@ -20,7 +20,7 @@ function accepted(code: string) {
 
 <template>
   <p v-if="creation.data.value?.mode === 'none'" class="text-muted-foreground">
-    {{ t('Creating new pickups is turned off on this server.') }}
+    {{ t('home.startPanel.creatingNewPickupsIsTurned') }}
   </p>
   <Button
     v-else-if="creation.data.value?.mode === 'code'"
@@ -29,12 +29,12 @@ function accepted(code: string) {
     @click="askCode = true"
   >
     <PlusIcon />
-    {{ t('Start a pickup') }}
+    {{ t('common.startAPickup') }}
   </Button>
   <Button v-else as-child size="lg" class="h-12 px-5 text-base">
     <RouterLink :to="{ name: 'create' }">
       <PlusIcon />
-      {{ t('Start a pickup') }}
+      {{ t('common.startAPickup') }}
     </RouterLink>
   </Button>
   <CreationCodeDialog v-model:open="askCode" @accepted="accepted" @cancel="askCode = false" />

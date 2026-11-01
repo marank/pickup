@@ -24,7 +24,7 @@ const emit = defineEmits<{ confirm: [] }>()
         <AlertDialogDescription>{{ description }}</AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
-        <AlertDialogCancel>{{ t('Cancel') }}</AlertDialogCancel>
+        <AlertDialogCancel>{{ t('common.cancel') }}</AlertDialogCancel>
         <AlertDialogAction variant="destructive" @click="emit('confirm')">
           {{ confirmLabel }}
         </AlertDialogAction>

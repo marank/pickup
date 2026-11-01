@@ -40,9 +40,9 @@ const emit = defineEmits<{ save: []; discard: [] }>()
     </div>
     <div v-if="saveable" class="flex justify-end gap-2 border-t px-5 py-3">
       <Button v-if="dirty" type="button" variant="ghost" @click="emit('discard')">{{
-        t('Discard')
+        t('pickups.settingsCard.discard')
       }}</Button>
-      <Button type="submit" :disabled="!dirty || pending">{{ t('Save') }}</Button>
+      <Button type="submit" :disabled="!dirty || pending">{{ t('common.save') }}</Button>
     </div>
   </component>
 </template>

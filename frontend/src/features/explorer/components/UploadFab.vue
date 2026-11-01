@@ -17,7 +17,7 @@ const explorer = useExplorer()
     :style="{
       bottom: 'calc(1rem + env(safe-area-inset-bottom) + var(--upload-tray-height, 0px))',
     }"
-    :aria-label="t('Upload photos or videos')"
+    :aria-label="t('common.uploadPhotosOrVideos')"
     @click="explorer.fileInput?.click()"
   >
     <UploadIcon class="size-6" />

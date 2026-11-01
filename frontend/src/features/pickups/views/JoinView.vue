@@ -16,8 +16,8 @@ const pickup = usePickup(() => props.pickupId)
 <template>
   <NotFoundCard
     v-if="isNotFound(pickup.error.value)"
-    :title="t('Pickup not found')"
-    :description="t('Check the link you got, or ask for a new one.')"
+    :title="t('common.pickupNotFound')"
+    :description="t('common.checkTheLinkYouGot')"
   />
   <JoinPanel
     v-else-if="pickup.data.value"

@@ -29,10 +29,10 @@ async function submit() {
   try {
     const { message } = await setEmail.mutateAsync(email.value.trim())
     // A different address than the stored one only gets a confirmation link.
-    toast.success(message || t('Check your inbox for your personal link'))
+    toast.success(message || t('common.checkYourInboxForYour'))
     open.value = false
   } catch (err) {
-    toast.error(apiErrorMessage(err, t('Could not send the mail')))
+    toast.error(apiErrorMessage(err, t('common.couldNotSendTheMail')))
   }
 }
 </script>
@@ -42,23 +42,21 @@ async function submit() {
     <DialogContent class="sm:max-w-md">
       <form class="space-y-4" @submit.prevent="submit">
         <DialogHeader>
-          <DialogTitle>{{ t('Email me my personal link') }}</DialogTitle>
+          <DialogTitle>{{ t('common.emailMeMyPersonalLink') }}</DialogTitle>
           <DialogDescription>
-            {{
-              t(
-                'With your personal link you can log in on any device. We also save the address, so you can request the link again later.',
-              )
-            }}
-            <template v-if="pickup.email_privacy">{{ t('It is stored only as a hash.') }}</template>
+            {{ t('pickups.emailLinkDialog.withYourPersonalLinkYou') }}
+            <template v-if="pickup.email_privacy">{{ t('common.itIsStoredOnlyAs') }}</template>
           </DialogDescription>
         </DialogHeader>
         <div class="space-y-1.5">
-          <Label for="own-email">{{ t('Your email') }}</Label>
+          <Label for="own-email">{{ t('common.yourEmail') }}</Label>
           <Input id="own-email" v-model="email" type="email" required autocomplete="email" />
         </div>
         <DialogFooter>
-          <Button type="button" variant="outline" @click="open = false">{{ t('Cancel') }}</Button>
-          <Button type="submit" :disabled="setEmail.isPending.value">{{ t('Send') }}</Button>
+          <Button type="button" variant="outline" @click="open = false">{{
+            t('common.cancel')
+          }}</Button>
+          <Button type="submit" :disabled="setEmail.isPending.value">{{ t('common.send') }}</Button>
         </DialogFooter>
       </form>
     </DialogContent>

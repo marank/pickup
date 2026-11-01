@@ -1,51 +1,86 @@
-import type { Messages } from '@/lib/i18n'
-
-/** German for src/components, src/layouts, src/lib, src/router, App.vue (see lib/i18n.ts). */
-const common: Messages = {
-  // App: the area where messages pop up (screen readers)
-  Notifications: 'Mitteilungen',
-  // Menus: appearance and language
-  Appearance: 'Darstellung',
-  'Colour scheme': 'Farbschema',
-  Dark: 'Dunkel',
-  Language: 'Sprache',
-  Light: 'Hell',
-  'Like the browser': 'Wie der Browser',
-  System: 'System',
-
-  // Dialogs and cards
-  Cancel: 'Abbrechen',
-  Close: 'Schließen',
-  'Go to the start page': 'Zur Startseite',
-
-  // CopyField
-  '{label} copied': '{label} kopiert',
-  'Could not copy the {label}': '{label} konnte nicht kopiert werden',
-  'Copy {label}': '{label} kopieren',
-
-  // HomeLink (the logo in the header)
-  'Pickup start page': 'Pickup-Startseite',
-  'Leave the pickup?': 'Pickup verlassen?',
-  'You stay logged in on this device. Open the pickup’s link to come back.':
-    'Du bleibst auf diesem Gerät angemeldet. Öffne den Link des Pickups, um zurückzukommen.',
-  'Open the pickup’s link to come back.': 'Öffne den Link des Pickups, um zurückzukommen.',
-  'Stay here': 'Hierbleiben',
-
-  // SplashScreen
-  'Opening the pickup…': 'Pickup wird geöffnet …',
-
-  // QrCard
-  'Could not create the image': 'Das Bild konnte nicht erstellt werden',
-  '{title} – QR code': '{title} – QR-Code',
-  'QR code card for “{title}”': 'QR-Code-Karte für „{title}“',
-
-  // lib/format.ts: relative dates
-  Today: 'Heute',
-  Yesterday: 'Gestern',
-  '{n} days ago': ['vor 1 Tag', 'vor {n} Tagen'],
-
-  // api/errors.ts
-  'Request failed ({status})': 'Anfrage fehlgeschlagen ({status})',
-}
-
-export default common
+export default {
+  addAnEmailForName: 'E-Mail-Adresse für {name} hinzufügen',
+  added: 'Hinzugefügt',
+  anyoneWithTheLink: 'Alle mit dem Link',
+  appearance: 'Darstellung',
+  ascending: 'Aufsteigend',
+  back: 'Zurück',
+  cancel: 'Abbrechen',
+  caption: 'Bildunterschrift',
+  checkTheLinkYouGot: 'Prüf den Link, den du bekommen hast, oder frag nach einem neuen.',
+  checkYourInboxForYour: 'Schau in dein Postfach, dort ist dein persönlicher Link',
+  close: 'Schließen',
+  closeSearch: 'Suche schließen',
+  commands: 'Befehle',
+  content: 'Inhalt',
+  couldNotSendTheMail: 'Die Mail konnte nicht gesendet werden',
+  createYourFolder: 'Eigenen Ordner anlegen',
+  dateAdded: 'Hinzugefügt am',
+  delete: 'Löschen',
+  descending: 'Absteigend',
+  details: 'Details',
+  download: 'Herunterladen',
+  downloadAll: 'Alles herunterladen',
+  downloadFolder: 'Ordner herunterladen',
+  editCaption: 'Bildunterschrift bearbeiten',
+  email: 'E-Mail',
+  emailMeMyPersonalLink: 'Persönlichen Link per E-Mail schicken',
+  folderContents: 'Ordnerinhalt',
+  folders: 'Ordner',
+  goToTheStartPage: 'Zur Startseite',
+  itIsStoredOnlyAs: 'Sie wird nur als Hash gespeichert.',
+  joinToUpload: 'Mitmachen und hochladen',
+  largeIcons: 'Große Symbole',
+  nFiles: ['1 Datei', '{n} Dateien'],
+  nFolders: ['1 Ordner', '{n} Ordner'],
+  nItems: ['1 Element', '{n} Elemente'],
+  nSelected: '{n} ausgewählt',
+  name: 'Name',
+  nameOfThePickup: 'Name des Pickups',
+  newFolder: 'Neuer Ordner',
+  next: 'Weiter',
+  nobodyNewCanJoinRight: 'Gerade kann niemand Neues mitmachen.',
+  openThePickup: 'Pickup öffnen',
+  owner: 'Besitzer:in',
+  passwordOfThePickup: 'Passwort des Pickups',
+  people: 'Personen',
+  personalLink: 'Persönlicher Link',
+  pickupNotFound: 'Pickup nicht gefunden',
+  pleaseCheckTheAddress: 'Bitte prüf die Adresse',
+  readOnly: 'Schreibgeschützt',
+  refresh: 'Aktualisieren',
+  rename: 'Umbenennen',
+  save: 'Speichern',
+  saveQrCard: 'QR-Karte speichern',
+  saved: 'Gespeichert',
+  search: 'Suchen',
+  searchThisFolder: 'Diesen Ordner durchsuchen',
+  send: 'Senden',
+  settings: 'Einstellungen',
+  share: 'Teilen',
+  shareLink: 'Teilen-Link',
+  size: 'Größe',
+  smallIcons: 'Kleine Symbole',
+  sortBy: 'Sortieren nach',
+  startAPickup: 'Pickup starten',
+  theCreator: 'die Ersteller:in',
+  timeline: 'Zeitleiste',
+  type: 'Typ',
+  untitledPickup: 'Pickup ohne Titel',
+  upOneLevel: 'Eine Ebene nach oben',
+  upload: 'Hochladen',
+  uploadPhotosOrVideos: 'Fotos oder Videos hochladen',
+  usedOfLimit: '{used} von {limit}',
+  video: 'Video',
+  view: 'Ansicht',
+  viewingOnly: 'Nur ansehen',
+  whoCanSeeThePhotos: 'Wer kann die Fotos sehen?',
+  you: 'Du',
+  youInvitePeopleByEmail:
+    'Du lädst Personen per E-Mail ein; alle bekommen einen persönlichen Link.',
+  yourEmail: 'Deine E-Mail-Adresse',
+  yourFolder: 'Dein Ordner',
+  yourFolderName: 'Dein Ordner: {name}',
+  yourName: 'Dein Name',
+  yourPersonalLink: 'Dein persönlicher Link',
+} as const

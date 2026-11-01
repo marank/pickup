@@ -39,7 +39,7 @@ watch(
   (mode) => {
     if (mode === 'code' && !creationCode.value) askCode.value = true
     if (mode === 'none') {
-      toast.error(t('Creating pickups is turned off on this server.'))
+      toast.error(t('pickups.createView.creatingPickupsIsTurnedOff'))
       void router.replace({ name: 'home' })
     }
   },
@@ -64,22 +64,22 @@ const shareUrl = computed(() => (created.value ? absolute(`/pickup/${created.val
 const form = reactive({ title: '', creator_name: '', creator_email: '', join_policy: 'open' })
 const fieldErrors = ref<Record<string, string>>({})
 const steps = computed(() => [
-  { label: t('Details'), current: phase.value !== 'ready' },
-  { label: t('Links'), current: phase.value === 'ready' },
+  { label: t('common.details'), current: phase.value !== 'ready' },
+  { label: t('pickups.createView.links'), current: phase.value === 'ready' },
 ])
 
 const policies = [
   {
     value: 'open',
     icon: LinkIcon,
-    label: () => t('Anyone with the link'),
-    hint: () => t('Everyone with the link picks a name and gets a folder.'),
+    label: () => t('common.anyoneWithTheLink'),
+    hint: () => t('pickups.createView.everyoneWithTheLinkPicks'),
   },
   {
     value: 'invite',
     icon: MailIcon,
-    label: () => t('Only people I invite'),
-    hint: () => t('You invite people by email; each gets a personal link.'),
+    label: () => t('pickups.createView.onlyPeopleIInvite'),
+    hint: () => t('common.youInvitePeopleByEmail'),
   },
 ] as const
 
@@ -114,7 +114,7 @@ async function submit() {
         if (Array.isArray(messages)) fieldErrors.value[field] = String(messages[0])
       }
     }
-    toast.error(apiErrorMessage(err, t('Could not create the pickup')))
+    toast.error(apiErrorMessage(err, t('pickups.createView.couldNotCreateThePickup')))
   }
 }
 </script>
@@ -128,9 +128,12 @@ async function submit() {
         class="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
       >
         <ArrowLeftIcon class="size-4" />
-        {{ t('Back') }}
+        {{ t('common.back') }}
       </RouterLink>
-      <ol class="ml-auto flex items-center gap-2 text-muted-foreground" :aria-label="t('Steps')">
+      <ol
+        class="ml-auto flex items-center gap-2 text-muted-foreground"
+        :aria-label="t('pickups.createView.steps')"
+      >
         <template v-for="(step, index) in steps" :key="step.label">
           <!-- The line between the steps fills while the pickup is packed. -->
           <li
@@ -172,13 +175,17 @@ async function submit() {
           <section
             v-if="phase === 'ready' && created"
             class="space-y-6"
-            :aria-label="t('Your pickup is ready')"
+            :aria-label="t('pickups.createView.yourPickupIsReady')"
           >
             <div class="space-y-1">
               <h1 class="font-heading text-2xl font-bold">
-                {{ t('“{title}” is ready', { title: created.title || t('Untitled pickup') }) }}
+                {{
+                  t('pickups.createView.titleIsReady', {
+                    title: created.title || t('common.untitledPickup'),
+                  })
+                }}
               </h1>
-              <p class="text-muted-foreground">{{ t('You get two links.') }}</p>
+              <p class="text-muted-foreground">{{ t('pickups.createView.youGetTwoLinks') }}</p>
             </div>
 
             <div class="grid items-start gap-6 sm:grid-cols-[13rem_1fr]">
@@ -187,12 +194,12 @@ async function submit() {
                 <QrCard
                   ref="qr"
                   :value="shareUrl"
-                  :title="created.title || t('Untitled pickup')"
+                  :title="created.title || t('common.untitledPickup')"
                   class="w-full"
                 />
                 <Button variant="outline" class="w-full" @click="qr?.save()">
                   <DownloadIcon />
-                  {{ t('Save QR card') }}
+                  {{ t('common.saveQrCard') }}
                 </Button>
               </div>
 
@@ -200,31 +207,33 @@ async function submit() {
                 <div class="space-y-2">
                   <p class="flex items-center gap-1.5 font-medium">
                     <UsersIcon class="size-4 text-muted-foreground" />
-                    {{ t('Share link') }}
+                    {{ t('common.shareLink') }}
                     <span class="font-normal text-muted-foreground">{{
-                      t('— for your guests')
+                      t('pickups.createView.forYourGuests')
                     }}</span>
                   </p>
-                  <CopyField :value="shareUrl" :label="t('Share link')" />
+                  <CopyField :value="shareUrl" :label="t('common.shareLink')" />
                   <p class="text-sm text-muted-foreground">
-                    {{ t('Send it to your guests, or print the QR card.') }}
+                    {{ t('pickups.createView.sendItToYourGuests') }}
                   </p>
                 </div>
 
                 <div class="space-y-2">
                   <p class="flex items-center gap-1.5 font-medium">
                     <KeyRoundIcon class="size-4 text-tomato" />
-                    {{ t('Your personal link') }}
-                    <span class="font-normal text-muted-foreground">{{ t('— only for you') }}</span>
+                    {{ t('common.yourPersonalLink') }}
+                    <span class="font-normal text-muted-foreground">{{
+                      t('pickups.createView.onlyForYou')
+                    }}</span>
                   </p>
-                  <CopyField :value="absolute(created.member_url)" :label="t('Personal link')" />
+                  <CopyField
+                    :value="absolute(created.member_url)"
+                    :label="t('common.personalLink')"
+                  />
                   <p class="text-sm text-muted-foreground">
-                    <template v-if="emailed">{{ t('We also emailed it to you.') }} </template
-                    >{{
-                      t(
-                        'With this link you log in as the creator on any device; keep it to yourself. You can copy it again from the account menu.',
-                      )
-                    }}
+                    <template v-if="emailed"
+                      >{{ t('pickups.createView.weAlsoEmailedItTo') }} </template
+                    >{{ t('pickups.createView.withThisLinkYouLog') }}
                   </p>
                 </div>
               </div>
@@ -232,7 +241,7 @@ async function submit() {
 
             <Button as-child size="lg" class="w-full">
               <RouterLink :to="{ name: 'explorer', params: { pickupId: created.id } }">
-                {{ t('Open the pickup') }}
+                {{ t('common.openThePickup') }}
                 <ArrowRightIcon />
               </RouterLink>
             </Button>
@@ -242,22 +251,27 @@ async function submit() {
             <PackingAnimation />
           </div>
 
-          <form v-else class="space-y-6" :aria-label="t('New pickup')" @submit.prevent="submit">
+          <form
+            v-else
+            class="space-y-6"
+            :aria-label="t('pickups.createView.newPickup')"
+            @submit.prevent="submit"
+          >
             <div class="space-y-1">
-              <h1 class="font-heading text-2xl font-bold">{{ t('Start a pickup') }}</h1>
+              <h1 class="font-heading text-2xl font-bold">{{ t('common.startAPickup') }}</h1>
               <p class="text-muted-foreground">
-                {{ t("A shared place for everyone's photos and videos. Nobody needs an account.") }}
+                {{ t('pickups.createView.aSharedPlaceForEveryones') }}
               </p>
             </div>
 
             <div class="space-y-1.5">
-              <Label for="create-title">{{ t('Name of the pickup') }}</Label>
+              <Label for="create-title">{{ t('common.nameOfThePickup') }}</Label>
               <Input
                 id="create-title"
                 v-model="form.title"
                 required
                 maxlength="200"
-                :placeholder="t('e.g. Anna & Mark’s wedding')"
+                :placeholder="t('pickups.createView.eGAnnaMarkS')"
                 autocomplete="off"
               />
               <p v-if="fieldErrors.title" class="text-sm text-destructive">
@@ -268,8 +282,10 @@ async function submit() {
             <div class="grid gap-4 sm:grid-cols-2">
               <div class="space-y-1.5">
                 <Label for="create-name"
-                  >{{ t('Your name') }}
-                  <span class="text-muted-foreground">{{ t('(optional)') }}</span></Label
+                  >{{ t('common.yourName') }}
+                  <span class="text-muted-foreground">{{
+                    t('pickups.createView.optional')
+                  }}</span></Label
                 >
                 <Input
                   id="create-name"
@@ -278,13 +294,15 @@ async function submit() {
                   autocomplete="name"
                 />
                 <p class="text-xs text-muted-foreground">
-                  {{ t('You get a folder with this name right away.') }}
+                  {{ t('pickups.createView.youGetAFolderWith') }}
                 </p>
               </div>
               <div class="space-y-1.5">
                 <Label for="create-email"
-                  >{{ t('Your email') }}
-                  <span class="text-muted-foreground">{{ t('(optional)') }}</span></Label
+                  >{{ t('common.yourEmail') }}
+                  <span class="text-muted-foreground">{{
+                    t('pickups.createView.optional')
+                  }}</span></Label
                 >
                 <Input
                   id="create-email"
@@ -293,7 +311,7 @@ async function submit() {
                   autocomplete="email"
                 />
                 <p class="text-xs text-muted-foreground">
-                  {{ t('We send you your link to get back in.') }}
+                  {{ t('pickups.createView.weSendYouYourLink') }}
                 </p>
                 <p v-if="fieldErrors.creator_email" class="text-sm text-destructive">
                   {{ fieldErrors.creator_email }}
@@ -302,7 +320,9 @@ async function submit() {
             </div>
 
             <fieldset class="space-y-2">
-              <legend class="mb-1 text-sm font-medium">{{ t('Who can join?') }}</legend>
+              <legend class="mb-1 text-sm font-medium">
+                {{ t('pickups.createView.whoCanJoin') }}
+              </legend>
               <div class="grid gap-2 sm:grid-cols-2">
                 <label
                   v-for="policy in policies"
@@ -324,16 +344,12 @@ async function submit() {
                 </label>
               </div>
               <p class="text-xs text-muted-foreground">
-                {{
-                  t(
-                    'Only participants see the photos. You can change this and more later in the settings.',
-                  )
-                }}
+                {{ t('pickups.createView.onlyParticipantsSeeThePhotos') }}
               </p>
             </fieldset>
 
             <Button type="submit" size="lg" class="w-full" :disabled="phase !== 'form'">
-              {{ t('Create pickup') }}
+              {{ t('pickups.createView.createPickup') }}
               <ArrowRightIcon />
             </Button>
           </form>

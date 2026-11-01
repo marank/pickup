@@ -40,15 +40,15 @@ const skipped = computed(() => queue.value.items.filter((item) => item.status ==
 const title = computed(() => {
   const counts = { done: queue.value.finished, total: total.value }
   if (queue.value.busy)
-    return t('Uploading {current} of {total}', { ...counts, current: counts.done + 1 })
+    return t('explorer.uploadTray.uploadingCurrentOfTotal', { ...counts, current: counts.done + 1 })
   if (failed.value === total.value)
-    return plural(failed.value, '1 upload failed', '{n} uploads failed')
+    return plural(failed.value, 'explorer.uploadTray.nUploadsFailed')
   return skipped.value
-    ? t('{done} of {total} uploaded, {skipped} already there', {
+    ? t('explorer.uploadTray.doneOfTotalUploadedSkipped', {
         ...counts,
         skipped: skipped.value,
       })
-    : t('{done} of {total} uploaded', counts)
+    : t('explorer.uploadTray.doneOfTotalUploaded', counts)
 })
 
 // A finished batch says so for a moment, then the list goes away by itself. Failed uploads
@@ -73,7 +73,7 @@ watch(total, (count) => count || (open.value = false))
     ref="tray"
     class="fixed right-3 bottom-3 left-3 z-40 overflow-hidden rounded-xl border bg-card shadow-lg sm:left-auto sm:w-96"
     role="region"
-    :aria-label="t('Uploads')"
+    :aria-label="t('explorer.uploadTray.uploads')"
   >
     <button
       type="button"

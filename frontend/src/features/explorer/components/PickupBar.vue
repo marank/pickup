@@ -13,12 +13,20 @@ import { pickupDates } from '../lib/dates'
 const explorer = useExplorer()
 const phone = usePhone()
 const pickup = computed(() => explorer.pickup.data)
-const title = computed(() => pickup.value?.title || t('Untitled pickup'))
+const title = computed(() => pickup.value?.title || t('common.untitledPickup'))
 const dates = computed(() => pickupDates(pickup.value))
 const chips = computed(() =>
   [
-    { text: dates.value.readOnly, icon: LockIcon, hint: t('Then nobody adds or changes anything') },
-    { text: dates.value.deleted, icon: HourglassIcon, hint: t('Then everything is deleted') },
+    {
+      text: dates.value.readOnly,
+      icon: LockIcon,
+      hint: t('explorer.pickupBar.thenNobodyAddsOrChanges'),
+    },
+    {
+      text: dates.value.deleted,
+      icon: HourglassIcon,
+      hint: t('explorer.pickupBar.thenEverythingIsDeleted'),
+    },
   ].filter((chip) => chip.text),
 )
 </script>
@@ -58,11 +66,11 @@ const chips = computed(() =>
         <Button
           variant="outline"
           size="sm"
-          :aria-label="t('Share')"
+          :aria-label="t('common.share')"
           @click="explorer.dialog = { kind: 'share' }"
         >
           <Share2Icon />
-          <span class="max-sm:hidden">{{ t('Share') }}</span>
+          <span class="max-sm:hidden">{{ t('common.share') }}</span>
         </Button>
       </div>
     </div>

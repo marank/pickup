@@ -91,7 +91,7 @@ const button =
           v-if="item.editable"
           type="button"
           :class="button"
-          :aria-label="t('Edit caption')"
+          :aria-label="t('common.editCaption')"
           @click="editCaption"
         >
           <PencilIcon class="size-4" />
@@ -100,14 +100,14 @@ const button =
           :href="item.media.file"
           :download="item.media.original_filename"
           :class="button"
-          :aria-label="t('Download')"
+          :aria-label="t('common.download')"
         >
           <DownloadIcon class="size-4" />
         </a>
         <button
           type="button"
           :class="button"
-          :aria-label="t('Close')"
+          :aria-label="t('common.close')"
           @click="explorer.viewer.open = false"
         >
           <XIcon class="size-5" />
@@ -169,7 +169,7 @@ const button =
           <button
             type="button"
             class="absolute top-1/2 left-2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-paper/10 hover:bg-paper/20 pointer-coarse:hidden"
-            :aria-label="t('Previous')"
+            :aria-label="t('explorer.mediaViewer.previous')"
             @click="step(-1)"
           >
             <ChevronLeftIcon />
@@ -177,7 +177,7 @@ const button =
           <button
             type="button"
             class="absolute top-1/2 right-2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-paper/10 hover:bg-paper/20 pointer-coarse:hidden"
-            :aria-label="t('Next')"
+            :aria-label="t('common.next')"
             @click="step(1)"
           >
             <ChevronRightIcon />
@@ -199,7 +199,7 @@ const button =
           v-else-if="files.length > 1"
           class="hidden px-4 pb-4 text-center text-xs text-paper/50 pointer-coarse:block"
         >
-          {{ t('Swipe for the next one · pinch to zoom · swipe down to close') }}
+          {{ t('explorer.mediaViewer.swipeForTheNextOne') }}
         </p>
       </div>
     </DialogContent>

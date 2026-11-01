@@ -40,7 +40,7 @@ const scrollTop = () => window.scrollTo({ top: 0 })
   <Transition name="splash">
     <SplashScreen v-if="splash" />
   </Transition>
-  <Toaster rich-colors position="top-right" :container-aria-label="t('Notifications')" />
+  <Toaster rich-colors position="top-right" :container-aria-label="t('app.app.notifications')" />
 </template>
 
 <style scoped>

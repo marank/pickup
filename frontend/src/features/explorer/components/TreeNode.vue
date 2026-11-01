@@ -48,8 +48,8 @@ function onKey(event: KeyboardEvent) {
         :class="!children.length && 'invisible'"
         :aria-label="
           isOpen
-            ? t('Collapse {name}', { name: folder.name })
-            : t('Expand {name}', { name: folder.name })
+            ? t('explorer.treeNode.collapseName', { name: folder.name })
+            : t('explorer.treeNode.expandName', { name: folder.name })
         "
         tabindex="-1"
         @click="emit('toggle', folder.id)"

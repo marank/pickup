@@ -185,7 +185,7 @@ importers:
         specifier: ^0.7.1
         version: 0.7.1
       cn:
-        specifier: ^0.5.1
+        specifier: ^0.5.2
         version: 0.5.2
       openapi-fetch:
         specifier: ^0.17.0

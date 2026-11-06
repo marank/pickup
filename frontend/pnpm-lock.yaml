@@ -176,7 +176,7 @@ importers:
         specifier: ^1.66.0
         version: 1.66.0(vue@3.5.44(typescript@6.0.3))
       '@tanstack/vue-query':
-        specifier: ^5.105.1
+        specifier: ^5.105.3
         version: 5.105.3(vue@3.5.44(typescript@6.0.3))
       '@vueuse/core':
         specifier: ^15.0.0

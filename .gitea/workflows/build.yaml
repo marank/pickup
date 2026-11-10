@@ -28,7 +28,7 @@ permissions:
 
 env:
   # Images started with `docker run` below; renovate.json updates them via a regex manager.
-  TRIVY_IMAGE: aquasec/trivy:0.76.1
+  TRIVY_IMAGE: aquasec/trivy:0.76.2
   POSTGRES_IMAGE: postgres:18-alpine
 
 jobs:

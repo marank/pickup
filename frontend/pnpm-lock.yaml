@@ -252,8 +252,8 @@ importers:
         specifier: ^10.1.8
         version: 10.1.8(eslint@10.14.0(jiti@2.7.0)(supports-color@10.2.2))
       eslint-plugin-cypress:
-        specifier: ^7.0.3
-        version: 7.0.3(@typescript-eslint/parser@8.72.1(eslint@10.14.0(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3))(eslint@10.14.0(jiti@2.7.0)(supports-color@10.2.2))
+        specifier: ^7.0.4
+        version: 7.0.4(@typescript-eslint/parser@8.72.1(eslint@10.14.0(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3))(eslint@10.14.0(jiti@2.7.0)(supports-color@10.2.2))
       eslint-plugin-oxlint:
         specifier: ~1.92.0
         version: 1.92.0(oxlint@1.92.0)
@@ -2117,8 +2117,8 @@ packages:
     peerDependencies:
       eslint: '>=7.0.0'
 
-  eslint-plugin-cypress@7.0.3:
-    resolution: {integrity: sha512-l9xGy+lBRwSUYqVu3oRMp1BxM32o4xJfj5v58pneSOgrn2k8bTxmyFERIHUvofinr7eUACgXazfnhHZyWDyj0g==}
+  eslint-plugin-cypress@7.0.4:
+    resolution: {integrity: sha512-+SbWR09N1yx/yPi9tiGhdloebPcQSUzpX9t4bLt4pNbQlzQNw7+ajr+PI9kuhzT0GHruA/pSFZw0ebXQMFl83w==}
     peerDependencies:
       '@typescript-eslint/parser': '>=8'
       eslint: '>=10'
@@ -2355,8 +2355,8 @@ packages:
     resolution: {integrity: sha512-NBcGGFbBA9s1VzD41QXDG+3++t9Mn5t1FpLdhESY6oKY4gYTFpX4wO3sqGUa0Srjtbfj3szX0RnemmrVRUdULA==}
     engines: {node: '>=10'}
 
-  globals@17.13.0:
-    resolution: {integrity: sha512-RwMTC61u7hrG3ZJMkZQOK4JLJrKS8QtoTii63EmWvFXHqycY9FObBJQCbsLxSO8kjKhWE5kV1GC+Vb1g3RI0Zg==}
+  globals@17.14.0:
+    resolution: {integrity: sha512-UtdkTVyAJePQv0J2M9Xe4L0ruNSDV314XiIJsADI2Zf40bcdAonE/D/OhAU8AT99oij9mhLByb+NvA3QWZYgCg==}
     engines: {node: '>=18'}
 
   gopd@1.2.0:
@@ -5557,10 +5557,10 @@ snapshots:
     dependencies:
       eslint: 10.14.0(jiti@2.7.0)(supports-color@10.2.2)
 
-  eslint-plugin-cypress@7.0.3(@typescript-eslint/parser@8.72.1(eslint@10.14.0(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3))(eslint@10.14.0(jiti@2.7.0)(supports-color@10.2.2)):
+  eslint-plugin-cypress@7.0.4(@typescript-eslint/parser@8.72.1(eslint@10.14.0(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3))(eslint@10.14.0(jiti@2.7.0)(supports-color@10.2.2)):
     dependencies:
       eslint: 10.14.0(jiti@2.7.0)(supports-color@10.2.2)
-      globals: 17.13.0
+      globals: 17.14.0
     optionalDependencies:
       '@typescript-eslint/parser': 8.72.1(eslint@10.14.0(jiti@2.7.0)(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)
 
@@ -5839,7 +5839,7 @@ snapshots:
     dependencies:
       ini: 2.0.0
 
-  globals@17.13.0: {}
+  globals@17.14.0: {}
 
   gopd@1.2.0: {}
 

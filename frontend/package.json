@@ -42,7 +42,7 @@
   "devDependencies": {
     "@size-limit/file": "^14.3.0",
     "@tailwindcss/vite": "^4.3.5",
-    "@tsconfig/node24": "^24.0.5",
+    "@tsconfig/node24": "^24.0.6",
     "@types/jsdom": "^28.0.3",
     "@types/node": "^26.6.6",
     "@vitejs/plugin-vue": "^6.0.10",

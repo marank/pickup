@@ -1,4 +1,18 @@
 export default {
+  connectView: {
+    title: 'Add this server to the app',
+    intro:
+      'With this server in the Pickup app, you can create new pickups here straight from your phone.',
+    openInApp: 'Open in the Pickup app',
+    orPaste: 'Nothing happens? Copy the link and paste it in the app under “Add link”.',
+    linkLabel: 'Link',
+    withCode:
+      'The link carries a code for creating pickups, and the app keeps it. Pass it on only to people who may create pickups here.',
+    needsCode: 'Creating pickups here needs a code. The app asks for it.',
+    creationOff:
+      'Nobody can create new pickups on this server. The app opens its pickups all the same.',
+    useInBrowser: 'Use Pickup in the browser instead',
+  },
   explorerMock: {
     beachDay: 'Beach day',
     grandma: 'Grandma',

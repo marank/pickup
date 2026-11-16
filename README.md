@@ -40,6 +40,7 @@ Every setting is described in `.env.example`. The ones you will most likely touc
 - `EMAIL_HOST` and friends: without a mail server Pickup works, but personal links can't be mailed.
 - `PICKUP_STORAGE_LIMIT`, `MEMBER_STORAGE_LIMIT`: how much a pickup and one participant may upload (`0` is unlimited).
 - `PICKUP_CREATION`: `everyone` may create pickups, only people with one of the `PICKUP_CREATION_CODES` (`code`), or nobody (`none`).
+- `SERVER_NAME`: how the iOS and Android apps list this server (empty: its host name).
 - `ADMIN_ENABLED`: the Django admin at `/admin` is closed unless this is `true`.
 
 Uploads: nginx accepts request bodies up to 25 MB; the app sends larger files in 5 MB chunks. Assembling a chunked upload copies the file once, so `GUNICORN_TIMEOUT` (default 300 s) has to cover the largest file on your disk.
@@ -82,6 +83,10 @@ docker compose exec app python manage.py storage_limits <pickup id> --pickup 50G
 
 # a creator forgot their pickup's password: remove it, they set a new one
 docker compose exec app python manage.py pickup_password <pickup id> --remove
+
+# the link that adds this server to the apps' server list (/connect); with PICKUP_CREATION=code
+# it carries the first code (or --code …, or --no-code), so share it only with people who may create
+docker compose exec app python manage.py server_link
 
 # the admin user's password
 docker compose exec app python manage.py set_password admin

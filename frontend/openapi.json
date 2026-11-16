@@ -2944,10 +2944,15 @@
                             }
                         ],
                         "description": "code: every creation needs one of the codes\n\n* `everyone` - everyone\n* `code` - code\n* `none` - none"
+                    },
+                    "name": {
+                        "type": "string",
+                        "description": "How apps list this server (SERVER_NAME); empty: use its host name"
                     }
                 },
                 "required": [
-                    "mode"
+                    "mode",
+                    "name"
                 ]
             },
             "CreationCodeRequest": {

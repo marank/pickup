@@ -249,6 +249,8 @@ if PICKUP_CREATION not in ("everyone", "code", "none"):
     raise ImproperlyConfigured(f"PICKUP_CREATION must be everyone, code or none, got {PICKUP_CREATION!r}.")
 if PICKUP_CREATION == "code" and not PICKUP_CREATION_CODES:
     raise ImproperlyConfigured("PICKUP_CREATION=code needs at least one code in PICKUP_CREATION_CODES.")
+# How the apps list this server (manage.py server_link shares it); empty: its host name.
+SERVER_NAME = env_str("SERVER_NAME", "").strip()
 
 
 # Email

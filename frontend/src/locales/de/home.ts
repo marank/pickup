@@ -1,4 +1,19 @@
 export default {
+  connectView: {
+    title: 'Diesen Server zur App hinzufügen',
+    intro:
+      'Ist dieser Server in der Pickup-App eingetragen, kannst du hier direkt vom Handy aus neue Pickups erstellen.',
+    openInApp: 'In der Pickup-App öffnen',
+    orPaste:
+      'Es passiert nichts? Kopier den Link und füg ihn in der App unter „Link hinzufügen“ ein.',
+    linkLabel: 'Link',
+    withCode:
+      'Der Link enthält einen Code zum Erstellen von Pickups, und die App merkt ihn sich. Gib ihn nur an Leute weiter, die hier Pickups erstellen dürfen.',
+    needsCode: 'Zum Erstellen von Pickups braucht es hier einen Code. Die App fragt danach.',
+    creationOff:
+      'Auf diesem Server kann niemand neue Pickups erstellen. Seine Pickups öffnet die App trotzdem.',
+    useInBrowser: 'Pickup lieber im Browser nutzen',
+  },
   explorerMock: {
     beachDay: 'Strandtag',
     grandma: 'Oma',

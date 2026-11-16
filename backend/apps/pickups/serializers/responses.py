@@ -59,6 +59,9 @@ class CreationSerializer(serializers.Serializer[Any]):
     mode = serializers.ChoiceField(
         choices=["everyone", "code", "none"], help_text="code: every creation needs one of the codes"
     )
+    name = serializers.CharField(
+        help_text="How apps list this server (SERVER_NAME); empty: use its host name"
+    )
 
 
 class CreationCodeSerializer(serializers.Serializer[Any]):

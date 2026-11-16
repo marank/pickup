@@ -726,6 +726,8 @@ export interface components {
        *     * `none` - none
        */
       mode: components['schemas']['ModeEnum']
+      /** @description How apps list this server (SERVER_NAME); empty: use its host name */
+      name: string
     }
     CreationCodeRequest: {
       code: string

@@ -36,7 +36,7 @@ from ..serializers import (
 )
 from ..services.access import can_view
 from ..services.archive import collect, safe_name, stream
-from ..services.creation import creation_mode, creation_refused
+from ..services.creation import creation_info, creation_refused
 from ..services.folders import with_counts
 from ..services.identity import forget_plain_emails
 from ..services.members import (
@@ -396,7 +396,7 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
             refused = creation_refused(body.validated_data["code"])
             if refused:
                 return Response({"error": refused}, status=status.HTTP_403_FORBIDDEN)
-        return Response(CreationSerializer({"mode": creation_mode()}).data)
+        return Response(CreationSerializer(creation_info()).data)
 
     @extend_schema(request=EmailSerializer, responses={202: MessageSerializer})
     @action(detail=False, methods=["post"], url_path="lookup")

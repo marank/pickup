@@ -2,6 +2,7 @@
 
 import hmac
 import re
+from urllib.parse import quote
 
 from django.conf import settings
 
@@ -13,6 +14,20 @@ def _normalize(code: str) -> str:
 
 def creation_mode() -> str:
     return str(settings.PICKUP_CREATION)
+
+
+def creation_info() -> dict[str, str]:
+    """What the apps need before offering this server for new pickups."""
+    return {"mode": creation_mode(), "name": settings.SERVER_NAME}
+
+
+def connect_link(code: str = "") -> str:
+    """
+    The link that adds this server to the apps' server list (the SPA's /connect page). A code
+    goes after the `#`, so it never reaches server logs; the apps keep it for creating.
+    """
+    link = f"{settings.APP_URLS[0].origin}/connect"
+    return f"{link}#code={quote(code, safe='')}" if code else link
 
 
 def valid_code(code: str) -> bool:

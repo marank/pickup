@@ -304,6 +304,8 @@ REST_FRAMEWORK = {
     # endpoints check access themselves instead of requiring a logged-in user.
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    # UserError from the services becomes {"error": message} with its status.
+    "EXCEPTION_HANDLER": "apps.core.api.exceptions.handle_exception",
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"]
     + (["rest_framework.renderers.BrowsableAPIRenderer"] if DEBUG else []),
     "DEFAULT_PARSER_CLASSES": [

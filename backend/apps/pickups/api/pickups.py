@@ -39,7 +39,6 @@ from ..services.archive import collect, safe_name, stream
 from ..services.creation import creation_info, creation_refused
 from ..services.folders import with_counts
 from ..services.members import (
-    MembershipError,
     check_pickup_password,
     confirm_email,
     create_pickup,
@@ -216,17 +215,14 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
         if not body.is_valid():
             return Response(body.errors, status=status.HTTP_400_BAD_REQUEST)
         data = body.validated_data
-        try:
-            member = join_pickup(
-                request,
-                pickup,
-                member,
-                name=data["name"],
-                user_name=data["user_name"],
-                email=data.get("email", ""),
-            )
-        except MembershipError as exc:
-            return Response({"error": str(exc)}, status=exc.status)
+        member = join_pickup(
+            request,
+            pickup,
+            member,
+            name=data["name"],
+            user_name=data["user_name"],
+            email=data.get("email", ""),
+        )
         login_member(request, member)
         # The personal link is shown once so the member can come back from another browser.
         response = JoinResponseSerializer(
@@ -279,14 +275,11 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
         body = MemberDetailsSerializer(data=request.data)
         if not body.is_valid():
             return Response(body.errors, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            update_member(
-                member,
-                user_name=body.validated_data.get("user_name"),
-                folder_name=body.validated_data.get("folder_name"),
-            )
-        except MembershipError as exc:
-            return Response({"error": str(exc)}, status=exc.status)
+        update_member(
+            member,
+            user_name=body.validated_data.get("user_name"),
+            folder_name=body.validated_data.get("folder_name"),
+        )
         return Response(PickupSerializer(pickup, context={"member": member}).data)
 
     @extend_schema(request=SessionSerializer, responses={200: LinkPreviewSerializer, 403: ErrorSerializer})
@@ -348,10 +341,7 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
             return Response({"error": _("Join the pickup first.")}, status=status.HTTP_403_FORBIDDEN)
         body = EmailSerializer(data=request.data)
         body.is_valid(raise_exception=True)
-        try:
-            pending = set_email(request, member, body.validated_data["email"])
-        except MembershipError as exc:
-            return Response({"error": str(exc)}, status=exc.status)
+        pending = set_email(request, member, body.validated_data["email"])
         if pending:
             return Response({"message": _("We sent a confirmation link to the new address.")})
         return Response({"message": _("We sent you your personal link.")})
@@ -363,10 +353,7 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
         pickup = self.get_object()
         body = EmailConfirmSerializer(data=request.data)
         body.is_valid(raise_exception=True)
-        try:
-            confirm_email(pickup, body.validated_data["token"])
-        except MembershipError as exc:
-            return Response({"error": str(exc)}, status=exc.status)
+        confirm_email(pickup, body.validated_data["token"])
         return Response({"message": _("Your new address is confirmed.")})
 
     @extend_schema(

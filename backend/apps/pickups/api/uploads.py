@@ -17,7 +17,6 @@ from ..serializers import (
     UploadSessionSerializer,
 )
 from ..services.access import can_edit
-from ..services.duplicates import DuplicateUpload
 from ..services.members import get_member_from_request
 from ..services.storage import StorageError, check_room
 from ..services.uploads import create_upload_session, finalize_upload, store_chunk
@@ -43,10 +42,6 @@ def _not_pending(session: UploadSession) -> Response:
     )
 
 
-def _too_large(exc: StorageError) -> Response:
-    return Response({"error": str(exc)}, status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
-
-
 class UploadSessionCreateView(APIView):
     """Create a new chunked upload session."""
 
@@ -68,10 +63,7 @@ class UploadSessionCreateView(APIView):
         serializer = CreateUploadSessionSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            check_room(folder, serializer.validated_data["file_size"])
-        except StorageError as exc:
-            return _too_large(exc)
+        check_room(folder, serializer.validated_data["file_size"])
         session = create_upload_session(folder, serializer.validated_data)
         return Response(UploadSessionSerializer(session).data, status=status.HTTP_201_CREATED)
 
@@ -148,24 +140,21 @@ class UploadSessionFinalizeView(APIView):
             check_room(session.folder, session.file_size, exclude_session=session.id)
         except StorageError as exc:
             session.status = "error"
-            session.error_message = str(exc)
+            session.error_message = exc.message
             session.save(update_fields=["status", "error_message"])
             session.cleanup_chunks()
-            return _too_large(exc)
+            raise
 
         try:
             media = finalize_upload(session)
-        except DuplicateUpload as exc:
-            return Response({"error": str(exc)}, status=status.HTTP_409_CONFLICT)
-        except (OSError, ValueError) as exc:
+        except OSError, ValueError:
+            # The details (paths, system errors) go to the log only, never to the browser.
             logger.exception("Finalizing upload session %s failed", session.id)
+            message = _("The upload could not be finished. Please try again.")
             session.status = "error"
-            session.error_message = str(exc)
+            session.error_message = message
             session.save(update_fields=["status", "error_message"])
-            return Response(
-                {"error": _("Failed to finalize upload: {error}").format(error=exc)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
+            return Response({"error": message}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response(
             MediaSerializer(media, context={"member": member}).data, status=status.HTTP_201_CREATED

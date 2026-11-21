@@ -20,7 +20,6 @@ from ..serializers import (
     PersonalLinkSerializer,
 )
 from ..services.members import (
-    MembershipError,
     add_email,
     get_member_from_request,
     invite,
@@ -80,16 +79,13 @@ class MemberViewSet(mixins.ListModelMixin, viewsets.GenericViewSet[Member]):
             return _creator_only()
         body = InviteSerializer(data=request.data)
         body.is_valid(raise_exception=True)
-        try:
-            member = invite(
-                request,
-                self._pickup(),
-                creator,
-                body.validated_data["email"],
-                body.validated_data.get("name", ""),
-            )
-        except MembershipError as exc:
-            return Response({"error": str(exc)}, status=exc.status)
+        member = invite(
+            request,
+            self._pickup(),
+            creator,
+            body.validated_data["email"],
+            body.validated_data.get("name", ""),
+        )
         return Response(
             MemberSerializer(member, context={"member": creator}).data, status=status.HTTP_201_CREATED
         )
@@ -105,10 +101,7 @@ class MemberViewSet(mixins.ListModelMixin, viewsets.GenericViewSet[Member]):
         creator = self._creator()
         if creator is None:
             return _creator_only()
-        try:
-            resend_invite(request, self.get_object(), creator)
-        except MembershipError as exc:
-            return Response({"error": str(exc)}, status=exc.status)
+        resend_invite(request, self.get_object(), creator)
         return Response({"message": _("Invitation sent again.")})
 
     @extend_schema(
@@ -124,10 +117,7 @@ class MemberViewSet(mixins.ListModelMixin, viewsets.GenericViewSet[Member]):
             return _creator_only()
         body = EmailSerializer(data=request.data)
         body.is_valid(raise_exception=True)
-        try:
-            add_email(request, self.get_object(), creator, body.validated_data["email"])
-        except MembershipError as exc:
-            return Response({"error": str(exc)}, status=exc.status)
+        add_email(request, self.get_object(), creator, body.validated_data["email"])
         return Response({"message": _("Address saved; they got their link by email.")})
 
     @extend_schema(parameters=[_PICKUP_ID], responses={200: PersonalLinkSerializer, 403: ErrorSerializer})
@@ -147,10 +137,7 @@ class MemberViewSet(mixins.ListModelMixin, viewsets.GenericViewSet[Member]):
         """Remove a participant together with their folder and files."""
         if self._creator() is None:
             return _creator_only()
-        try:
-            remove_member(self.get_object())
-        except MembershipError as exc:
-            return Response({"error": str(exc)}, status=exc.status)
+        remove_member(self.get_object())
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

@@ -7,11 +7,15 @@ from django.conf import settings
 from django.db.models import Q, Sum
 from django.utils.translation import gettext as _
 
+from apps.core.errors import UserError
+
 from ..models import Folder, Media, Pickup, UploadSession
 
 
-class StorageError(Exception):
+class StorageError(UserError):
     """An upload would go over a limit; the message is shown to the user."""
+
+    status = 413
 
 
 @dataclass(frozen=True)

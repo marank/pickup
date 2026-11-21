@@ -19,11 +19,9 @@ from ..serializers import (
     UploadMediaSerializer,
 )
 from ..services.access import can_delete_folder, can_edit, can_view
-from ..services.duplicates import DuplicateUpload
-from ..services.folders import FolderError, create_subfolder, delete_subfolder, rename_folder
+from ..services.folders import create_subfolder, delete_subfolder, rename_folder
 from ..services.media import clear_folder
 from ..services.members import get_member_from_request
-from ..services.storage import StorageError
 from ..services.uploads import upload_media
 
 
@@ -99,12 +97,7 @@ class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
         upload = UploadMediaSerializer(data=request.data)
         if not upload.is_valid():
             return Response(upload.errors, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            media = upload_media(folder, upload.validated_data)
-        except StorageError as exc:
-            return Response({"error": str(exc)}, status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
-        except DuplicateUpload as exc:
-            return Response({"error": str(exc)}, status=status.HTTP_409_CONFLICT)
+        media = upload_media(folder, upload.validated_data)
         return Response(
             MediaSerializer(media, context={"member": member}).data, status=status.HTTP_201_CREATED
         )
@@ -145,10 +138,7 @@ class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
             return denied
         body = FolderNameSerializer(data=request.data)
         body.is_valid(raise_exception=True)
-        try:
-            folder = create_subfolder(parent, body.validated_data["name"])
-        except FolderError as exc:
-            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        folder = create_subfolder(parent, body.validated_data["name"])
         return Response(self.get_serializer(folder).data, status=status.HTTP_201_CREATED)
 
     @extend_schema(
@@ -162,10 +152,7 @@ class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
             return denied
         body = FolderNameSerializer(data=request.data)
         body.is_valid(raise_exception=True)
-        try:
-            rename_folder(folder, body.validated_data["name"])
-        except FolderError as exc:
-            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        rename_folder(folder, body.validated_data["name"])
         return Response(self.get_serializer(folder).data)
 
     @extend_schema(responses={204: None, 400: ErrorSerializer, 403: ErrorSerializer})
@@ -177,8 +164,5 @@ class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
             return Response(
                 {"error": _("Only the owner can change this folder.")}, status=status.HTTP_403_FORBIDDEN
             )
-        try:
-            delete_subfolder(folder)
-        except FolderError as exc:
-            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        delete_subfolder(folder)
         return Response(status=status.HTTP_204_NO_CONTENT)

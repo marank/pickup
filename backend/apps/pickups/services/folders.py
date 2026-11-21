@@ -7,10 +7,12 @@ from django.db.models import Count, OuterRef, QuerySet, Subquery
 from django.db.models.functions import Coalesce
 from django.utils.translation import gettext as _
 
+from apps.core.errors import UserError
+
 from ..models import Folder, Media
 
 
-class FolderError(Exception):
+class FolderError(UserError):
     """A folder operation that is not allowed; the message is shown to the user."""
 
 

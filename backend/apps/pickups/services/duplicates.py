@@ -6,11 +6,15 @@ from collections.abc import Iterable
 from django.db.models import Q
 from django.utils.translation import gettext as _
 
+from apps.core.errors import UserError
+
 from ..models import Folder, Media
 
 
-class DuplicateUpload(Exception):
+class DuplicateUpload(UserError):
     """The member already has this exact file; `media` is where it is."""
+
+    status = 409
 
     def __init__(self, media: Media) -> None:
         self.media = media

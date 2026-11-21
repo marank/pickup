@@ -11,6 +11,8 @@ from django.http import HttpRequest
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
+from apps.core.errors import UserError
+
 from ..models import Folder, JoinPolicy, Media, Member, Pickup, UploadSession, live
 from .access import is_closed_for
 from .folders import FolderError, rename_folder, subtree_ids
@@ -24,12 +26,8 @@ EMAIL_CHANGE_SALT = "pickups.email-change"
 EMAIL_CHANGE_MAX_AGE = timedelta(days=1)
 
 
-class MembershipError(Exception):
+class MembershipError(UserError):
     """A membership action that is not allowed; the message is shown to the user."""
-
-    def __init__(self, message: str, status: int = 400) -> None:
-        super().__init__(message)
-        self.status = status
 
 
 def get_member_from_request(request: HttpRequest, pickup: Pickup) -> Member | None:

@@ -61,8 +61,6 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     env:
-      # The tests run against PostgreSQL like production, with the local dev settings.
-      DEBUG: "true"
       DB_TYPE: postgres
       DB_HOST: localhost
       DB_NAME: ci
@@ -87,7 +85,12 @@ jobs:
       - name: Install just
         run: uv tool install rust-just==1.59.0
 
+      # The tests run against PostgreSQL like production, with the local dev settings. Only
+      # this step: uv's --env-file doesn't override variables, so the deploy check would
+      # inherit it.
       - name: Checks and tests
+        env:
+          DEBUG: "true"
         run: just check-backend
 
       - name: Deploy checks

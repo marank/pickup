@@ -1,5 +1,5 @@
 # Fast checks before each commit; the full set is the VS Code `check` task (and CI).
-# Install once: uv tool run pre-commit install   (versions are kept current by Renovate)
+# Install once: uv tool run pre-commit install
 # Generated files must stay exactly as generated (CI compares them).
 exclude: ^frontend/(openapi\.json|src/api/schema\.d\.ts)$
 repos:

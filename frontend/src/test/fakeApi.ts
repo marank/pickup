@@ -77,7 +77,7 @@ export async function fakeFetch(input: RequestInfo | URL, init?: RequestInit): P
     if (!match) continue
     const params = Object.fromEntries(route.keys.map((key, i) => [key, match[i + 1]!]))
     const { status = 200, body } = await route.handler(recorded, params)
-    if (request.signal.aborted) throw new DOMException('Aborted', 'AbortError')
+    request.signal.throwIfAborted()
     if (body === undefined) return new Response(null, { status })
     return new Response(JSON.stringify(body), {
       status,

@@ -61,9 +61,7 @@ async function invite() {
 async function resend(member: Member) {
   try {
     await admin.resend.mutateAsync(member.id)
-    toast.success(
-      t('pickups.peoplePanel.invitationSentAgainToEmail', { email: member.email ?? '' }),
-    )
+    toast.success(t('pickups.peoplePanel.invitationSentAgainToEmail', { email: member.email }))
   } catch (err) {
     toast.error(apiErrorMessage(err, t('pickups.peoplePanel.couldNotSendTheInvitation')))
   }

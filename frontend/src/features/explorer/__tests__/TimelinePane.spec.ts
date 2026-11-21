@@ -70,7 +70,7 @@ describe('timeline', () => {
     await settle()
 
     Array.from(document.body.querySelectorAll<HTMLButtonElement>('[role="group"] [aria-pressed]'))
-      .find((chip) => chip.textContent?.includes('Bob'))!
+      .find((chip) => chip.textContent.includes('Bob'))!
       .click()
     await settle()
     expect(pageText()).toContain('2 photos and videos · by 1 person')

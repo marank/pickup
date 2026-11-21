@@ -61,7 +61,7 @@ describe('explorer on a phone', () => {
 
     findButton('Search').click()
     await flushPromises()
-    await new DOMWrapper($<HTMLInputElement>('input[aria-label="Search this folder"]')!).setValue(
+    await new DOMWrapper($<HTMLInputElement>('input[aria-label="Search this folder"]')).setValue(
       'zzz',
     )
     findButton('Close search').click()

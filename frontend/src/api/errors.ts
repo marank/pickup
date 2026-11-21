@@ -23,6 +23,16 @@ export function apiErrorMessage(err: unknown, fallback: string): string {
   return (err instanceof ApiError && messageFrom(err.body)) || fallback
 }
 
+/** The first validation message per field of a 400 answer ({ field: ['...'] }), else none. */
+export function fieldErrorsOf(err: unknown): Record<string, string> {
+  if (!(err instanceof ApiError) || !err.body || typeof err.body !== 'object') return {}
+  const errors: Record<string, string> = {}
+  for (const [field, messages] of Object.entries(err.body)) {
+    if (Array.isArray(messages)) errors[field] = String(messages[0])
+  }
+  return errors
+}
+
 export function isNotFound(err: unknown): boolean {
   return err instanceof ApiError && err.status === 404
 }

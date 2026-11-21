@@ -9,7 +9,7 @@ from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from ..models import Folder, Media, Pickup, live
+from ..models import Folder, Pickup, live
 from ..serializers import (
     ErrorSerializer,
     FolderNameSerializer,
@@ -19,12 +19,12 @@ from ..serializers import (
     UploadMediaSerializer,
 )
 from ..services.access import can_delete_folder, can_edit, can_view
-from ..services.capture_time import store_capture_time
-from ..services.duplicates import DuplicateUpload, check_duplicate, fingerprint
+from ..services.duplicates import DuplicateUpload
 from ..services.folders import FolderError, create_subfolder, delete_subfolder, rename_folder
+from ..services.media import clear_folder
 from ..services.members import get_member_from_request
-from ..services.storage import StorageError, check_room
-from ..services.thumbnails import create_thumbnail
+from ..services.storage import StorageError
+from ..services.uploads import upload_media
 
 
 class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
@@ -100,18 +100,11 @@ class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
         if not upload.is_valid():
             return Response(upload.errors, status=status.HTTP_400_BAD_REQUEST)
         try:
-            check_room(folder, upload.validated_data["file"].size)
+            media = upload_media(folder, upload.validated_data)
         except StorageError as exc:
             return Response({"error": str(exc)}, status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE)
-        file = upload.validated_data["file"]
-        sha256 = fingerprint(file.chunks())
-        try:
-            check_duplicate(folder, sha256)
         except DuplicateUpload as exc:
             return Response({"error": str(exc)}, status=status.HTTP_409_CONFLICT)
-        media = Media.objects.create(folder=folder, sha256=sha256, **upload.validated_data)
-        create_thumbnail(media)
-        store_capture_time(media)
         return Response(
             MediaSerializer(media, context={"member": member}).data, status=status.HTTP_201_CREATED
         )
@@ -128,10 +121,7 @@ class FolderViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Folder]):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        media_count = folder.media.count()
-        for media in folder.media.all():
-            media.delete_files()
-        folder.media.all().delete()
+        media_count = clear_folder(folder)
         return Response({"message": _("Deleted {count} media files.").format(count=media_count)})
 
     def _owned(self, request: Request) -> tuple[Folder, Response | None]:

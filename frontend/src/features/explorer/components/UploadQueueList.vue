@@ -62,7 +62,12 @@ const statusText: Record<UploadItem['status'], () => string> = {
             {{ t('common.cancel') }}
           </Button>
         </div>
-        <Progress v-if="item.status === 'uploading'" :model-value="item.progress" class="mt-2" />
+        <Progress
+          v-if="item.status === 'uploading'"
+          :model-value="item.progress"
+          :aria-label="t('explorer.uploadQueueList.uploading')"
+          class="mt-2"
+        />
         <p
           v-if="item.error"
           class="mt-1 text-sm"

@@ -32,7 +32,9 @@ const setHeight = (px: number) =>
   document.documentElement.style.setProperty('--upload-tray-height', `${px}px`)
 useResizeObserver(tray, ([entry]) => setHeight(entry ? entry.contentRect.height + 12 : 0))
 // The observer says nothing when the list goes away (cleared): the button would stay up high.
-watch(tray, (el) => el || setHeight(0))
+watch(tray, (el) => {
+  if (!el) setHeight(0)
+})
 onBeforeUnmount(() => setHeight(0))
 
 const failed = computed(() => queue.value.items.filter((item) => item.status === 'error').length)
@@ -86,7 +88,12 @@ watch(total, (count) => count || (open.value = false))
       <ChevronDownIcon v-if="open" class="size-4" />
       <ChevronUpIcon v-else class="size-4" />
     </button>
-    <Progress v-if="queue.busy" :model-value="progress" class="h-1 rounded-none" />
+    <Progress
+      v-if="queue.busy"
+      :model-value="progress"
+      :aria-label="t('explorer.uploadTray.uploads')"
+      class="h-1 rounded-none"
+    />
     <div v-if="open" class="max-h-72 overflow-y-auto border-t p-2">
       <UploadQueueList
         :items="queue.items"

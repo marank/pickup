@@ -41,9 +41,7 @@ type Shape<T> = T extends readonly [string, string]
 
 const choice = ref<Choice>(readPreference('pickup.locale', LOCALES, 'auto'))
 const browser = (): Locale =>
-  (navigator.languages?.[0] ?? navigator.language ?? '').toLowerCase().startsWith('de')
-    ? 'de'
-    : 'en'
+  (navigator.languages[0] ?? navigator.language).toLowerCase().startsWith('de') ? 'de' : 'en'
 /** The language in use. */
 export const locale = computed<Locale>(() => (choice.value === 'auto' ? browser() : choice.value))
 const messages = ref<Messages | null>(null)

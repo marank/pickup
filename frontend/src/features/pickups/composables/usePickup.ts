@@ -121,3 +121,23 @@ export function useMarkIntroSeen(pickupId: MaybeRefOrGetter<string>) {
     onSuccess: () => client.invalidateQueries({ queryKey: pickupKeys.detail(toValue(pickupId)) }),
   })
 }
+
+/** Whose personal link this is (no login yet): title, name and whether a password is needed. */
+export function previewMemberLink(pickupId: string, accessKey: string) {
+  return unwrap(
+    api.POST('/api/pickups/{id}/session/preview/', {
+      params: { path: { id: pickupId } },
+      body: { access_key: accessKey },
+    }),
+  )
+}
+
+/** The link from the "confirm your new address" mail: stores the signed address. */
+export function confirmEmail(pickupId: string, token: string) {
+  return unwrap(
+    api.POST('/api/pickups/{id}/session/email/confirm/', {
+      params: { path: { id: pickupId } },
+      body: { token },
+    }),
+  )
+}

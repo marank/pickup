@@ -1,6 +1,7 @@
 """Membership: who is calling, creating pickups, joining, inviting and removing people."""
 
 from datetime import timedelta
+from typing import Any
 
 from django.contrib.auth.hashers import check_password, make_password
 from django.core import signing
@@ -13,7 +14,7 @@ from django.utils.translation import gettext as _
 from ..models import Folder, JoinPolicy, Media, Member, Pickup, UploadSession, live
 from .access import is_closed_for
 from .folders import FolderError, rename_folder, subtree_ids
-from .identity import email_hash, normalize_email, normalize_name, remember_email
+from .identity import email_hash, forget_plain_emails, normalize_email, normalize_name, remember_email
 from .mail import send_personal_link, send_pickup_list
 
 SESSION_KEY = "pickup_members"  # {pickup_id: [member_id, access_version]} of this browser
@@ -97,6 +98,22 @@ def set_pickup_password(request: HttpRequest, pickup: Pickup, creator: Member, p
     pickup.refresh_from_db(fields=["password", "access_version"])
     creator.pickup = pickup
     login_member(request, creator)
+
+
+def update_pickup(request: HttpRequest, pickup: Pickup, creator: Member, data: dict[str, Any]) -> None:
+    """
+    Apply the creator's changes (validated `PickupUpdateSerializer` data). A new password ends
+    other logins; switching e-mail privacy on forgets the plain addresses.
+    """
+    changes = dict(data)
+    password = changes.pop("password", None)
+    for field, value in changes.items():
+        setattr(pickup, field, value)
+    pickup.save()
+    if password is not None:
+        set_pickup_password(request, pickup, creator, password)
+    if pickup.email_privacy:
+        forget_plain_emails(pickup)
 
 
 def name_taken(pickup: Pickup, user_name: str, exclude: Member | None = None) -> bool:
@@ -367,7 +384,5 @@ def delete_pickup(pickup: Pickup) -> int:
 
 def delete_expired_pickups() -> list[tuple[str, int]]:
     """Pickups whose expiry date has passed, with all their files: (id, files) of each."""
-    deleted = []
-    for pickup in Pickup.objects.filter(expires_at__lte=timezone.now()).order_by("expires_at"):
-        deleted.append((str(pickup.id), delete_pickup(pickup)))
-    return deleted
+    expired = Pickup.objects.filter(expires_at__lte=timezone.now()).order_by("expires_at")
+    return [(str(pickup.id), delete_pickup(pickup)) for pickup in expired]

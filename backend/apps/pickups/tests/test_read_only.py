@@ -30,7 +30,8 @@ def test_both_dates_are_optional_and_read_only_comes_first() -> None:
     pickup_id = new_pickup(creator)
     response = settings_patch(creator, pickup_id, read_only_at=in_days(3), expires_at=in_days(10))
     assert response.status_code == 200
-    assert response.json()["read_only_at"] and response.json()["is_read_only"] is False
+    assert response.json()["read_only_at"]
+    assert response.json()["is_read_only"] is False
     late = settings_patch(creator, pickup_id, read_only_at=in_days(11))  # after the stored deletion
     assert late.json() == {"read_only_at": ["Choose a day before the pickup is deleted."]}
     assert settings_patch(creator, pickup_id, read_only_at=in_days(-1)).status_code == 400

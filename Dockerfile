@@ -1,11 +1,11 @@
 # syntax=docker/dockerfile:1
 
 # --- 1. Build the SPA ------------------------------------------------------------
-FROM node:24-alpine AS frontend
-# pnpm pinned to the version in package.json "packageManager".
-RUN npm install -g pnpm@12.15.0
+FROM node:24-alpine@sha256:116b800c3754b440ee0aa3ed2f20f5bf3d99a554bfd9adeea09ea8017f6e85f5 AS frontend
 WORKDIR /frontend
 COPY frontend/package.json frontend/pnpm-lock.yaml frontend/pnpm-workspace.yaml ./
+# pnpm in the version of "packageManager" in package.json (the one place it is set).
+RUN npm install -g "pnpm@$(node -p "require('./package.json').packageManager.split('@')[1]")"
 RUN pnpm install --frozen-lockfile
 COPY frontend/ ./
 RUN pnpm run build
@@ -17,7 +17,7 @@ RUN pnpm run build
 # and turning frames upright, writing one PNG. No network, no devices, no GPL parts (LGPL).
 # AV1 through Debian's libdav1d. Keep the formats in step with VIDEO_FORMATS in
 # backend/apps/pickups/services/thumbnails.py.
-FROM python:3.14-slim AS ffmpeg
+FROM python:3.14-slim-trixie@sha256:9aaa474097d094040649f2162a627c0049b408f52138d980916788d80f04802f AS ffmpeg
 WORKDIR /src
 RUN sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/debian.sources \
  && apt-get update \
@@ -43,7 +43,7 @@ RUN cd ffmpeg-*/ \
  && /opt/ffmpeg/bin/ffmpeg -hide_banner -L | grep -q "GNU Lesser General Public"
 
 # --- 3. Runtime: supervisord → nginx + gunicorn/Django -----------------------------
-FROM python:3.14-slim AS runtime
+FROM python:3.14-slim-trixie@sha256:9aaa474097d094040649f2162a627c0049b408f52138d980916788d80f04802f AS runtime
 COPY --from=ghcr.io/astral-sh/uv:0.12.20 /uv /usr/local/bin/uv
 
 ENV PYTHONDONTWRITEBYTECODE=1 \

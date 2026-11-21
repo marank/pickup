@@ -1,7 +1,6 @@
 {
-  // Everyday commands. The "check" tasks run what CI runs (.gitea/workflows/build.yaml);
-  // keep both in sync. Commands use only `&&` chaining and task options for cwd/env, so
-  // they work in bash, zsh, cmd and PowerShell 7.
+  // Everyday commands. Every task calls a recipe of the justfile, the one place the commands
+  // live; CI (.github/workflows/build.yaml) calls the same recipes.
   "version": "2.0.0",
   "tasks": [
     {
@@ -15,8 +14,7 @@
     {
       "label": "dev: backend",
       "type": "shell",
-      "command": "uv run python manage.py runserver",
-      "options": { "cwd": "${workspaceFolder}/backend" },
+      "command": "just dev-backend",
       "isBackground": true,
       "presentation": { "panel": "dedicated" },
       "problemMatcher": []
@@ -24,89 +22,56 @@
     {
       "label": "dev: frontend",
       "type": "shell",
-      "command": "pnpm dev",
-      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "command": "just dev-frontend",
       "isBackground": true,
       "presentation": { "panel": "dedicated" },
       "problemMatcher": []
     },
     {
       "label": "check",
-      "detail": "Everything CI checks, backend and frontend",
-      "dependsOn": ["check: backend", "check: deploy settings", "check: frontend"],
-      "dependsOrder": "sequence",
+      "detail": "Everything CI checks: backend, deploy settings, frontend, workflows",
+      "type": "shell",
+      "command": "just check",
       "group": { "kind": "test", "isDefault": true },
       "problemMatcher": []
     },
     {
-      "label": "check: backend",
-      "detail": "ruff, mypy, deptry, migrations, Django checks, pytest with coverage",
+      "label": "check: changed",
+      "detail": "Before a commit: only what the changed files can break",
       "type": "shell",
-      "command": "uv sync --locked && uv run ruff check . && uv run ruff format --check . && uv run mypy . && uv run deptry . && uv run python manage.py makemigrations --check --dry-run && uv run python scripts/check_messages.py && uv run python manage.py check --fail-level WARNING && uv run python manage.py spectacular --validate --fail-on-warn --format openapi-json --file .openapi-check.json && uv run python -c \"import filecmp, sys; sys.exit(0 if filecmp.cmp('.openapi-check.json', '../frontend/openapi.json', shallow=False) else 'frontend/openapi.json is outdated: run the api: types task')\" && uv run pytest -q --cov --cov-report=term --cov-fail-under=90",
-      "options": { "cwd": "${workspaceFolder}/backend" },
+      "command": "just check-changed",
       "problemMatcher": []
     },
     {
-      "label": "check: deploy settings",
-      "detail": "Django deploy checks with production-like settings",
+      "label": "check: backend",
       "type": "shell",
-      "command": "uv run python manage.py check --deploy --fail-level WARNING",
-      "options": {
-        "cwd": "${workspaceFolder}/backend",
-        "env": {
-          "DEBUG": "false",
-          "APP_URLS": "https://app.example.com",
-          "SECRET_KEY": "local-deploy-check-not-secret-but-long-and-random-enough-0123456789abcdef",
-          "EMAIL_HASH_KEY": "local-deploy-check-email-hash-key-0123456789abcdef"
-        }
-      },
-      "hide": true,
+      "command": "just check-backend",
       "problemMatcher": []
     },
     {
       "label": "check: frontend",
-      "detail": "prettier, oxlint, eslint, knip, type-check, vitest with coverage, build, size, licenses",
       "type": "shell",
-      "command": "pnpm install --frozen-lockfile && pnpm check && pnpm build-only && pnpm size && pnpm check:licenses",
-      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "command": "just check-frontend",
       "problemMatcher": []
     },
     {
       "label": "api: types",
       "detail": "After API changes: OpenAPI schema → frontend/openapi.json → src/api/schema.d.ts",
-      "dependsOn": ["api: export schema", "api: generate types"],
-      "dependsOrder": "sequence",
-      "problemMatcher": []
-    },
-    {
-      "label": "api: export schema",
       "type": "shell",
-      "command": "uv run python manage.py spectacular --validate --fail-on-warn --format openapi-json --file ../frontend/openapi.json",
-      "options": { "cwd": "${workspaceFolder}/backend", "env": { "DB_TYPE": "sqlite" } },
-      "hide": true,
-      "problemMatcher": []
-    },
-    {
-      "label": "api: generate types",
-      "type": "shell",
-      "command": "pnpm api:types",
-      "options": { "cwd": "${workspaceFolder}/frontend" },
-      "hide": true,
+      "command": "just api-types",
       "problemMatcher": []
     },
     {
       "label": "django: makemigrations",
       "type": "shell",
-      "command": "uv run python manage.py makemigrations",
-      "options": { "cwd": "${workspaceFolder}/backend" },
+      "command": "just migrations",
       "problemMatcher": []
     },
     {
       "label": "django: worker",
       "detail": "Background jobs (mails, cleanup, catching up on previews); needs DB_TYPE=postgres in .env — with SQLite jobs run right away",
       "type": "shell",
-      "command": "uv run python manage.py procrastinate worker",
-      "options": { "cwd": "${workspaceFolder}/backend" },
+      "command": "just worker",
       "isBackground": true,
       "problemMatcher": []
     },
@@ -114,35 +79,33 @@
       "label": "django: messages",
       "detail": "After changing server texts: collect them in locale/de/django.po (translate the empty ones), compile django.mo",
       "type": "shell",
-      "command": "uv run python manage.py makemessages -l de --ignore=.venv --ignore='*/tests/*' --no-obsolete --no-location && uv run python manage.py compilemessages -l de --ignore=.venv",
-      "options": { "cwd": "${workspaceFolder}/backend" },
+      "command": "just messages",
       "problemMatcher": []
     },
     {
       "label": "django: migrate",
       "type": "shell",
-      "command": "uv run python manage.py migrate",
-      "options": { "cwd": "${workspaceFolder}/backend" },
+      "command": "just migrate",
       "problemMatcher": []
     },
     {
       "label": "db: start dev postgres",
       "detail": "Postgres for native development (DB_TYPE=postgres, DB_HOST=localhost in .env)",
       "type": "shell",
-      "command": "docker compose -f compose.dev.yml up -d",
+      "command": "just db-up",
       "problemMatcher": []
     },
     {
       "label": "docker: up",
       "detail": "Build and start the production-like stack (http://localhost:8080)",
       "type": "shell",
-      "command": "docker compose up -d --build",
+      "command": "just docker-up",
       "problemMatcher": []
     },
     {
       "label": "docker: down",
       "type": "shell",
-      "command": "docker compose down",
+      "command": "just docker-down",
       "problemMatcher": []
     }
   ]

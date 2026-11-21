@@ -19,9 +19,9 @@ const $ = <T extends Element = HTMLElement>(selector: string) =>
   document.body.querySelector<T>(selector)
 const items = () => Array.from(document.body.querySelectorAll<HTMLElement>('[data-item]'))
 const itemNames = () =>
-  items().map((el) => el.querySelector('p, span.truncate')?.textContent?.trim())
+  items().map((el) => el.querySelector('p, span.truncate')?.textContent.trim())
 const item = (name: string) => {
-  const el = items().find((candidate) => candidate.textContent?.includes(name))
+  const el = items().find((candidate) => candidate.textContent.includes(name))
   if (!el) throw new Error(`No item ${name}: ${itemNames().join(', ')}`)
   return el
 }
@@ -58,7 +58,7 @@ const settle = async () => {
 }
 const confirmDialogButton = (label: string) =>
   Array.from(document.body.querySelectorAll<HTMLButtonElement>('[role="alertdialog"] button')).find(
-    (button) => button.textContent?.trim() === label,
+    (button) => button.textContent.trim() === label,
   )!
 
 async function render(folderId?: string, options: Parameters<typeof serveExplorer>[0] = {}) {
@@ -96,7 +96,7 @@ describe('explorer: browsing', () => {
     // tree
     const beachInTree = Array.from(
       document.body.querySelectorAll('nav[aria-label="Folders"] button'),
-    ).find((b) => b.textContent?.trim() === 'Beach') as HTMLButtonElement
+    ).find((b) => b.textContent.trim() === 'Beach') as HTMLButtonElement
     beachInTree.click()
     await settle()
     expect(router.currentRoute.value.params.folderId).toBe(BEACH)
@@ -125,7 +125,7 @@ describe('explorer: browsing', () => {
   it('expands tree branches with the arrow keys', async () => {
     await render()
     const bob = Array.from(document.body.querySelectorAll('nav[aria-label="Folders"] button')).find(
-      (b) => b.textContent?.trim() === "Bob's photos",
+      (b) => b.textContent.trim() === "Bob's photos",
     )!
     bob.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }))
     await flushPromises()
@@ -143,7 +143,7 @@ describe('explorer: browsing', () => {
       'input[placeholder="Search this folder"]',
     )
     expect(inputs).toHaveLength(2)
-    await new DOMWrapper(inputs[1]!).setValue('zebra')
+    await new DOMWrapper(inputs[1]).setValue('zebra')
     expect(itemNames()).toEqual(['zebra.jpg'])
     findButton('Close search').click()
     await flushPromises()
@@ -156,7 +156,7 @@ describe('explorer: browsing', () => {
     const { router } = await render(ALICE)
     $('[title="Type a path (Ctrl+L)"]')!.click()
     await flushPromises()
-    const input = new DOMWrapper($<HTMLInputElement>('input[aria-label="Folder path"]')!)
+    const input = new DOMWrapper($<HTMLInputElement>('input[aria-label="Folder path"]'))
     expect((input.element as HTMLInputElement).value).toBe('Summer party / Alice')
 
     await input.setValue("Summer party / bob's photos / drone SHOTS")
@@ -167,7 +167,7 @@ describe('explorer: browsing', () => {
     const error = vi.spyOn(toast, 'error')
     window.dispatchEvent(new KeyboardEvent('keydown', { key: 'l', ctrlKey: true }))
     await flushPromises()
-    const again = new DOMWrapper($<HTMLInputElement>('input[aria-label="Folder path"]')!)
+    const again = new DOMWrapper($<HTMLInputElement>('input[aria-label="Folder path"]'))
     await again.setValue('Nowhere/else')
     await again.trigger('submit')
     expect(error).toHaveBeenCalledWith("“Nowhere/else” doesn't exist")
@@ -195,7 +195,7 @@ describe('explorer: browsing', () => {
     await openMenu('View')
     await chooseMenuItem('Details')
     const sizeHeader = Array.from(document.body.querySelectorAll('th button')).find((b) =>
-      b.textContent?.includes('Size'),
+      b.textContent.includes('Size'),
     )!
     ;(sizeHeader as HTMLButtonElement).click()
     await flushPromises()
@@ -214,7 +214,7 @@ describe('explorer: browsing', () => {
 
   it('searches the current folder', async () => {
     await render(ALICE)
-    const search = new DOMWrapper($<HTMLInputElement>('input[placeholder="Search this folder"]')!)
+    const search = new DOMWrapper($<HTMLInputElement>('input[placeholder="Search this folder"]'))
     await search.setValue('stripes')
     expect(itemNames()).toEqual(['zebra.jpg'])
     await search.setValue('nothing like this')
@@ -383,7 +383,7 @@ describe('explorer: browsing', () => {
     const sheet = $('[role="dialog"]')!
     expect(sheet.textContent).toContain('Folders')
     const alice = Array.from(sheet.querySelectorAll('button')).find(
-      (b) => b.querySelector('.truncate')?.textContent?.trim() === 'Alice',
+      (b) => b.querySelector('.truncate')?.textContent.trim() === 'Alice',
     )!
     alice.click()
     await settle()
@@ -513,7 +513,7 @@ describe('explorer: owner actions', () => {
     await render(ALICE)
     findButton('New folder').click()
     await flushPromises()
-    await new DOMWrapper($<HTMLInputElement>('#name-dialog-input')!).setValue('  Sunsets ')
+    await new DOMWrapper($<HTMLInputElement>('#name-dialog-input')).setValue('  Sunsets ')
     findButton('Create').click()
     await settle()
     expect(requests.find((r) => r.path.endsWith('/subfolders/'))).toMatchObject({
@@ -528,7 +528,7 @@ describe('explorer: owner actions', () => {
     await render(ALICE)
     await click(item('Beach'))
     await press('F2')
-    const name = new DOMWrapper($<HTMLInputElement>('#name-dialog-input')!)
+    const name = new DOMWrapper($<HTMLInputElement>('#name-dialog-input'))
     expect((name.element as HTMLInputElement).value).toBe('Beach')
     await name.setValue('Seaside')
     await name.trigger('submit')
@@ -863,7 +863,7 @@ describe('explorer: read-only', () => {
     expect(pageText()).toContain('Your folder: Alice')
     expect(pageText()).toContain('Read-only')
     const labels = Array.from(document.body.querySelectorAll('button')).map((b) =>
-      b.textContent?.trim(),
+      b.textContent.trim(),
     )
     expect(labels).not.toContain('Upload')
     expect(labels).not.toContain('Join')

@@ -39,7 +39,7 @@ watch(
   open,
   (isOpen) => {
     if (!isOpen) return
-    form.name = props.pickup.member_name ?? ''
+    form.name = props.pickup.member_name
     form.folder = props.folderName ?? ''
     form.email = ''
   },
@@ -48,7 +48,7 @@ watch(
 
 async function submit() {
   const details: { user_name?: string; folder_name?: string } = {}
-  if (form.name.trim() !== (props.pickup.member_name ?? '')) details.user_name = form.name.trim()
+  if (form.name.trim() !== props.pickup.member_name) details.user_name = form.name.trim()
   if (props.folderName !== null && form.folder.trim() !== props.folderName)
     details.folder_name = form.folder.trim()
   const email = form.email.trim()

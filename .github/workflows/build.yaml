@@ -1,13 +1,13 @@
-# CI: lint, type-check and test backend + frontend, scan the repository, then build the
-# image, smoke-test it hardened like in production, scan it and push it to the Gitea
-# container registry (same host as this Gitea instance).
+# CI: check backend, frontend and the workflows through the justfile, scan the repository,
+# then build the image, smoke-test it hardened like in production, scan it and push it to
+# the GitHub container registry (ghcr.io/<owner>/<repo>). No secrets needed: the push uses
+# the job's GITHUB_TOKEN. Every command a check runs lives in the justfile, so CI and
+# `just check` cannot drift apart.
 #
-# Required repository secrets:
-#   REGISTRY_USER   Gitea user that owns (or may write to) the package
-#   REGISTRY_TOKEN  access token with the "write:package" scope
-#
-# Pull requests only run the checks and a test build; pushes to main and
-# version tags (v1.2.3) also push the image.
+# Pull requests only run the checks and a test build. Pushes to main push `latest` and
+# `sha-…`; version tags (v1.2.3, from release.yaml via workflow_call or by hand) also push
+# 1.2.3, 1.2 and 1. Once a week main is rebuilt even without a change, so the image gets
+# Debian's security fixes and a newly known vulnerability turns the run red.
 name: build
 
 on:
@@ -16,27 +16,36 @@ on:
     tags: ["v*"]
   pull_request:
     branches: [main]
+  schedule:
+    # Mondays 03:17 UTC (off the full hour, when GitHub's scheduler is busiest).
+    - cron: "17 3 * * 1"
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      version:
+        description: Release version without "v" (e.g. 1.2.3); tags the image like a version tag
+        type: string
+        required: true
 
 concurrency:
-  group: ${{ gitea.workflow }}-${{ gitea.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.version }}
   cancel-in-progress: true
 
-# The jobs only read the repository; the registry login uses its own token.
-permissions:
-  contents: read
+# Nothing by default; each job asks for what it needs.
+permissions: {}
 
 env:
-  # Images started with `docker run` below; renovate.json updates them via a regex manager.
-  TRIVY_IMAGE: aquasec/trivy:0.76.2
+  # Started with `docker run` below; Dependabot does not see them. Bump TRIVY_IMAGE (tag and
+  # digest) by hand, POSTGRES_IMAGE together with compose.yml.
+  TRIVY_IMAGE: aquasec/trivy:0.76.2@sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb
   POSTGRES_IMAGE: postgres:18-alpine
 
 jobs:
-  # --- Backend: ruff, mypy, deptry, licenses, migrations, checks, OpenAPI, pytest ----
+  # --- Backend: `just check-backend` and `just check-deploy` against PostgreSQL -----------
   backend:
     runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/astral-sh/uv:python3.14-trixie-slim
+    permissions:
+      contents: read
     services:
       postgres:
         image: postgres:18-alpine
@@ -44,156 +53,130 @@ jobs:
           POSTGRES_DB: ci
           POSTGRES_USER: ci
           POSTGRES_PASSWORD: ci
+        ports:
+          - 5432:5432
         options: >-
           --health-cmd "pg_isready -U ci -d ci"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
     env:
-      UV_LINK_MODE: copy
-      UV_PYTHON_DOWNLOADS: never
       # The tests run against PostgreSQL like production, with the local dev settings.
       DEBUG: "true"
-      SECRET_KEY: ci-only-not-secret
       DB_TYPE: postgres
-      DB_HOST: postgres
+      DB_HOST: localhost
       DB_NAME: ci
       DB_USER: ci
       DB_PASSWORD: ci
-    defaults:
-      run:
-        working-directory: backend
     steps:
-      # builtin:checkout runs git inside the job image; the -slim images lack it.
-      # Add the same system packages the Dockerfile installs for the app (if any).
-      # working-directory: / because backend/ does not exist yet.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # ffmpeg: the image builds a small one itself; tests take Debian's.
+      # gettext: makemessages/compilemessages for the translations check.
       - name: Install system packages
-        working-directory: /
-        run: |
-          apt-get update
-          # ffmpeg: the image builds a small one itself; tests take Debian's.
-          # gettext: makemessages/compilemessages for the translations check.
-          apt-get install -y --no-install-recommends git ca-certificates ffmpeg gettext
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg gettext
 
-      - uses: builtin:checkout
+      # Python comes from backend/.python-version, like natively. No caches: this workflow
+      # also publishes the image, and a poisoned cache could reach it.
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+        with:
+          enable-cache: false
 
-      - name: Install dependencies
-        # --locked also fails when uv.lock no longer matches pyproject.toml.
-        run: uv sync --locked
+      - name: Install just
+        run: uv tool install rust-just==1.59.0
 
-      - name: Lint
-        run: |
-          uv run ruff check --output-format=concise .
-          uv run ruff format --check .
+      - name: Checks and tests
+        run: just check-backend
 
-      - name: Type-check
-        run: uv run mypy .
+      - name: Deploy checks
+        run: just check-deploy
 
-      # Every declared package is imported, every imported one declared.
-      - name: Unused dependencies
-        run: uv run deptry .
-
-      # Production dependencies only: licenses must go with Pickup's AGPL-3.0-or-later
-      # (no non-free ones, no GPL-2.0-only).
-      - name: Licenses
-        run: |
-          LICENSE_DIR=$(mktemp -d)
-          trap 'rm -rf "$LICENSE_DIR"' EXIT
-          uv export --locked --no-dev --no-hashes --format requirements.txt -o "$LICENSE_DIR/requirements.txt"
-          uv venv --quiet "$LICENSE_DIR/venv"
-          uv pip install --quiet --python "$LICENSE_DIR/venv" -r "$LICENSE_DIR/requirements.txt" pip-licenses
-          "$LICENSE_DIR/venv/bin/pip-licenses" --format=json \
-            --ignore-packages pip-licenses prettytable wcwidth \
-            | uv run python scripts/check_licenses.py
-
-      - name: Check for missing migrations
-        run: uv run python manage.py makemigrations --check --dry-run
-
-      # Every text has a German entry, and django.mo is compiled from django.po.
-      - name: Translations up to date
-        run: uv run python scripts/check_messages.py
-
-      - name: Django system checks
-        run: uv run python manage.py check --fail-level WARNING
-
-      # Production settings: secure cookies, no debug, no warnings left.
-      - name: Django deploy checks
-        env:
-          DEBUG: "false"
-          SECRET_KEY: ci-deploy-check-not-secret-but-long-and-random-enough-0123456789abcdef
-          EMAIL_HASH_KEY: ci-deploy-check-email-hash-key-0123456789abcdef
-          APP_URLS: https://app.example.com
-        run: uv run python manage.py check --deploy --fail-level WARNING
-
-
-      # frontend/openapi.json must match the API (TypeScript types are generated from it).
-      # Generated with SQLite like locally: the database decides some integer limits.
-      - name: OpenAPI schema up to date
-        env:
-          DB_TYPE: sqlite
-        run: |
-          uv run python manage.py spectacular --validate --fail-on-warn --format openapi-json --file /tmp/openapi.json
-          diff -u ../frontend/openapi.json /tmp/openapi.json
-
-      - name: Tests
-        run: uv run pytest -q --cov --cov-report=term --cov-fail-under=90
-
-  # --- Frontend: prettier, oxlint, eslint, knip, type-check, vitest, build, size, audit
+  # --- Frontend: `just check-frontend` ------------------------------------------------------
   frontend:
     runs-on: ubuntu-latest
-    container:
-      image: node:24-trixie-slim
-    defaults:
-      run:
-        working-directory: frontend
+    permissions:
+      contents: read
     steps:
-      - name: Install git
-        working-directory: /
-        run: apt-get update && apt-get install -y --no-install-recommends git ca-certificates
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      - uses: builtin:checkout
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
 
-      - name: Install dependencies
-        run: |
-          npm install -g pnpm@12.15.0
-          pnpm install --frozen-lockfile
+      - name: Install just
+        run: uv tool install rust-just==1.59.0
 
-      # format:check, lint (oxlint, eslint, knip for unused code; no --fix), type-check and
-      # unit tests with their coverage minimum
-      - name: Checks
-        run: pnpm check
+      # pnpm in the version of packageManager in package.json (the one place it is set).
+      - uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+        with:
+          package_json_file: frontend/package.json
 
-      - name: Build
-        run: pnpm build-only
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          package-manager-cache: false
 
-      # Size budgets in package.json, so the app stays quick on a phone.
-      - name: Bundle size
-        run: pnpm size
+      - name: Checks, tests, build
+        run: just check-frontend
 
-      - name: Licenses
-        run: pnpm check:licenses
+  # --- Workflows: `just check-workflows` (actionlint syntax, zizmor security audit) ----------
+  workflows:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
 
-      - name: API types up to date
-        run: |
-          pnpm api:types
-          git diff --exit-code -- src/api/schema.d.ts
+      - name: Install just
+        run: uv tool install rust-just==1.59.0
 
-      # Known vulnerabilities in the dependencies that end up in the browser.
-      - name: Audit
-        run: pnpm audit --prod --audit-level high
+      # With a token zizmor also runs its online audits (e.g. known-vulnerable actions).
+      - name: Lint and audit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: just check-workflows
+
+  # --- End of support: `just check-eol`, only in the weekly run ----------------------------
+  # Updates Dependabot ignores (PostgreSQL majors) or doesn't offer (base image majors) come
+  # up here: the run turns red 180 days before a platform's support ends. Not a dependency of
+  # `image` and not a required check, so it never blocks the rebuild or a pull request.
+  eol:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+
+      - name: Install just
+        run: uv tool install rust-just==1.59.0
+
+      - name: Check
+        run: just check-eol
 
   # --- Repository: committed secrets, vulnerable lock files, Dockerfile/compose ----
   repository:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: builtin:checkout
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       # Secrets, critical fixable vulnerabilities and Dockerfile/compose misconfigurations
-      # fail; HIGH vulnerabilities are reported. The database is cached in a volume of the
-      # runner's Docker. The runner talks to a Docker-in-Docker daemon, so a bind mount of
-      # the checkout would show an empty directory; the files are streamed into the
-      # scanner as a tar archive instead.
+      # fail; HIGH vulnerabilities are reported. The files are streamed into the scanner
+      # as a tar archive, so it sees exactly the checkout without .git and dependencies.
       - name: Scan
         run: |
           trivy() {
@@ -212,27 +195,33 @@ jobs:
 
   # --- Image: build, smoke-test, scan, push ---------------------------------------
   image:
-    needs: [backend, frontend, repository]
+    needs: [backend, frontend, workflows, repository]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     env:
       DOCKER_BUILDKIT: "1"
-      PUSH: ${{ gitea.event_name != 'pull_request' }}
+      PUSH: ${{ github.event_name != 'pull_request' }}
     steps:
-      - uses: builtin:checkout
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Compute tags
         id: meta
         # Context values go in via env, never straight into the script: tag names
         # may contain shell metacharacters.
         env:
-          SERVER_URL: ${{ gitea.server_url }}
-          REPO: ${{ gitea.repository }}
-          REF: ${{ gitea.ref }}
-          REF_NAME: ${{ gitea.ref_name }}
-          SHA: ${{ gitea.sha }}
+          REPO: ${{ github.repository }}
+          REF: ${{ github.ref }}
+          REF_NAME: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+          # Set when release.yaml calls this workflow for a new release.
+          RELEASE: ${{ inputs.version }}
         run: |
-          # Gitea's container registry lives on the instance's own host.
-          REGISTRY=$(echo "$SERVER_URL" | sed -E 's#^[a-z]+://##; s#/.*$##')
+          REGISTRY=ghcr.io
+          if [ -n "$RELEASE" ]; then REF="refs/tags/v$RELEASE"; REF_NAME="v$RELEASE"; fi
           IMAGE=$(echo "$REGISTRY/$REPO" | tr '[:upper:]' '[:lower:]')
           SHORT_SHA=$(echo "$SHA" | cut -c1-12)
           TAGS="$IMAGE:sha-$SHORT_SHA"
@@ -266,16 +255,16 @@ jobs:
         if: env.PUSH == 'true'
         env:
           REGISTRY: ${{ steps.meta.outputs.registry }}
-          REGISTRY_USER: ${{ secrets.REGISTRY_USER }}
-          REGISTRY_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
+          REGISTRY_USER: ${{ github.actor }}
+          REGISTRY_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: echo "$REGISTRY_TOKEN" | docker login "$REGISTRY" -u "$REGISTRY_USER" --password-stdin
 
       - name: Build
         env:
           IMAGE: ${{ steps.meta.outputs.image }}
           IMAGE_TAGS: ${{ steps.meta.outputs.tags }}
-          SOURCE: ${{ gitea.server_url }}/${{ gitea.repository }}
-          SHA: ${{ gitea.sha }}
+          SOURCE: ${{ github.server_url }}/${{ github.repository }}
+          SHA: ${{ github.sha }}
         run: |
           read -ra tag_list <<< "$IMAGE_TAGS"
           tag_args=()
@@ -300,7 +289,7 @@ jobs:
       - name: Smoke test
         env:
           IMAGE: ${{ steps.meta.outputs.ref }}
-          RUN_ID: ${{ gitea.run_id }}
+          RUN_ID: ${{ github.run_id }}
         run: |
           NAME="smoke-$RUN_ID"
           docker network create "$NAME"
@@ -361,9 +350,8 @@ jobs:
           echo "Image boots hardened, serves SPA, API and static files"
 
       # Known vulnerabilities (OS packages, Python wheels) and secrets baked into the image.
-      # Critical fixable ones block the push; HIGH is reported. The runner talks to a
-      # Docker-in-Docker daemon, so neither paths nor its socket can be shared with the
-      # scanner; the image is streamed in with docker save instead.
+      # Critical fixable ones block the push; HIGH is reported. The image is streamed into
+      # the scanner with docker save, so it needs neither the Docker socket nor a path.
       - name: Vulnerability scan
         env:
           IMAGE: ${{ steps.meta.outputs.ref }}

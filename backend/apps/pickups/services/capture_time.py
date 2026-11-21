@@ -38,7 +38,8 @@ def image_time(path: str) -> datetime | None:
     if not isinstance(text, str):
         return None
     try:
-        moment = datetime.strptime(text.strip()[:19], "%Y:%m:%d %H:%M:%S")
+        # EXIF times carry no zone; the offset or the server's zone is added below.
+        moment = datetime.strptime(text.strip()[:19], "%Y:%m:%d %H:%M:%S")  # noqa: DTZ007
     except ValueError:
         return None
     offset = sub.get(OFFSET_TIME_ORIGINAL)
@@ -62,7 +63,7 @@ def video_time(path: str) -> datetime | None:
     match = CREATION_TIME.search(result.stderr.decode(errors="replace"))
     if match is None:
         return None
-    return datetime.fromisoformat(match.group(1).replace("Z", "+00:00"))
+    return datetime.fromisoformat(match.group(1))
 
 
 def store_capture_time(media: Media) -> None:

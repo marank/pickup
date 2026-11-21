@@ -162,7 +162,9 @@ def test_the_creator_deletes_the_pickup_for_good(
     with django_capture_on_commit_callbacks(execute=True):
         assert creator.delete(f"/api/pickups/{pickup_id}/").status_code == 204
     assert not Pickup.objects.exists()
-    assert not (Member.objects.exists() or Folder.objects.exists() or Media.objects.exists())
+    assert not (Member.objects.exists())
+    assert not (Folder.objects.exists())
+    assert not (Media.objects.exists())
     assert not stored.storage.exists(stored.name or "")
     assert not os.path.exists(chunks_dir)
     assert creator.get(f"/api/pickups/{pickup_id}/").status_code == 404

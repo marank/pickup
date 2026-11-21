@@ -78,12 +78,12 @@ const personalUrl = computed(() =>
 const setEmail = useSetEmail(() => props.pickup.id)
 const email = ref('')
 const emailing = ref(false)
-const emailInput = ref<InstanceType<typeof Input> | null>(null)
+const emailInput = ref<{ $el: HTMLInputElement } | null>(null)
 
 async function startEmailing() {
   emailing.value = true
   await nextTick()
-  ;(emailInput.value?.$el as HTMLInputElement | undefined)?.focus()
+  emailInput.value?.$el.focus()
 }
 
 const markSeen = useMarkIntroSeen(() => props.pickup.id)

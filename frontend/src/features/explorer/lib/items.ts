@@ -78,7 +78,7 @@ function compare(a: ExplorerItem, b: ExplorerItem, key: SortKey): number {
       return compareText(typeLabel(a), typeLabel(b))
     case 'owner':
       return compareText(a.owner, b.owner)
-    default:
+    case 'name':
       return compareText(a.name, b.name)
   }
 }

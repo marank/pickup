@@ -7,11 +7,11 @@ import SplashScreen from '@/components/SplashScreen.vue'
 import { Toaster } from '@/components/ui/sonner'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { t } from '@/lib/i18n'
+import { reducedMotion } from '@/lib/motion'
 import { pageKey } from '@/router/pageKey'
 
 /** How long the logo intro needs (LogoIntro.vue) plus a short moment to look at it. */
 const SPLASH_MS = 1650
-const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
 
 // Opening a pickup by its link: the logo assembles in the middle, then the pickup appears.
 // Personal links show the logo on their own page (MemberLinkView).

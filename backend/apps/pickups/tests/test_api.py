@@ -143,7 +143,9 @@ def test_removed_crud_actions(client: Client, joined: tuple[str, str], method: s
     # The folder owner is logged in and still can't use them.
     response = getattr(client, method)(url, {}, content_type="application/json")
     assert response.status_code in (404, 405)
-    assert Pickup.objects.exists() and Folder.objects.exists() and Media.objects.exists()
+    assert Pickup.objects.exists()
+    assert Folder.objects.exists()
+    assert Media.objects.exists()
 
 
 def test_unsafe_requests_need_csrf_token(joined: tuple[str, str]) -> None:
@@ -191,7 +193,8 @@ def test_uploaded_files_get_random_names(client: Client, joined: tuple[str, str]
     media = upload(client, *joined).json()
     stored = Media.objects.get(id=media["id"])
     assert media["original_filename"] == "photo.jpg"
-    assert stored.file.name and "photo" not in stored.file.name
+    assert stored.file.name
+    assert "photo" not in stored.file.name
     assert stored.file.name.endswith(".jpg")
 
 
@@ -254,7 +257,9 @@ def test_chunked_upload(client: Client, joined: tuple[str, str]) -> None:
     media = Media.objects.get()
     assert media.file.read() == content
     assert media.original_filename == "../clip.mp4"
-    assert media.file.name and ".." not in media.file.name and media.file.name.endswith(".mp4")
+    assert media.file.name
+    assert ".." not in media.file.name
+    assert media.file.name.endswith(".mp4")
     assert UploadSession.objects.get().status == "complete"
     assert client.post(f"{base}/finalize/").status_code == 400
 

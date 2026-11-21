@@ -29,17 +29,17 @@ export async function renderAt(
 }
 
 /** Text of the whole document, including dialogs teleported to <body>. */
-export const pageText = () => document.body.textContent ?? ''
+export const pageText = () => document.body.textContent
 
 export function findButton(name: string | RegExp): HTMLButtonElement {
   const buttons = Array.from(document.body.querySelectorAll('button'))
   const match = buttons.find((button) => {
-    const label = button.getAttribute('aria-label') ?? button.textContent?.trim() ?? ''
+    const label = button.getAttribute('aria-label') ?? button.textContent.trim()
     return typeof name === 'string' ? label === name : name.test(label)
   })
   if (!match)
     throw new Error(
-      `No button "${name}" in: ${buttons.map((b) => b.textContent?.trim()).join(' | ')}`,
+      `No button "${name}" in: ${buttons.map((b) => b.textContent.trim()).join(' | ')}`,
     )
   return match
 }
@@ -68,13 +68,11 @@ export async function openMenu(label: string) {
 export async function chooseMenuItem(text: string | RegExp) {
   const items = Array.from(document.body.querySelectorAll<HTMLElement>('[role^="menuitem"]'))
   const item = items.find((el) =>
-    typeof text === 'string'
-      ? el.textContent?.trim().startsWith(text)
-      : text.test(el.textContent ?? ''),
+    typeof text === 'string' ? el.textContent.trim().startsWith(text) : text.test(el.textContent),
   )
   if (!item)
     throw new Error(
-      `No menu item "${text}" in: ${items.map((el) => el.textContent?.trim()).join(' | ')}`,
+      `No menu item "${text}" in: ${items.map((el) => el.textContent.trim()).join(' | ')}`,
     )
   item.click()
   await flushPromises()

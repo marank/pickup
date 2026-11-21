@@ -77,6 +77,7 @@ const emptyMessage = computed(() => {
 </script>
 
 <template>
+  <!-- eslint-disable-next-line vuejs-accessibility/no-static-element-interactions -- the focusable pane handles the keys for its items; the pointer draws the selection rectangle -->
   <section
     ref="pane"
     class="relative min-h-0 flex-1 overflow-y-auto p-2 outline-none sm:p-3"
@@ -123,6 +124,7 @@ const emptyMessage = computed(() => {
       <ItemsGrid v-else :variant="explorer.prefs.view" />
     </template>
 
+    <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events, vuejs-accessibility/no-static-element-interactions -- clicking empty space deselects; the keyboard has Escape -->
     <div
       v-else-if="ownEmpty"
       class="mx-auto flex max-w-sm flex-col items-center gap-3 py-16 text-center"
@@ -143,6 +145,7 @@ const emptyMessage = computed(() => {
       </Button>
     </div>
 
+    <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events, vuejs-accessibility/no-static-element-interactions -- clicking empty space deselects; the keyboard has Escape -->
     <div
       v-else
       class="flex flex-col items-center gap-3 py-16 text-center text-muted-foreground"

@@ -83,7 +83,7 @@ describe('password-protected pickups', () => {
     await settle()
     expect(lastBody('PATCH', `/pickups/${PICKUP_ID}/`)).toEqual({ password: 'summer-24' })
     expect(success).toHaveBeenCalledWith('Password saved')
-    expect(($('#settings-password') as HTMLInputElement).value).toBe('')
+    expect($<HTMLInputElement>('#settings-password').value).toBe('')
   })
 
   it('offers to remove a password and notes what it means for "anyone with the link"', async () => {

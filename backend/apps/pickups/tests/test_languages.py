@@ -34,7 +34,7 @@ def test_errors_and_mails_follow_the_language_of_the_request() -> None:
 def test_every_german_text_is_translated() -> None:
     po = (Path(settings.BASE_DIR) / "locale" / "de" / "LC_MESSAGES" / "django.po").read_text()
     entries = po.split("\n\n")[1:]  # without the header
-    empty = [entry for entry in entries if re.search(r'^msgstr ""\Z', entry.strip(), re.M)]
+    empty = [entry for entry in entries if re.search(r'^msgstr ""\Z', entry.strip(), re.MULTILINE)]
     assert empty == []
     # Compiled next to it (scripts/check_messages.py checks it is current).
     assert (Path(settings.BASE_DIR) / "locale" / "de" / "LC_MESSAGES" / "django.mo").exists()

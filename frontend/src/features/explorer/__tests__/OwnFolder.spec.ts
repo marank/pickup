@@ -14,7 +14,7 @@ const marked = () => {
   const badges = Array.from(document.body.querySelectorAll('[title="Your folder"]'))
   const where = (badge: Element) => (badge.closest('[role="tree"]') ? 'tree' : 'content')
   const name = (badge: Element) =>
-    badge.closest('li, tr')?.querySelector('.truncate, .line-clamp-2')?.textContent?.trim()
+    badge.closest('li, tr')?.querySelector('.truncate, .line-clamp-2')?.textContent.trim()
   return badges.map((badge) => `${where(badge)}:${name(badge)}`).sort()
 }
 

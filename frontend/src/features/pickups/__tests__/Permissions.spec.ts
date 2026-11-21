@@ -81,13 +81,13 @@ describe('joining by policy', () => {
   it('asks an invited person for their name, prefilled from the invitation', async () => {
     await renderJoin({ join_policy: 'invite', is_member: true, member_name: 'Mark' })
     expect(pageText()).toContain('Choose your name')
-    expect(($('#user_name') as HTMLInputElement).value).toBe('Mark')
+    expect($<HTMLInputElement>('#user_name').value).toBe('Mark')
     expect(pageText()).not.toContain('Already part of it on another device?')
   })
 
   it('does not prefill the placeholder name of the creator', async () => {
     await renderJoin({ is_creator: true, is_member: true, member_name: 'Creator' })
-    expect(($('#user_name') as HTMLInputElement).value).toBe('')
+    expect($<HTMLInputElement>('#user_name').value).toBe('')
   })
 })
 
@@ -103,7 +103,7 @@ describe('creator tools', () => {
     expect($('[aria-current="page"]').textContent).toContain('Settings')
     const commands = $('[role="toolbar"][aria-label="Commands"]')
     const labels = Array.from(commands.querySelectorAll('button')).map(
-      (b) => b.ariaLabel ?? b.textContent?.trim(),
+      (b) => b.ariaLabel ?? b.textContent.trim(),
     )
     expect(labels).toEqual(['Show folders', 'Timeline']) // no commands on pages, only switching
     expect(findButton('Up one level').disabled).toBe(false)
@@ -139,9 +139,9 @@ describe('creator tools', () => {
     const card = (name: string) => $(`form[aria-label="${name}"]`)
     const saveIn = (name: string) =>
       Array.from(card(name).querySelectorAll('button')).find(
-        (b) => b.textContent?.trim() === 'Save',
+        (b) => b.textContent.trim() === 'Save',
       )!
-    expect(($('#settings-title') as HTMLInputElement).value).toBe('Summer party')
+    expect($<HTMLInputElement>('#settings-title').value).toBe('Summer party')
     expect(['General', 'Access', 'Privacy'].map((name) => saveIn(name).disabled)).toEqual([
       true,
       true,
@@ -162,10 +162,10 @@ describe('creator tools', () => {
 
     // Discard resets only its own card.
     Array.from(card('General').querySelectorAll('button'))
-      .find((b) => b.textContent?.trim() === 'Discard')!
+      .find((b) => b.textContent.trim() === 'Discard')!
       .click()
     await flushPromises()
-    expect(($('#settings-title') as HTMLInputElement).value).toBe('Summer party')
+    expect($<HTMLInputElement>('#settings-title').value).toBe('Summer party')
     expect($<HTMLInputElement>('input[name="visibility"][value="link"]').checked).toBe(true)
 
     // Saving a card sends only its fields; the other cards keep their edits.
@@ -177,7 +177,7 @@ describe('creator tools', () => {
       join_policy: 'invite',
     })
     expect(success).toHaveBeenCalledWith('Saved')
-    expect(($('#settings-title') as HTMLInputElement).value).toBe(' Sommerfest ')
+    expect($<HTMLInputElement>('#settings-title').value).toBe(' Sommerfest ')
 
     await submit('#settings-title')
     expect(lastRequest('PATCH', `/pickups/${PICKUP_ID}/`)?.body).toEqual({ title: 'Sommerfest' })
@@ -202,7 +202,7 @@ describe('creator tools', () => {
     expect(dialog).toContain('Delete “Summer party” for good?')
     expect(dialog).toContain('4 folders and 4 files are deleted for everyone')
     Array.from(document.body.querySelectorAll<HTMLButtonElement>('[role="alertdialog"] button'))
-      .find((button) => button.textContent?.trim() === 'Delete for good')!
+      .find((button) => button.textContent.trim() === 'Delete for good')!
       .click()
     await settle()
     expect(lastRequest('DELETE', `/pickups/${PICKUP_ID}/`)).toBeDefined()
@@ -219,7 +219,7 @@ describe('creator tools', () => {
     findButton('Delete pickup').click()
     await settle()
     Array.from(document.body.querySelectorAll<HTMLButtonElement>('[role="alertdialog"] button'))
-      .find((button) => button.textContent?.trim() === 'Delete for good')!
+      .find((button) => button.textContent.trim() === 'Delete for good')!
       .click()
     await settle()
     expect(error).toHaveBeenCalledWith('Could not delete the pickup')
@@ -237,9 +237,9 @@ describe('creator tools', () => {
     expect($('[title="Then everything is deleted"]').textContent).toContain('Deleted after')
     $('[title="Then everything is deleted"]').click()
     await settle()
-    expect(($('#settings-read-only') as HTMLInputElement).value).toBe('2026-12-20')
-    expect(($('#settings-expires') as HTMLInputElement).value).toBe('2026-12-24')
-    expect(($('#settings-expires') as HTMLInputElement).min).toBe('2026-12-20')
+    expect($<HTMLInputElement>('#settings-read-only').value).toBe('2026-12-20')
+    expect($<HTMLInputElement>('#settings-expires').value).toBe('2026-12-24')
+    expect($<HTMLInputElement>('#settings-expires').min).toBe('2026-12-20')
     expect(pageText()).toContain('nobody joins, uploads or changes anything')
     expect(pageText()).toContain('the pickup is deleted with all photos and videos')
 
@@ -257,7 +257,7 @@ describe('creator tools', () => {
     expect(new Date(body.expires_at!).getHours()).toBe(23)
 
     for (const button of document.body.querySelectorAll('button'))
-      if (button.textContent?.trim() === 'Never') button.click()
+      if (button.textContent.trim() === 'Never') button.click()
     await flushPromises()
     expect(pageText()).toContain('Never: people can add photos until the pickup is deleted.')
     expect(pageText()).toContain('Never: the pickup stays until you delete it.')
@@ -272,7 +272,7 @@ describe('creator tools', () => {
     await renderAsCreator()
     findButton('Settings').click()
     await settle()
-    const summary = () => $('[data-testid="access-summary"]').textContent!
+    const summary = () => $('[data-testid="access-summary"]').textContent
     expect(summary()).toContain('Anyone with the share link can join and upload.')
     expect(summary()).toContain('Only participants see the photos.')
     const pick = async (name: string, value: string) => {
@@ -344,7 +344,7 @@ describe('creator tools', () => {
     findButton('People').click()
     await settle()
 
-    const list = $('ul[aria-label="Participants"]').textContent!.replace(/\s+/g, ' ')
+    const list = $('ul[aria-label="Participants"]').textContent.replace(/\s+/g, ' ')
     expect(list).toContain('Anna (you)')
     expect(list).toContain('Invited, not joined yet · mark@example.com')
     expect(list).toContain('Member · email stored privately')
@@ -382,7 +382,7 @@ describe('creator tools', () => {
     await settle()
     expect(pageText()).toContain('their folder with everything in it is deleted')
     Array.from(document.body.querySelectorAll<HTMLButtonElement>('[role="alertdialog"] button'))
-      .find((button) => button.textContent?.trim() === 'Remove')!
+      .find((button) => button.textContent.trim() === 'Remove')!
       .click()
     await settle()
     expect(lastRequest('DELETE', '/members/m-bob/')).toBeDefined()
@@ -447,7 +447,7 @@ describe('creator tools', () => {
     findButton('Remove Bob').click()
     await settle()
     Array.from(document.body.querySelectorAll<HTMLButtonElement>('[role="alertdialog"] button'))
-      .find((button) => button.textContent?.trim() === 'Remove')!
+      .find((button) => button.textContent.trim() === 'Remove')!
       .click()
     await settle()
     expect(error).toHaveBeenCalledWith('Could not remove')

@@ -1,11 +1,9 @@
 <script setup lang="ts">
-import { useMutation } from '@tanstack/vue-query'
 import { Loader2Icon, MailIcon } from '@lucide/vue'
 import { ref } from 'vue'
 import { toast } from 'vue-sonner'
 
-import { api } from '@/api/client'
-import { apiErrorMessage, unwrap } from '@/api/errors'
+import { apiErrorMessage } from '@/api/errors'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -17,19 +15,18 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { t } from '@/lib/i18n'
+import { pause } from '@/lib/motion'
+
+import { useLookup } from '../composables/useLookup'
 
 /** Lost your links? The backend mails the address the pickups it belongs to. */
 const email = ref('')
 const sending = ref(false)
 const sentMessage = ref('')
 const sentOpen = ref(false)
-const lookup = useMutation({
-  mutationFn: (address: string) =>
-    unwrap(api.POST('/api/pickups/lookup/', { body: { email: address } })),
-})
+const lookup = useLookup()
 /** The spinner stays a moment even when the answer is instant, so the click registers. */
 const MIN_SPINNER_MS = 700
-const pause = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms))
 
 async function submit() {
   sending.value = true

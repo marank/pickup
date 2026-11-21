@@ -5,12 +5,13 @@ import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 
 import { apiErrorMessage } from '@/api/errors'
-import type { Pickup } from '@/api/types'
+import type { JoinPolicy, Pickup, Visibility } from '@/api/types'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { endOfDay, formatFileSize, toDateInput } from '@/lib/format'
+import { allValues } from '@/lib/enums'
 import { formatDate, plural, t } from '@/lib/i18n'
 
 import { usePickupAdmin } from '../composables/usePickupAdmin'
@@ -21,7 +22,14 @@ const router = useRouter()
 const { updateSettings, deletePickup } = usePickupAdmin(() => props.pickup.id, false)
 const confirmDelete = ref(false)
 
-const form = reactive({
+const form = reactive<{
+  title: string
+  visibility: Visibility
+  join_policy: JoinPolicy
+  email_privacy: boolean
+  readOnly: string
+  expires: string
+}>({
   title: '',
   visibility: 'members',
   join_policy: 'open',
@@ -67,49 +75,53 @@ watch(
   { immediate: true },
 )
 
-const visibilityOptions = [
-  {
-    value: 'members',
+interface OptionTexts {
+  label: () => string
+  hint: () => string
+}
+const visibilityTexts: Record<Visibility, OptionTexts> = {
+  members: {
     label: () => t('pickups.settingsPanel.onlyParticipants'),
     hint: () => t('pickups.settingsPanel.recommendedOthersWithTheLink'),
   },
-  {
-    value: 'link',
+  link: {
     label: () => t('common.anyoneWithTheLink'),
     hint: () => t('pickups.settingsPanel.everyoneWhoHasTheLink'),
   },
-  {
-    value: 'creator',
+  creator: {
     label: () => t('pickups.settingsPanel.onlyMePaused'),
     hint: () => t('pickups.settingsPanel.onlyYouStillSeeThe'),
   },
-] as const
-const joinOptions = [
-  {
-    value: 'open',
+}
+const visibilityOptions = allValues<Visibility>({ members: true, link: true, creator: true }).map(
+  (value) => ({ value, ...visibilityTexts[value] }),
+)
+const joinTexts: Record<JoinPolicy, OptionTexts> = {
+  open: {
     label: () => t('common.anyoneWithTheLink'),
     hint: () => t('pickups.settingsPanel.peoplePickANewName'),
   },
-  {
-    value: 'invite',
+  invite: {
     label: () => t('pickups.settingsPanel.onlyInvitedPeople'),
     hint: () => t('common.youInvitePeopleByEmail'),
   },
-  {
-    value: 'closed',
+  closed: {
     label: () => t('pickups.settingsPanel.nobodyNew'),
     hint: () => t('pickups.settingsPanel.currentParticipantsStayNobodyNew'),
   },
-] as const
+}
+const joinOptions = allValues<JoinPolicy>({ open: true, invite: true, closed: true }).map(
+  (value) => ({ value, ...joinTexts[value] }),
+)
 /** Both answers in one plain sentence, following the form while it is edited. */
 const accessSummary = computed(() => {
   if (form.visibility === 'creator') return t('pickups.settingsPanel.pausedOnlyYouSeeThe')
-  const joinTexts: Record<string, () => string> = {
+  const joinSummaries: Record<JoinPolicy, () => string> = {
     open: () => t('pickups.settingsPanel.anyoneWithTheShareLink2'),
     invite: () => t('pickups.settingsPanel.onlyPeopleYouInviteCan'),
     closed: () => t('pickups.settingsPanel.onlyTheCurrentParticipantsUpload'),
   }
-  const join = joinTexts[form.join_policy]?.() ?? ''
+  const join = joinSummaries[form.join_policy]()
   const see =
     form.visibility === 'link' && !props.pickup.has_password
       ? t('pickups.settingsPanel.anyoneWithTheShareLink')
@@ -155,7 +167,7 @@ async function save(card: Card) {
   }
   saving.value = card
   try {
-    await updateSettings.mutateAsync(values as Parameters<typeof updateSettings.mutateAsync>[0])
+    await updateSettings.mutateAsync(values)
     toast.success(t('common.saved'))
   } catch (err) {
     toast.error(apiErrorMessage(err, t('pickups.settingsPanel.couldNotSaveTheSettings')))

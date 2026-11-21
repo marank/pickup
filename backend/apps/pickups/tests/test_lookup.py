@@ -51,7 +51,8 @@ def test_an_address_gets_its_live_pickups_with_personal_links() -> None:
         message.body.index("Pickups you participate in:"),
     )
     assert created < message.body.index("Wedding") < participating < message.body.index("Trip")
-    assert "Old" not in message.body and "Someone else" not in message.body
+    assert "Old" not in message.body
+    assert "Someone else" not in message.body
     assert isinstance(message, EmailMultiAlternatives)
     html = str(message.alternatives[0][0])
     assert all(link in html for link in links)
@@ -86,4 +87,5 @@ def test_sections_without_pickups_are_left_out() -> None:
     allow_next_mail()
     lookup("bob@example.com")
     body = mail.outbox[-1].body
-    assert "Pickups you participate in:" in body and "Pickups you created" not in body
+    assert "Pickups you participate in:" in body
+    assert "Pickups you created" not in body

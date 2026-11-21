@@ -60,8 +60,10 @@ def collect(pickup: Pickup, folder_ids: Iterable[UUID] = (), media_ids: Iterable
     def add_folder(folder: Folder, prefix: str) -> None:
         path = _unique(f"{prefix}{safe_name(folder.name)}/", used)
         entries.append(Entry(path))
-        for item in media_by_folder[folder.id]:
-            entries.append(Entry(_unique(path + safe_name(item.original_filename), used), item))
+        entries.extend(
+            Entry(_unique(path + safe_name(item.original_filename), used), item)
+            for item in media_by_folder[folder.id]
+        )
         for child in children[folder.id]:
             add_folder(child, path)
 
@@ -74,10 +76,12 @@ def collect(pickup: Pickup, folder_ids: Iterable[UUID] = (), media_ids: Iterable
     for folder in folders:
         if folder.id in wanted_folders:
             add_folder(folder, "")
-    for items in media_by_folder.values():
-        for item in items:
-            if item.id in wanted_media:
-                entries.append(Entry(_unique(safe_name(item.original_filename), used), item))
+    entries.extend(
+        Entry(_unique(safe_name(item.original_filename), used), item)
+        for items in media_by_folder.values()
+        for item in items
+        if item.id in wanted_media
+    )
     return entries
 
 

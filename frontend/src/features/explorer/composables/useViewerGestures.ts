@@ -177,14 +177,19 @@ export function useViewerGestures({ stage, picture, count, step, close }: Option
     else if (mode === 'dismiss') drag.value = { x: 0, y: Math.max(0, d.y) }
   }
 
+  /** A finger of a pinch lifted: snap back when barely zoomed, else keep the picture in view. */
+  function endPinch() {
+    if (pointers.size < 2) pinch = null
+    if (scale.value < 1.05) {
+      resetZoom()
+      animate()
+    } else offset.value = clamped(offset.value)
+  }
+
   function onPointerUp(event: PointerEvent) {
     if (!pointers.delete(event.pointerId)) return
     if (pinch) {
-      if (pointers.size < 2) pinch = null
-      if (scale.value < 1.05) {
-        resetZoom()
-        animate()
-      } else offset.value = clamped(offset.value)
+      endPinch()
       return
     }
     if (pointers.size > 0 || mode === 'ignore') {

@@ -18,9 +18,10 @@
     "lint:fix": "oxlint . --fix && eslint . --fix --cache",
     "format:check": "prettier --check src/",
     "test:coverage": "vitest run --coverage",
-    "check": "pnpm format:check && pnpm lint && pnpm type-check && pnpm test:coverage",
+    "check": "pnpm format:check && pnpm lint && pnpm type-check && pnpm test:coverage && pnpm check:duplication",
     "size": "size-limit",
     "check:licenses": "node scripts/check-licenses.mjs",
+    "check:duplication": "jscpd --config .jscpd.json --silent",
     "api:types": "openapi-typescript openapi.json -o src/api/schema.d.ts && prettier --write src/api/schema.d.ts"
   },
   "dependencies": {
@@ -40,6 +41,7 @@
     "vue-sonner": "^2.0.9"
   },
   "devDependencies": {
+    "@eslint-community/eslint-plugin-eslint-comments": "^4.8.1",
     "@size-limit/file": "^14.3.0",
     "@tailwindcss/vite": "^4.3.5",
     "@tsconfig/node24": "^24.0.6",
@@ -56,8 +58,11 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-cypress": "^7.0.4",
     "eslint-plugin-oxlint": "~1.93.0",
+    "eslint-plugin-sonarjs": "^4.2.2",
     "eslint-plugin-vue": "~10.12.1",
+    "eslint-plugin-vuejs-accessibility": "^2.6.3",
     "jiti": "^2.7.0",
+    "jscpd": "^5.4.3",
     "jsdom": "^29.1.1",
     "knip": "^6.45.0",
     "npm-run-all2": "^9.0.4",

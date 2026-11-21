@@ -3,7 +3,7 @@ import { reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 
-import { ApiError, apiErrorMessage } from '@/api/errors'
+import { apiErrorMessage, fieldErrorsOf } from '@/api/errors'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -45,11 +45,7 @@ async function submit() {
       params: { pickupId: props.pickupId, folderId: joined.folder.id },
     })
   } catch (err) {
-    if (err instanceof ApiError && err.body && typeof err.body === 'object') {
-      for (const [field, messages] of Object.entries(err.body)) {
-        if (Array.isArray(messages)) fieldErrors.value[field] = String(messages[0])
-      }
-    }
+    fieldErrors.value = fieldErrorsOf(err)
     toast.error(apiErrorMessage(err, t('pickups.joinForm.couldNotJoinThePickup')))
   }
 }

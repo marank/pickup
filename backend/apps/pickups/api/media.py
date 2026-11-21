@@ -13,6 +13,7 @@ from rest_framework.response import Response
 from ..models import Media, Pickup, live
 from ..serializers import CaptionSerializer, ErrorSerializer, MediaSerializer
 from ..services.access import can_delete_media, can_edit, can_view
+from ..services.media import delete_media
 from ..services.members import get_member_from_request
 
 _PICKUP_ID = OpenApiParameter("pickup_id", OpenApiTypes.UUID, OpenApiParameter.PATH)
@@ -70,8 +71,7 @@ class MediaViewSet(mixins.RetrieveModelMixin, mixins.DestroyModelMixin, viewsets
                 {"error": _("You do not have permission to delete this media.")},
                 status=status.HTTP_403_FORBIDDEN,
             )
-        media.delete_files()
-        media.delete()
+        delete_media(media)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @extend_schema(

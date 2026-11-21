@@ -43,6 +43,7 @@ const layout = computed(
     :aria-label="t('common.folderContents')"
   >
     <ItemContextMenu v-for="item in explorer.items" :key="item.id" :item="item">
+      <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events, vuejs-accessibility/interactive-supports-focus -- focus stays on the content pane, whose keys (arrows, Enter, Delete) act on the selected options -->
       <li
         role="option"
         :aria-selected="explorer.selection.isSelected(item.id)"

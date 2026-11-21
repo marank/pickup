@@ -1,16 +1,18 @@
 # Pickup — conventions for contributors and coding agents
 
-Photo/video sharing without accounts. Django backend (`backend/`, API via Django REST framework), Vue 3 + TypeScript SPA (`frontend/`), one hardened Docker image. Read this before changing structure; `README.md` has setup and commands.
+Photo/video sharing without accounts. Django backend (`backend/`, API via Django REST framework), Vue 3 + TypeScript SPA (`frontend/`), one hardened Docker image. CI on GitHub Actions (`.github/workflows/build.yaml`), updates by Dependabot. Read this before changing structure; `CONTRIBUTING.md` has the setup.
 
 ## Commands
 
-VS Code tasks (`.vscode/tasks.json`) hold the everyday commands; the README lists the plain equivalents.
-- `dev` task: Django :8000 + Vite :5173 → http://localhost:5173.
-- `check` task runs everything CI runs. It must pass before a commit is pushed. If you change a check, change it in both `tasks.json` and `.gitea/workflows/build.yaml`.
-- `api: types` after any API change (schema → `frontend/openapi.json` → `frontend/src/api/schema.d.ts`); commit both files. CI fails if either is stale.
-- `django: makemigrations` after model changes; commit the migrations.
+The `justfile` holds every command; CI (`.github/workflows/build.yaml`) and the VS Code tasks (`.vscode/tasks.json`) only call its recipes, so a check is changed there and nowhere else. `just` lists them; CONTRIBUTING.md has the setup.
+- `just dev-backend` + `just dev-frontend` (task `dev`): Django :8000 + Vite :5173 → http://localhost:5173.
+- `just check` runs everything CI runs. It must pass before a commit is pushed; `just check-changed` before a commit checks only what the changed files can break.
+- `just api-types` after any API change (schema → `frontend/openapi.json` → `frontend/src/api/schema.d.ts`); commit both files. CI fails if either is stale.
+- `just migrations` after model changes; commit the migrations. `just messages` after changing server texts.
 - Frontend package manager is **pnpm** only. Backend dependencies via `uv add` / `uv add --dev`.
 - `uv tool run pre-commit install` once per clone (ruff, prettier, oxlint on commit).
+- Commit titles are Conventional Commits (`feat: …`, `fix: …`, `deps: …`); release-please builds releases and CHANGELOG.md from them.
+- Dependabot doesn't cover these; bump them by hand: `TRIVY_IMAGE` (tag and digest) and `POSTGRES_IMAGE` in `build.yaml` (Postgres together with `compose.yml`), the actionlint and zizmor versions in the justfile, `rust-just==…` and the Node version in the workflows, and pnpm's `packageManager` if Dependabot leaves it alone.
 
 ## Domain rules (access control)
 
@@ -70,3 +72,19 @@ Members have no accounts. Keep these properties; tests in `apps/pickups/tests/` 
 - `docker/start` runs the deploy check, migrations and `ensure_admin`, then supervisord, which runs gunicorn, nginx and the job worker; nginx serves the SPA (a pickup's pages, `/pickup/{id}…`, come from Django: the built `index.html` with the pickup's title and creator in the link-preview tags, `services/link_preview.py`, none with a password), delivers uploaded files from the internal `/protected-media/` location after Django's check, and proxies `/api` and `/admin`.
 - `/admin` is closed in Docker unless `ADMIN_ENABLED=true`.
 - Backups (`docker/backup.sh`): nightly database dump plus hard-linked media snapshot. Anything new under `/data` that must survive belongs in that script too.
+
+## House defaults
+
+Checked against django-spa-defaults 1.8.0 (2026-11-21). Accepted deviations and settled judgements,
+one line each as `- ID: decision and reason`, or `- ID [path, …]: …` for exceptions in some places only
+(IDs from the project-defaults checklist); the review does not report these again:
+- DOCKER-03: the smoke test does not probe `/api/auth/me` — Pickup has no user accounts and no such endpoint; the unauthenticated case is covered by `/api/pickups/<random uuid>/` and `/api/files/<random uuid>/` answering 404.
+- BE-14: settled — the remaining writes in the API (`media.py` caption, `uploads.py` error status) save only the endpoint's own object with no further effect.
+- FE-02: met with `src/lib/enums.ts` (the project keeps helpers in `lib/`, not `utils/`).
+- FE-16: unknown components, events and directives are checked (`checkUnknown…`); unknown props are not (no `strictTemplates`), because the vendored shadcn-vue components pass `id`, `onClick` and `data-slot` through untyped (~500 errors). Revisit when shadcn-vue types its attribute fallthrough.
+- BE-11: settled — `DEBUG` defaults to off and `secret_key()` refuses to start without a long `SECRET_KEY` when it is off.
+- BE-13: settled — `services/mail.py` only builds mails in the request; `deliver()` runs in the `send_mail` job (`run_later`).
+
+Project decisions (asked once; the review checks against them and asks again only if a line is missing):
+- Releases: release-please
+- Contributions: team only

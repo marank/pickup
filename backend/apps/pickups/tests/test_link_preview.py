@@ -72,4 +72,5 @@ def test_protected_or_gone_pickups_get_the_generic_preview(change: str) -> None:
         Pickup.objects.all().delete()
     page = page_of(f"/pickup/{pickup_id}")
     assert meta(page, "og:title") == "Pickup"
-    assert "Secret party" not in page and "Anna" not in page
+    assert "Secret party" not in page
+    assert "Anna" not in page

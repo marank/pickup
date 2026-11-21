@@ -38,7 +38,6 @@ from ..services.access import can_view
 from ..services.archive import collect, safe_name, stream
 from ..services.creation import creation_info, creation_refused
 from ..services.folders import with_counts
-from ..services.identity import forget_plain_emails
 from ..services.members import (
     MembershipError,
     check_pickup_password,
@@ -54,8 +53,8 @@ from ..services.members import (
     request_link,
     request_pickup_list,
     set_email,
-    set_pickup_password,
     update_member,
+    update_pickup,
 )
 
 
@@ -122,12 +121,7 @@ class PickupViewSet(mixins.RetrieveModelMixin, viewsets.GenericViewSet[Pickup]):
             )
         body = PickupUpdateSerializer(pickup, data=request.data, partial=True)
         body.is_valid(raise_exception=True)
-        password = body.validated_data.pop("password", None)
-        body.save()
-        if password is not None:
-            set_pickup_password(request, pickup, member, password)
-        if pickup.email_privacy:
-            forget_plain_emails(pickup)
+        update_pickup(request, pickup, member, body.validated_data)
         return Response(PickupSerializer(pickup, context={"member": member}).data)
 
     @extend_schema(responses={204: None, 403: ErrorSerializer})

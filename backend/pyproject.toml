@@ -19,13 +19,16 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "complexipy>=9.0.0",
     "deptry>=0.25.1",
     "django-stubs>=6.1.2",
     "djangorestframework-stubs>=3.18.2",
+    "import-linter>=2.17",
     "mypy>=2.4.1",
     "pytest>=9.2.0",
     "pytest-cov>=7.1.0",
     "pytest-django>=4.14.0",
+    "pytest-randomly>=5.1.0",
     "ruff>=0.17.4",
 ]
 
@@ -35,15 +38,74 @@ target-version = "py314"
 extend-exclude = ["*/migrations/*"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B", "DJ", "SIM"]
+# Correctness, readability and safety; limits against tangled and deeply nested code
+# (C90), deliberately none against length.
+select = [
+    "E", "F", "I", "UP", "B", "DJ", "SIM",
+    "C90",  # cyclomatic complexity
+    "DTZ",  # timezone-aware datetimes only
+    "T20",  # no print()
+    "ERA",  # no commented-out code
+    "S",    # security patterns (bandit)
+    "BLE",  # no blind `except Exception` that swallows errors
+    "TRY",  # exception handling: no `except: pass`, re-raise with context, ...
+    "PERF", # slow patterns
+    "FURB", # older, longer spellings of what the standard library does directly
+    "PT",   # pytest usage
+    "PGH",  # no blanket `# noqa` / `# type: ignore`
+    "RUF100", # unused `# noqa`
+]
+ignore = [
+    "S603",    # subprocess with fixed argument lists (ffmpeg, ffprobe, manage.py) is intended
+    "TRY003",  # messages passed to the exception class are fine
+]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 15
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["S101", "S105", "S106"]  # assert, passwords in fixtures
+"conftest.py" = ["S101"]
+"scripts/**" = ["T201"]                   # command-line tools print their result
+
+# Layers inside every app: api, views, admin and commands may use serializers, services and
+# models; services and jobs (tasks) call each other (a service queues a job, the job runs a
+# service); models import neither. core and accounts import no other app.
+[tool.importlinter]
+root_packages = ["apps", "config"]
+
+[[tool.importlinter.contracts]]
+name = "Layers inside each app"
+type = "layers"
+containers = ["apps.core", "apps.accounts", "apps.pickups"]
+layers = ["(api) | (views) | (admin) | (management)", "(serializers)", "(services) : (tasks)", "models"]
+
+[[tool.importlinter.contracts]]
+name = "core and accounts depend on no other app"
+type = "forbidden"
+source_modules = ["apps.core", "apps.accounts"]
+forbidden_modules = ["apps.pickups"]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings"
 python_files = ["test_*.py"]
+# pytest-randomly shuffles the test order on every run, so tests that pass only because of
+# another test's leftovers fail; the seed is printed (`-p randomly -p "randomly_seed=..."` to
+# repeat, `-p no:randomly` to switch it off while debugging).
 
 [tool.mypy]
 plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
 strict = true
+# Checks against cases the types rule out are reported instead of kept "to be safe".
+warn_unreachable = true
+strict_equality_for_none = true
+enable_error_code = [
+    "redundant-expr",
+    "truthy-bool",          # `if obj:` on an object that is always true
+    "possibly-undefined",   # a variable only set in some branches
+    "ignore-without-code",  # `# type: ignore` names the error it silences
+    "exhaustive-match",     # a `match` over an enum or union misses a case
+]
 exclude = ["/migrations/"]
 
 [[tool.mypy.overrides]]
@@ -71,5 +133,6 @@ source = ["apps", "config"]
 omit = ["*/migrations/*", "config/asgi.py", "config/wsgi.py", "manage.py"]
 
 [tool.coverage.report]
+fail_under = 90
 skip_covered = true
 show_missing = true

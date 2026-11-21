@@ -33,7 +33,7 @@ def photo(taken: str | None = None, offset: str | None = None, width: int = 20) 
 
 
 def at(text: str) -> datetime:
-    return datetime.fromisoformat(text.replace("Z", "+00:00"))
+    return datetime.fromisoformat(text)
 
 
 def upload(client: Client, pickup_id: str, folder_id: str, name: str, content: bytes) -> dict[str, Any]:

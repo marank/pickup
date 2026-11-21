@@ -83,7 +83,12 @@ export function serveExplorer({
   member = true,
   creator = false,
   readOnly = false,
-  pickupOverrides = {} as Partial<Pickup>,
+  pickupOverrides = {},
+}: {
+  member?: boolean
+  creator?: boolean
+  readOnly?: boolean
+  pickupOverrides?: Partial<Pickup>
 } = {}) {
   const ownsFolder = (f: Folder) => member && f.user_name === 'Alice'
   const list = folders.map((f) => ({

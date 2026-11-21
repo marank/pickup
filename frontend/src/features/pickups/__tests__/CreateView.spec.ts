@@ -125,7 +125,7 @@ describe('create page', () => {
     await settle()
     expect(pageText()).toContain('Enter a valid email.')
     expect(error).toHaveBeenCalled()
-    expect(($('#create-title') as HTMLInputElement).value).toBe('Party') // back to the form
+    expect($<HTMLInputElement>('#create-title').value).toBe('Party') // back to the form
   })
 })
 

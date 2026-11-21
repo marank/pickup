@@ -10,7 +10,7 @@ const canvas = ref<HTMLCanvasElement | null>(null)
 
 /** Draw once the heading font is there, else the canvas would use a fallback font. */
 async function fontsReady() {
-  await Promise.all(cardFonts().map((font) => document.fonts?.load(font))).catch(() => {})
+  await Promise.all(cardFonts().map((font) => document.fonts.load(font))).catch(() => {})
 }
 
 async function render(target: HTMLCanvasElement, scale: number): Promise<boolean> {

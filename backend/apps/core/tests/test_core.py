@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from django.core.management import CommandError, call_command
 from django.db import models
 from django.test import Client
+from django.test.utils import isolate_apps
 from pytest_django.fixtures import Settings
 
 from apps.core.checks import uuid_primary_keys
@@ -28,6 +29,9 @@ def test_all_own_models_use_uuid_primary_keys() -> None:
     assert uuid_primary_keys() == []
 
 
+# isolate_apps: the throwaway model must not stay in the app registry, or the check above
+# finds it when it runs later.
+@isolate_apps("apps.core")
 def test_uuid_check_flags_integer_primary_keys(monkeypatch: pytest.MonkeyPatch) -> None:
     class IntPk(models.Model):  # noqa: DJ008
         class Meta:

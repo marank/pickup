@@ -32,7 +32,7 @@ const intro = () => requests.filter((r) => r.path.endsWith('/session/intro/'))
 /** A button of the intro (the explorer behind it has a "Back" button too). */
 const next = async (label = 'Next') => {
   const buttons = Array.from(dialog()!.querySelectorAll('button'))
-  buttons.find((button) => button.textContent?.trim() === label)!.click()
+  buttons.find((button) => button.textContent.trim() === label)!.click()
   await settle()
 }
 

@@ -56,7 +56,8 @@ def test_upload_creates_small_upright_thumbnail(client: Client, joined: tuple[st
     assert media["thumbnail"] == f"/api/files/{media['id']}/thumbnail/"
     assert thumbnail_of(client, media).size == (427, THUMBNAIL_SIZE)  # portrait now
     stored = Media.objects.get()
-    assert stored.thumbnail.name and stored.thumbnail.name.endswith(".jpg")
+    assert stored.thumbnail.name
+    assert stored.thumbnail.name.endswith(".jpg")
     assert stored.thumbnail.name != stored.file.name
 
 

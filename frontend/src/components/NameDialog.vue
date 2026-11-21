@@ -50,6 +50,7 @@ function submit() {
         </DialogHeader>
         <div class="space-y-1.5">
           <Label for="name-dialog-input">{{ label }}</Label>
+          <!-- eslint-disable vuejs-accessibility/no-autofocus -- the dialog exists for this one field -->
           <Input
             id="name-dialog-input"
             v-model="value"
@@ -57,6 +58,7 @@ function submit() {
             autofocus
             autocomplete="off"
           />
+          <!-- eslint-enable vuejs-accessibility/no-autofocus -->
         </div>
         <DialogFooter>
           <Button type="button" variant="outline" @click="open = false">{{

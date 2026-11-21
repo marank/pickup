@@ -24,7 +24,7 @@ class Command(BaseCommand):
             return
 
         User = get_user_model()
-        if User.objects.filter(**{User.USERNAME_FIELD: username}).exists():
+        if User.objects.filter(**{f"{User.USERNAME_FIELD}__iexact": username}).exists():
             self.stdout.write(f"Admin user {username!r} already exists.")
             return
 

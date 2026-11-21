@@ -62,13 +62,13 @@ if _ALL_HTTPS:
     # nginx always sets X-Forwarded-Proto itself and takes it over only from
     # TRUSTED_PROXIES; Django is reachable only through nginx.
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-    SECURE_SSL_REDIRECT = True
-    # The container's own healthcheck talks plain http to 127.0.0.1.
-    SECURE_REDIRECT_EXEMPT = [r"^api/health$"]
-    # HSTS is the TLS reverse proxy's job (it owns the domain and its subdomains).
+# No http -> https redirect and no HSTS from the app: both are the TLS reverse proxy's job
+# (it owns the domain). A redirect here would only duplicate the proxy's and loop when
+# TRUSTED_PROXIES is wrong.
 
-# Deliberate choices, not oversights (see above), so the deploy check stays quiet about them.
-SILENCED_SYSTEM_CHECKS = ["security.W004", "security.W005", "security.W021"]
+# Deliberate choices, not oversights (see above), so the deploy check stays quiet about them:
+# W004/W005/W021 HSTS, W008 SSL redirect.
+SILENCED_SYSTEM_CHECKS = ["security.W004", "security.W005", "security.W008", "security.W021"]
 
 SESSION_COOKIE_SAMESITE = "Lax"
 # How long a browser stays logged in to its pickups after logging in (personal link, joining).

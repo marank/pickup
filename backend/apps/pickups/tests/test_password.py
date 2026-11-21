@@ -110,7 +110,8 @@ def test_the_link_preview_says_a_password_is_needed(protected: Any) -> None:
 def test_passwords_are_hashed_and_need_four_characters(protected: Any) -> None:
     pickup_id, creator, *_ = protected
     stored = Pickup.objects.get(id=pickup_id).password
-    assert PASSWORD not in stored and check_password(PASSWORD, stored)  # a hash (Argon2 outside tests)
+    assert PASSWORD not in stored
+    assert check_password(PASSWORD, stored)
     assert settings_patch(creator, pickup_id, password="abc").status_code == 400
     assert "password" not in detail(creator, pickup_id)
 

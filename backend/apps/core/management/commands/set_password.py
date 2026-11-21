@@ -21,7 +21,7 @@ class Command(BaseCommand):
     def handle(self, *args: Any, username: str, stdin: bool, **options: Any) -> None:
         User = get_user_model()
         try:
-            user = User.objects.get(**{User.USERNAME_FIELD: username})
+            user = User.objects.get_by_natural_key(username)
         except User.DoesNotExist as exc:
             raise CommandError(f"User {username!r} does not exist.") from exc
 

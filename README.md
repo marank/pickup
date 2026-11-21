@@ -8,7 +8,9 @@ After a party, a wedding or a holiday, everyone has photos on their phone and no
   <img src="docs/screenshots/timeline-phone.webp" alt="The timeline on a phone" width="22%">
 </p>
 
-## What it does
+## Features
+
+### For everyone at the party
 
 - Everyone who joins gets their own folder (with subfolders if they like). Only they can change it; everyone else can look and download.
 - The pickup page works like a file manager: folder tree, address bar, several views, sorting, search, right-click menus and keyboard shortcuts. On a phone it has its own layout, and a tap opens a folder or photo.
@@ -19,7 +21,15 @@ After a party, a wedding or a holiday, everyone has photos on their phone and no
 - The creator decides who may look and who may join, can invite people by email, set a password, remove people or files, make the pickup read-only from a certain day and have it deleted on another.
 - English and German, following the browser.
 
-## Running it
+### Security and operations
+
+- **No accounts.** Personal links carry a random key that is traded for a session; member ids are never credentials, and a pickup's id, its share link, is a random UUID.
+- **Files stay private.** Uploads are limited to images and videos (no SVG) and stored under random names. Every request goes through the access check; nginx then delivers the file from an internal location with a sandboxing Content-Security-Policy.
+- **Email privacy.** Per pickup, addresses can be stored as keyed hashes only.
+- **Hardened container.** One image with a read-only root filesystem, no capabilities, an unprivileged user, a strict CSP and rate limits on everything that sends mail or checks a password.
+- **Nightly backups** of the database and the files.
+
+## Quick start with Docker
 
 Pickup runs as one container next to Postgres. You need Docker with Compose.
 
@@ -36,7 +46,7 @@ The app is then at http://localhost:8080 (`APP_PORT`). Compose starts three serv
 
 Every setting is described in `.env.example`. The ones you will most likely touch:
 
-- `APP_URLS` and `TRUSTED_PROXIES`: behind a TLS reverse proxy, set `APP_URLS=https://your.domain` and `TRUSTED_PROXIES` to the proxy's address. Django then uses secure cookies and redirects to HTTPS. HSTS is up to the proxy.
+- `APP_URLS` and `TRUSTED_PROXIES`: behind a TLS reverse proxy, set `APP_URLS=https://your.domain` and `TRUSTED_PROXIES` to the proxy's address. Django then uses secure cookies; the redirect from HTTP to HTTPS and HSTS are up to the proxy.
 - `EMAIL_HOST` and friends: without a mail server Pickup works, but personal links can't be mailed.
 - `PICKUP_STORAGE_LIMIT`, `MEMBER_STORAGE_LIMIT`: how much a pickup and one participant may upload (`0` is unlimited).
 - `PICKUP_CREATION`: `everyone` may create pickups, only people with one of the `PICKUP_CREATION_CODES` (`code`), or nobody (`none`).
@@ -44,6 +54,8 @@ Every setting is described in `.env.example`. The ones you will most likely touc
 - `ADMIN_ENABLED`: the Django admin at `/admin` is closed unless this is `true`.
 
 Uploads: nginx accepts request bodies up to 25 MB; the app sends larger files in 5 MB chunks. Assembling a chunked upload copies the file once, so `GUNICORN_TIMEOUT` (default 300 s) has to cover the largest file on your disk.
+
+## Operations
 
 ### Backups
 
@@ -92,64 +104,19 @@ docker compose exec app python manage.py server_link
 docker compose exec app python manage.py set_password admin
 ```
 
-## Development
+## Contributing
 
-You need [uv](https://docs.astral.sh/uv/) (it brings Python 3.14), Node.js 24 with pnpm, and optionally Docker for Postgres.
+Pickup is still in active development, so pull requests are not accepted yet; bug reports and ideas are welcome as issues. See [CONTRIBUTING.md](CONTRIBUTING.md), which also explains how to run it from source:
 
 ```bash
-cp .env.example .env
-cd backend && uv sync && uv run python manage.py migrate && uv run python manage.py ensure_admin
-cd ../frontend && pnpm install
+just setup
+just dev-backend    # and in a second terminal: just dev-frontend
 ```
 
-The VS Code tasks in `.vscode/tasks.json` hold the everyday commands; **dev** starts Django on :8000 and Vite on :5173. Without VS Code:
-
-| What | Command |
-|---|---|
-| Backend | `cd backend && uv run python manage.py runserver` |
-| Frontend | `cd frontend && pnpm dev`, then open http://localhost:5173 |
-| Everything CI checks | task **check** |
-| Backend tests | `cd backend && uv run pytest` |
-| Frontend checks | `cd frontend && pnpm check` |
-| After model changes | `uv run python manage.py makemigrations` |
-| After API changes | task **api: types** (regenerates `frontend/openapi.json` and `src/api/schema.d.ts`) |
-| After changing server texts | task **django: messages**, then translate the new entries in `backend/locale/de` |
-| Postgres instead of SQLite | task **db: start dev postgres**, then `DB_TYPE=postgres` and `DB_HOST=localhost` in `.env`; the task **django: worker** runs background jobs |
-
-Vite proxies `/api`, `/admin` and `/django-static` to Django, so both share one origin. With SQLite there is no job worker: jobs such as mails run right away.
-
-Install the pre-commit hooks once per clone with `uv tool run pre-commit install`. End-to-end tests use Cypress: `pnpm exec cypress install` once, then `pnpm test:e2e`.
-
-How the code is organised, the access rules and the frontend conventions are written down in [AGENTS.md](AGENTS.md). Read it before changing structure; it is meant for people and coding agents alike.
-
-### How it is built
-
-- Backend: Django 6.1 with Django REST Framework, drf-spectacular for the OpenAPI schema, Procrastinate for background jobs, PostgreSQL (SQLite in development). Code in `backend/apps/pickups`, split into `models/`, `api/`, `serializers/`, `services/` and `tests/`.
-- Frontend: Vue 3 with TypeScript, TanStack Query, a client generated from the API schema, Tailwind and shadcn-vue, built with Vite. The pickup page is in `frontend/src/features/explorer`.
-- The API is described completely in `frontend/openapi.json` (browsable at `/api/docs/` with `DEBUG=true`). Members log in by trading their personal link's key for a session; every unsafe request carries a CSRF token.
-
-## Security
-
-- Personal links carry a random key that is traded for a session; member ids are never credentials. A pickup's id, which is its share link, is a random UUID.
-- Uploads are limited to images and videos (no SVG) and stored under random names. Files are never public: every request goes through Django's access check, then nginx delivers the file from an internal location with a sandboxing Content-Security-Policy.
-- Email addresses can be stored as keyed hashes only (privacy mode, per pickup). Never change `EMAIL_HASH_KEY` once in use, or stored addresses stop matching.
-- nginx sets a strict CSP and the usual security headers, and limits the admin login and every request that sends mail or checks a password.
-- CSRF protection on every unsafe request, also for people without an account.
-
-If you find a security problem, please report it privately to the maintainer instead of opening a public issue.
+Security problems: please report them privately, see [SECURITY.md](SECURITY.md).
 
 ## License
 
-Pickup is free software under the [GNU Affero General Public License v3.0 or later](LICENSE). You may use, change and share it, also run it as a service for others, as long as you publish the source of your version under the same license.
+Pickup is free software under the [GNU Affero General Public License v3.0 or later](LICENSE). Running a modified Pickup for others over a network obliges you to offer them its source.
 
 The Docker image contains other free software under its own license, among it [FFmpeg](https://ffmpeg.org/) (LGPL 2.1 or later; built from Debian's source package in the `ffmpeg` stage of the `Dockerfile`, which lists the enabled parts), libheif and libde265 (LGPL, via `pi-heif`), nginx, Python and the Postgres client libraries. The licenses of all Python and npm dependencies are checked in CI.
-
-## CI
-
-`.gitea/workflows/build.yaml` runs on a Gitea instance: the backend checks (ruff, mypy, deptry, licenses, migrations, translations, Django and deploy checks, the OpenAPI schema, pytest with at least 90 % coverage), the frontend checks (Prettier, oxlint, ESLint, knip, type-check, Vitest with coverage, build, bundle size, licenses, audit) and a Trivy scan. Then it builds the image, starts it hardened against Postgres, scans it and pushes it to the Gitea registry on `main` and on version tags (`v1.2.3`). The task **check** runs the same checks locally.
-
-To set it up on your own Gitea:
-
-1. Protect `main` with the required status checks `backend`, `frontend`, `repository` and `image`. Do this first: Renovate merges minor and patch updates once the checks pass.
-2. Enable Actions for the repository. The runner needs Docker.
-3. Add the secrets `REGISTRY_USER` and `REGISTRY_TOKEN` (scope `write:package`) for the image, `RENOVATE_TOKEN` for the user that opens Renovate's pull requests, and optionally `GH_COM_TOKEN`, a read-only github.com token for release notes.

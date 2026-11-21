@@ -4,7 +4,7 @@
  * support it the text goes to the clipboard as a promise right away.
  */
 export async function copyText(text: Promise<string>): Promise<void> {
-  if (typeof ClipboardItem === 'undefined' || !navigator.clipboard.write) {
+  if (typeof ClipboardItem === 'undefined' || !('write' in navigator.clipboard)) {
     return navigator.clipboard.writeText(await text)
   }
   const blob = text.then((value) => new Blob([value], { type: 'text/plain' }))

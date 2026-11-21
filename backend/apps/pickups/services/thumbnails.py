@@ -65,6 +65,7 @@ def video_still(path: str) -> bytes:
     ffmpeg = shutil.which("ffmpeg")
     if ffmpeg is None:
         raise FileNotFoundError("ffmpeg is not installed")
+    errors = b""
     for seek in ("0.5", "0"):
         # ffmpeg turns the frame upright itself (rotation metadata of phone videos).
         result = subprocess.run(
@@ -88,10 +89,11 @@ def video_still(path: str) -> bytes:
         )  # fmt: skip
         if result.returncode == 0 and result.stdout:
             return render_thumbnail(io.BytesIO(result.stdout))
+        errors = result.stderr
         if result.returncode != 0:
             break  # an error, or stopped (SIGTERM): no second attempt
         # Success without a frame: the clip is shorter than the seek, try its start.
-    raise ValueError(f"ffmpeg found no frame: {result.stderr.decode(errors='replace')[-500:]}")
+    raise ValueError(f"ffmpeg found no frame: {errors.decode(errors='replace')[-500:]}")
 
 
 def create_thumbnail(media: Media) -> bool:

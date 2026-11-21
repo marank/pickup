@@ -26,7 +26,7 @@ const title = computed(() => explorer.pickup.data?.title || t('common.untitledPi
 /** Segments: the pickup root, then each folder down to the current one. */
 const segments = computed(() => [
   { id: null as string | null, name: title.value },
-  ...explorer.path.map((folder) => ({ id: folder.id as string | null, name: folder.name })),
+  ...explorer.path.map((folder) => ({ id: folder.id, name: folder.name })),
 ])
 const pageNames = {
   timeline: () => t('common.timeline'),
@@ -81,6 +81,7 @@ useEventListener(window, 'keydown', (event: KeyboardEvent) => {
       />
     </form>
     <template v-else>
+      <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events, vuejs-accessibility/no-static-element-interactions -- a mouse shortcut; the keyboard has Ctrl+L -->
       <div
         ref="crumbs"
         class="no-scrollbar flex h-full min-w-0 flex-1 items-center overflow-x-auto"
@@ -128,6 +129,7 @@ useEventListener(window, 'keydown', (event: KeyboardEvent) => {
           </span>
         </template>
         <!-- Clicking next to the path (or Ctrl+L) turns it into a text field. -->
+        <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events, vuejs-accessibility/no-static-element-interactions -- a mouse shortcut; the keyboard has Ctrl+L -->
         <span
           class="min-w-6 flex-1 cursor-text self-stretch"
           :title="t('explorer.addressBar.typeAPathCtrlL')"

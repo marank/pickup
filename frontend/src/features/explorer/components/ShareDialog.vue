@@ -44,7 +44,7 @@ const description = computed(() => {
     : t('explorer.shareDialog.everyoneWithThisLinkCan')
 })
 
-const qr = ref<InstanceType<typeof QrCard> | null>(null)
+const qr = ref<{ save: () => Promise<void> } | null>(null)
 
 async function share() {
   try {

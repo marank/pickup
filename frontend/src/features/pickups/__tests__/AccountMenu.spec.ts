@@ -85,7 +85,7 @@ describe('account menu', () => {
     })
     await openAccount()
     await chooseMenuItem('Edit my details')
-    await new DOMWrapper(document.body.querySelector<HTMLInputElement>('#details-name')!).setValue(
+    await new DOMWrapper(document.body.querySelector<HTMLInputElement>('#details-name')).setValue(
       'Bob',
     )
     findButton('Save').click()
@@ -102,7 +102,7 @@ describe('account menu', () => {
     expect(pageText()).toContain('open your personal link')
     const leave = Array.from(
       document.body.querySelectorAll<HTMLButtonElement>('[role="alertdialog"] button'),
-    ).find((button) => button.textContent?.trim() === 'Log out')!
+    ).find((button) => button.textContent.trim() === 'Log out')!
     leave.click()
     for (let i = 0; i < 5; i++) await flushPromises()
     expect(
@@ -121,7 +121,7 @@ describe('account menu', () => {
     await openAccount()
     await chooseMenuItem('Log out')
     Array.from(document.body.querySelectorAll<HTMLButtonElement>('[role="alertdialog"] button'))
-      .find((button) => button.textContent?.trim() === 'Log out')!
+      .find((button) => button.textContent.trim() === 'Log out')!
       .click()
     for (let i = 0; i < 5; i++) await flushPromises()
     expect(error).toHaveBeenCalledWith('Could not log out')

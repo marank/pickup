@@ -104,7 +104,7 @@ export function useMarquee(pane: Ref<HTMLElement | null>, explorer: Explorer) {
     base = event.ctrlKey || event.metaKey ? new Set(explorer.selection.selected) : new Set()
     dragged = false
     last = event
-    pane.value?.setPointerCapture?.(event.pointerId)
+    pane.value?.setPointerCapture(event.pointerId)
     timer = setInterval(autoScroll, 30)
   }
 

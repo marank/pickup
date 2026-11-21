@@ -4,15 +4,15 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 
-import { api } from '@/api/client'
-import { apiErrorMessage, unwrap } from '@/api/errors'
+import { apiErrorMessage } from '@/api/errors'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import LogoIntro from '@/features/home/components/LogoIntro.vue'
 import { t } from '@/lib/i18n'
+import { pause, reducedMotion } from '@/lib/motion'
 
-import { enterPickup } from '../composables/usePickup'
+import { enterPickup, previewMemberLink } from '../composables/usePickup'
 
 /**
  * A personal link: the logo assembles in the middle, moves up, and a box says whose link it
@@ -23,8 +23,6 @@ const router = useRouter()
 
 /** The logo intro (LogoIntro.vue) plus a short moment to look at it. */
 const INTRO_MS = 1650
-const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
-const pause = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms))
 
 const preview = ref<{
   title: string
@@ -52,12 +50,7 @@ const youAre = computed(() =>
 
 onMounted(async () => {
   const [result] = await Promise.all([
-    unwrap(
-      api.POST('/api/pickups/{id}/session/preview/', {
-        params: { path: { id: props.pickupId } },
-        body: { access_key: props.accessKey },
-      }),
-    ).catch(() => null),
+    previewMemberLink(props.pickupId, props.accessKey).catch(() => null),
     pause(reducedMotion() ? 0 : INTRO_MS),
   ])
   if (!result) {

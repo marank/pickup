@@ -13,7 +13,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
 
-import { ApiError, apiErrorMessage } from '@/api/errors'
+import { ApiError, apiErrorMessage, fieldErrorsOf } from '@/api/errors'
 import type { CreatedPickup } from '@/api/types'
 import CopyField from '@/components/CopyField.vue'
 import QrCard from '@/components/QrCard.vue'
@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { t } from '@/lib/i18n'
+import { pause, reducedMotion } from '@/lib/motion'
 
 import CreationCodeDialog from '../components/CreationCodeDialog.vue'
 import PackingAnimation from '../components/PackingAnimation.vue'
@@ -49,12 +50,10 @@ const cancelCode = () => router.push({ name: 'home' })
 /** form → creating (a short animation, so it doesn't feel like nothing happened) → ready. */
 const phase = ref<'form' | 'creating' | 'ready'>('form')
 const PACKING_MS = 2000
-const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
-const pause = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms))
 /** Step 2: the new pickup and whether the creator's personal link went out by mail. */
 const created = ref<CreatedPickup | null>(null)
 const emailed = ref(false)
-const qr = ref<InstanceType<typeof QrCard> | null>(null)
+const qr = ref<{ save: () => Promise<void> } | null>(null)
 /** Height of the current step's content; the card animates to it. */
 const content = ref<HTMLElement | null>(null)
 const contentHeight = ref<number | null>(null)
@@ -109,11 +108,7 @@ async function submit() {
       creationCode.value = ''
       askCode.value = true
     }
-    if (err instanceof ApiError && err.body && typeof err.body === 'object') {
-      for (const [field, messages] of Object.entries(err.body)) {
-        if (Array.isArray(messages)) fieldErrors.value[field] = String(messages[0])
-      }
-    }
+    fieldErrors.value = fieldErrorsOf(err)
     toast.error(apiErrorMessage(err, t('pickups.createView.couldNotCreateThePickup')))
   }
 }

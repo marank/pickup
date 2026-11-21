@@ -3,10 +3,11 @@ import { CircleAlertIcon, CircleCheckIcon } from '@lucide/vue'
 import { onMounted, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 
-import { api } from '@/api/client'
-import { apiErrorMessage, unwrap } from '@/api/errors'
+import { apiErrorMessage } from '@/api/errors'
 import { Button } from '@/components/ui/button'
 import { t } from '@/lib/i18n'
+
+import { confirmEmail } from '../composables/usePickup'
 
 /** The link from the "confirm your new address" mail; the token comes after the #. */
 const props = defineProps<{ pickupId: string }>()
@@ -18,12 +19,7 @@ onMounted(async () => {
   // Don't keep the token (it carries the address) in the address bar or history.
   window.history.replaceState(window.history.state, '', window.location.pathname)
   try {
-    const result = await unwrap(
-      api.POST('/api/pickups/{id}/session/email/confirm/', {
-        params: { path: { id: props.pickupId } },
-        body: { token },
-      }),
-    )
+    const result = await confirmEmail(props.pickupId, token)
     message.value = result.message
     state.value = 'done'
   } catch (err) {

@@ -180,6 +180,7 @@ function onFiles(event: Event) {
     <input
       :ref="(el) => (explorer.fileInput = el as HTMLInputElement | null)"
       type="file"
+      :aria-label="t('explorer.contentPane.uploadPhotosAndVideos')"
       multiple
       accept="image/*,video/*"
       class="hidden"

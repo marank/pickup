@@ -64,6 +64,10 @@ run right away. For PostgreSQL like production: `just db-up`, then `DB_TYPE=post
 `DB_HOST=localhost` in `.env`; `just worker` runs the background jobs. End-to-end tests use
 Cypress: `pnpm exec cypress install` once, then `pnpm test:e2e` in `frontend/`.
 
+Demo data for screenshots and trying things out: `uv run python manage.py seed_demo` in
+`backend/` creates a pickup with four people and their photos (generated pictures, or your
+own with `--photos <folder of JPEGs>`) and prints the creator's personal link.
+
 How the code is organised, the access rules and the frontend conventions are in
 [AGENTS.md](AGENTS.md); read it before changing structure. The API is described in
 `frontend/openapi.json` (browsable at `/api/docs/` with `DEBUG=true`).

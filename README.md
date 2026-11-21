@@ -3,9 +3,9 @@
 After a party, a wedding or a holiday, everyone has photos on their phone and nobody has all of them. Pickup is a small self-hosted app to collect them: you create a pickup, send one link around, and everyone uploads into a folder of their own. Nobody needs an account.
 
 <p align="center">
-  <img src="docs/screenshots/explorer.webp" alt="A pickup in the browser: folder tree, photos, details" width="74%">
+  <img src="docs/screenshots/explorer.webp" alt="A pickup in the browser: folder tree, photos and the details of the selected one" width="74%">
   &nbsp;
-  <img src="docs/screenshots/timeline-phone.webp" alt="The timeline on a phone" width="22%">
+  <img src="docs/screenshots/timeline-phone.webp" alt="The timeline on a phone: everyone's photos by day and moment" width="22%">
 </p>
 
 ## Features
@@ -38,7 +38,11 @@ cp .env.example .env    # set SECRET_KEY, EMAIL_HASH_KEY, DB_PASSWORD, ADMIN_PAS
 docker compose up -d --build
 ```
 
-The app is then at http://localhost:8080 (`APP_PORT`). Compose starts three services:
+The app is then at http://localhost:8080 (`APP_PORT`), starting with this page:
+
+![The start page: what Pickup does and a button to create a pickup](docs/screenshots/home.webp)
+
+Compose starts three services:
 
 - `db`: PostgreSQL 18, data in the `db-data` volume.
 - `app`: nginx, gunicorn and a job worker under supervisord. nginx serves the app and hands out uploaded files only after Django has checked access; the worker sends mails (and retries them), deletes expired pickups and catches up on previews. Migrations run on every start. The container's root filesystem is read-only, it has no capabilities and runs as an unprivileged user; only `/data` (volume `app-data`) and `/tmp` are writable.

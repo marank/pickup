@@ -1,3 +1,9 @@
 allowBuilds:
   cypress: false
   vue-demi: true
+
+overrides:
+  # GHSA-g3hv-75wg-m249 (denial of service), fixed only in 11.0.1; pulled in by development
+  # tools (@vue/test-utils via js-beautify, eslint-plugin-sonarjs). Remove once they
+  # depend on minimatch 11 themselves.
+  'minimatch@>=7 <11.0.1': '^11.0.1'

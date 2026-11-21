@@ -227,8 +227,9 @@ async function submit() {
                   />
                   <p class="text-sm text-muted-foreground">
                     <template v-if="emailed"
-                      >{{ t('pickups.createView.weAlsoEmailedItTo') }} </template
-                    >{{ t('pickups.createView.withThisLinkYouLog') }}
+                      >{{ t('pickups.createView.weAlsoEmailedItTo') }} </template>{{
+                      t('pickups.createView.withThisLinkYouLog')
+                    }}
                   </p>
                 </div>
               </div>

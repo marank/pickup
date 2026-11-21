@@ -39,7 +39,7 @@ updates:
       frontend:
         update-types: [minor, patch]
     ignore:
-      # Follows the Node major of the images (node:24 in the Dockerfile and CI).
+      # Follows the Node major of the images (node:26 in the Dockerfile and CI).
       - dependency-name: "@types/node"
         update-types: [version-update:semver-major]
 

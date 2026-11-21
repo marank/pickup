@@ -265,11 +265,11 @@ describe('explorer: browsing', () => {
     touch(stage, 'pointerdown', 200)
     touch(stage, 'pointermove', 150)
     await flushPromises()
-    expect(strip().style.transform).toBe('translate3d(-50px, 0px, 0)')
+    expect(strip().style.transform).toBe('translate3d(-50px, 0px, 0px)')
     touch(stage, 'pointerup', 80)
     await slideDone()
     expect(dialog().textContent).toContain('clip.mp4')
-    expect(strip().style.transform).toBe('translate3d(0px, 0px, 0)')
+    expect(strip().style.transform).toBe('translate3d(0px, 0px, 0px)')
     touch(stage, 'pointerup', 80) // no matching pointerdown: ignored
     await slideDone()
     expect(dialog().textContent).toContain('clip.mp4')
@@ -368,7 +368,7 @@ describe('explorer: browsing', () => {
     touch(stage, 'pointermove', 105, 200)
     await flushPromises()
     expect((stage.firstElementChild as HTMLElement).style.transform).toBe(
-      'translate3d(0px, 100px, 0)',
+      'translate3d(0px, 100px, 0px)',
     )
     touch(stage, 'pointerup', 105, 300)
     await slideDone()

@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # --- 1. Build the SPA ------------------------------------------------------------
-FROM node:24-alpine@sha256:116b800c3754b440ee0aa3ed2f20f5bf3d99a554bfd9adeea09ea8017f6e85f5 AS frontend
+FROM node:26-alpine@sha256:6bd9ab43c0ec0190ca7b2d193906cb8b7edf6e7f4afa43ddeccd6452710bffb5 AS frontend
 WORKDIR /frontend
 COPY frontend/package.json frontend/pnpm-lock.yaml frontend/pnpm-workspace.yaml ./
 # pnpm in the version of "packageManager" in package.json (the one place it is set).
@@ -44,7 +44,7 @@ RUN cd ffmpeg-*/ \
 
 # --- 3. Runtime: supervisord → nginx + gunicorn/Django -----------------------------
 FROM python:3.14-slim-trixie@sha256:9aaa474097d094040649f2162a627c0049b408f52138d980916788d80f04802f AS runtime
-COPY --from=ghcr.io/astral-sh/uv:0.12.20 /uv /usr/local/bin/uv
+COPY --from=ghcr.io/astral-sh/uv:0.13.9@sha256:d3b601f0c7b118bc1753febf7c41cc80981df678445e0254284eecf84db79a7d /uv /usr/local/bin/uv
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \

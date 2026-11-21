@@ -45,7 +45,7 @@ so they describe the change for users.
 
 ## Development
 
-You need [uv](https://docs.astral.sh/uv/) (it brings Python 3.14), Node.js 24 with pnpm,
+You need [uv](https://docs.astral.sh/uv/) (it brings Python 3.14), Node.js 26 with pnpm,
 [just](https://just.systems/) (`uv tool install rust-just`) and optionally Docker for
 PostgreSQL.
 

@@ -50,7 +50,7 @@ You need [uv](https://docs.astral.sh/uv/) (it brings Python 3.14), Node.js 26 wi
 PostgreSQL.
 
 ```bash
-cp .env.example .env
+cp .env.example .env # then set DEBUG=true: development keys, mails on the console
 just setup
 just migrate
 just dev-backend     # Django on :8000
